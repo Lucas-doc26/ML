@@ -34,10 +34,13 @@ def preprocessamento(caminho: str, proporcao_treino: float = 0.6, proporcao_test
     img_width, img_height = 256, 256
     batch_size = 32
 
-    preprocess_input = tf.keras.applications.mobilenet_v3.preprocess_input
-    treino_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
-    validacao_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
-    teste_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
+    #preprocess_input = tf.keras.applications.mobilenet_v3.preprocess_input
+    def normalize_image(img):
+            return img / 255.0
+
+    treino_datagen = ImageDataGenerator(preprocessing_function=normalize_image)
+    validacao_datagen = ImageDataGenerator(preprocessing_function=normalize_image)
+    teste_datagen = ImageDataGenerator(preprocessing_function=normalize_image)
 
     class_mode = 'input' if autoencoder else 'binary'
 
@@ -81,8 +84,13 @@ def preprocessamento_dataframe(caminho:str):
     img_width, img_height = 256, 256
     batch_size = 32
     dataframe = pd.read_csv(caminho)
-    preprocess_input = tf.keras.applications.mobilenet_v3.preprocess_input
-    datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
+
+    def normalize_image(img):
+                return img / 255.0
+
+
+    #preprocess_input = tf.keras.applications.mobilenet_v3.preprocess_input
+    datagen = ImageDataGenerator(preprocessing_function=normalize_image)
     dataframe_gerador = datagen.flow_from_dataframe(
             dataframe=dataframe,
             x_col='caminho_imagem',
@@ -139,9 +147,13 @@ def preprocessamento_dataframe_unico(caminho_csv: str, autoencoder: bool = False
     img_width, img_height = 256, 256
     batch_size = 32
 
-    preprocess_input = tf.keras.applications.mobilenet_v3.preprocess_input
+    #preprocess_input = tf.keras.applications.mobilenet_v3.preprocess_input
 
-    datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
+    def normalize_image(img):
+            return img / 255.0
+
+
+    datagen = ImageDataGenerator(preprocessing_function=normalize_image)
 
     # Define o class_mode
     class_mode = 'input' if autoencoder else 'binary'
