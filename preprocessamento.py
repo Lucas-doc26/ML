@@ -8,7 +8,9 @@ from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from typing import List, Tuple
 import os
 
-def preprocessamento(caminho: str, proporcao_treino: float = 0.6, proporcao_teste: float = 0.2, proporcao_validacao: float = 0.2):
+def preprocessamento(caminho: str, 
+                     proporcao_treino: float = 0.6, proporcao_teste: float = 0.2, proporcao_validacao: float = 0.2, 
+                     shape = (64, 64)):
     """
     Prepara e retorna geradores de dados para treino, teste e validação, além dos dados em formato de arrays numpy.
     """
@@ -18,7 +20,6 @@ def preprocessamento(caminho: str, proporcao_treino: float = 0.6, proporcao_test
     treino, teste = train_test_split(dataframe, test_size=proporcao_teste, random_state=42)
     treino, validacao = train_test_split(treino, test_size=proporcao_validacao / (1 - proporcao_teste), random_state=42)
 
-    img_width, img_height = 256, 256
     batch_size = 32
 
     def normalize_image(img):
@@ -32,7 +33,7 @@ def preprocessamento(caminho: str, proporcao_treino: float = 0.6, proporcao_test
         dataframe=treino,
         x_col='caminho_imagem',
         y_col='classe',
-        target_size=(img_width, img_height),
+        target_size=(shape),
         batch_size=batch_size,
         class_mode='binary',
         shuffle=True
@@ -42,7 +43,7 @@ def preprocessamento(caminho: str, proporcao_treino: float = 0.6, proporcao_test
         dataframe=validacao,
         x_col='caminho_imagem',
         y_col='classe',
-        target_size=(img_width, img_height),
+        target_size=(shape),
         batch_size=batch_size,
         class_mode='binary',
         shuffle=True
@@ -52,7 +53,7 @@ def preprocessamento(caminho: str, proporcao_treino: float = 0.6, proporcao_test
         dataframe=teste,
         x_col='caminho_imagem',
         y_col='classe',
-        target_size=(img_width, img_height),
+        target_size=(shape),
         batch_size=batch_size,
         class_mode='binary',
         shuffle=False
@@ -74,8 +75,6 @@ def preprocessamento(caminho: str, proporcao_treino: float = 0.6, proporcao_test
     x_teste, y_teste = extrair_dados(teste_gerador)
 
     return treino_gerador, validacao_gerador, teste_gerador, x_treino, y_treino, x_teste, y_teste, x_validacao, y_validacao
-
-
 
 def preprocessamento_dataframe(caminho:str):
     """
