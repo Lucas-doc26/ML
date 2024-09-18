@@ -1,77 +1,81 @@
 import pandas as pd
 import os
 import random
-import csv
 from typing import Tuple, Optional
 
 def segmentando_datasets(quantidade_PUC:int=None, quantidade_UFPR04:int=None, quantidade_UFPR05:int=None) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
-    Função para criar os datasets csv.\n
-    Caso queira eles como lista, retorna uma tupla com os datasets separados em ordem PUC, UFPR04, UFPR05
+    Função para criar os datasets csv com uma divisão igual entre as classes 'Empty' e 'Occupied'.
+    Retorna uma tupla com os datasets separados em ordem PUC, UFPR04, UFPR05.
     """
     faculdades = ['PUC', 'UFPR04', 'UFPR05']
     
     limites_padrao = {
-        'PUC': float('inf'),  # Infinito para capturar todas as imagens
-        'UFPR04': float('inf'),
-        'UFPR05': float('inf')
+        'PUC': quantidade_PUC or float('inf'),
+        'UFPR04': quantidade_UFPR04 or float('inf'),
+        'UFPR05': quantidade_UFPR05 or float('inf')
     }
-    
-    if quantidade_PUC is not None:
-        limites_padrao['PUC'] = quantidade_PUC
-    if quantidade_UFPR04 is not None:
-        limites_padrao['UFPR04'] = quantidade_UFPR04
-    if quantidade_UFPR05 is not None:
-        limites_padrao['UFPR05'] = quantidade_UFPR05
 
     tempos = ['Cloudy', 'Rainy', 'Sunny']
     
     dataframes = [] 
 
     for local in faculdades:
-        caminhos_imagem = []
-        classes = []
+        caminhos_empty = []
+        caminhos_occupied = []
+        
         for tempo in tempos:
             sample_dir = os.path.join(
                 r"/home/lucas/Downloads/PKLot/PKLotSegmented/",
                 local, tempo)
-                #"C:\Users\lucaa\Downloads\PKLot\PKLot\PKLotSegmented"
-                #/home/lucas/Downloads/PKLot/PKLotSegmented/
-            pastas = os.listdir(sample_dir)
-            
-            if not os.path.exists(sample_dir)   :
+
+            if not os.path.exists(sample_dir):
                 print(f'Diretório não encontrado: {sample_dir}')
+                continue
+
+            pastas = os.listdir(sample_dir)
 
             for pasta in pastas:
-                todos_arquivos = []
                 for class_dir in ['Empty', 'Occupied']:
-                    # Caminho completo para o subdiretório da classe
                     full_class_dir = os.path.join(sample_dir, pasta, class_dir)
                     if os.path.exists(full_class_dir):
                         for file in os.listdir(full_class_dir):
                             if file.endswith('.jpg'):
-                                todos_arquivos.append((os.path.join(full_class_dir, file), class_dir))
+                                if class_dir == 'Empty':
+                                    caminhos_empty.append(os.path.join(full_class_dir, file))
+                                else:
+                                    caminhos_occupied.append(os.path.join(full_class_dir, file))
 
-                random.shuffle(todos_arquivos)
+        # Definir o limite de arquivos de acordo com a quantidade passada (metade para 'Empty', metade para 'Occupied')
+        limite_arquivos = limites_padrao[local]
+        limite_por_classe = limite_arquivos // 2
 
-                # Adicionando todas as imagens ao DataFrame
-                for file_path, class_dir in todos_arquivos:
-                    caminhos_imagem.append(file_path)
-                    classes.append(class_dir)
+        # Embaralhar as listas para garantir a aleatoriedade
+        random.shuffle(caminhos_empty)
+        random.shuffle(caminhos_occupied)
 
-        # Embaralhando novamente para garantir a aleatoriedade
+        # Garantir que a quantidade seja limitada pela menor lista
+        caminhos_empty = caminhos_empty[:limite_por_classe]
+        caminhos_occupied = caminhos_occupied[:limite_por_classe]
+
+        # Combinar as duas classes
+        caminhos_imagem = caminhos_empty + caminhos_occupied
+        classes = ['Empty'] * len(caminhos_empty) + ['Occupied'] * len(caminhos_occupied)
+
+        # Embaralhar novamente as imagens combinadas
         combined_data = list(zip(caminhos_imagem, classes))
         random.shuffle(combined_data)
         caminhos_imagem, classes = zip(*combined_data)
 
-        limite_arquivos = min(limites_padrao[local], len(caminhos_imagem))
+        classes_pandas = pd.Series(classes)
 
-        caminhos_imagem = caminhos_imagem[:limite_arquivos]
-        classes = classes[:limite_arquivos]
+        mapeamento = {'Occupied': 1, 'Empty': 0}
+        classes_numericas = classes_pandas.map(mapeamento)
 
+        # Criar o DataFrame
         df = pd.DataFrame({
             'caminho_imagem': caminhos_imagem,
-            'classe': classes
+            'classe': classes_numericas
         })
 
         # Salvar o DataFrame como arquivo CSV
@@ -86,7 +90,5 @@ def segmentando_datasets(quantidade_PUC:int=None, quantidade_UFPR04:int=None, qu
         print(df.head())
         print('\n')
 
-# Exemplo de usos: 
-#dataframePuc1, dataframeUFPR041, dataframeUFPR051 = segmentadando_datasets() -> Cria o csv/var com todos os arquivos 
-#dataframePuc, dataframeUFPR04, dataframeUFPR05 = segmentadando_datasets(1000, 1000, 1000) -> Cria o csv/var com o limite
-segmentando_datasets() #-> Cria somente os csv 
+# Exemplo de uso: 
+segmentando_datasets(1000, 1000, 1000)
