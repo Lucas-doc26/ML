@@ -89,17 +89,6 @@ def plot_imagens_dataframe_gerador(dataframe_gerador, img_por_coluna):
     plt.tight_layout()
     plt.show()
 
-def show_sample(dataset):
-    dataset = dataset.take(9)
-    plt.figure(figsize=(10, 10))
-    for i in range(9):
-        image, label = next(iter(dataset))
-        ax = plt.subplot(3, 3, i + 1)
-        plt.imshow(image.numpy().astype("uint8"))
-        plt.title(label.numpy().astype("uint8"))
-        plt.axis("off")
-    plt.show()
-
 def plot_confusion_matrix(y_true, y_pred, labels, save_path, title):
     """
     Plota uma matriz de confusão.
@@ -178,9 +167,34 @@ def plot_imagens_incorretas(y_binario, y_predicao, caminhos_imagens, modelo_nome
     plt.savefig(save_path_imgs)
     plt.close()
 
+def plot_autoencoder(x_test, Autoencoder):
+    def normalize(image):
+        image = np.clip(image, 0, 1)  # Garante que a imagem esteja no intervalo [0, 1]
+        return (image - image.min()) / (image.max() - image.min()) if image.max() != image.min() else image
+
+    plt.figure(figsize=(16, 8))
+
+    for i in range(8):
+        # Imagem original
+        plt.subplot(2, 8, i + 1)
+        plt.imshow(x_test[i])
+        plt.title("Original")
+        plt.axis("off")
+
+        # Predição e normalização
+        pred = Autoencoder.predict(x_test[i].reshape((1, 64, 64, 3)))
+        pred_img = normalize(pred[0])
+
+        plt.subplot(2, 8, i + 8 + 1)
+        plt.imshow(pred_img)
+        plt.title("Reconstruída")
+        plt.axis("off")
+
+    plt.show()
+
+
 import os
 from preprocessamento import mapear_rotulos_binarios, carregar_e_preprocessar_imagens
-from visualizacao import plot_confusion_matrix, plot_imagens_incorretas
 
 def avaliar_modelo_em_datasets(modelo, datasets_info):
     """
