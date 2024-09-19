@@ -67,15 +67,17 @@ def segmentando_datasets(quantidade_PUC:int=None, quantidade_UFPR04:int=None, qu
         random.shuffle(combined_data)
         caminhos_imagem, classes = zip(*combined_data)
 
+        """
         classes_pandas = pd.Series(classes)
 
         mapeamento = {'Occupied': 1, 'Empty': 0}
         classes_numericas = classes_pandas.map(mapeamento)
+        """
 
         # Criar o DataFrame
         df = pd.DataFrame({
             'caminho_imagem': caminhos_imagem,
-            'classe': classes_numericas
+            'classe': classes
         })
 
         # Salvar o DataFrame como arquivo CSV
@@ -91,4 +93,4 @@ def segmentando_datasets(quantidade_PUC:int=None, quantidade_UFPR04:int=None, qu
         print('\n')
 
 # Exemplo de uso: 
-segmentando_datasets(1000, 1000, 1000)
+#segmentando_datasets(1000, 1000, 1000)
