@@ -39,59 +39,96 @@ class Autoencoder:
 #encoder_model = autoencoder.encoder()
 #decoder_model = autoencoder.decoder()
 
-class GeradorRedeNeural:
-    def __init__(self, input_shape=(64, 64, 3), min_layers=3, max_layers=10):
+class GeradorAutoencoder:
+    def __init__(self, input_shape=(64, 64, 3), min_layers=2, max_layers=5):
         self.input_shape = input_shape
         self.min_layers = min_layers
         self.max_layers = max_layers
+        self.encoder = None
+        self.decoder = None
 
     def gerar_modelo(self):
-        model = tf.keras.Sequential()
-        
-        # Adiciona a camada de entrada
-        model.add(tf.keras.layers.InputLayer(input_shape=self.input_shape))
-        
-        # Número aleatório de camadas
         num_layers = np.random.randint(self.min_layers, self.max_layers + 1)
+        encoder_layers, decoder_layers = self._gerar_camadas_espelhadas(num_layers)
+        
+        self.encoder = self._criar_encoder(encoder_layers)
+        self.decoder = self._criar_decoder(decoder_layers)
+        
+        autoencoder = tf.keras.Sequential([self.encoder, self.decoder])
+        return autoencoder
+
+    def _gerar_camadas_espelhadas(self, num_layers):
+        encoder_layers = []
+        decoder_layers = []
+        output_shape = self.input_shape
         
         for _ in range(num_layers):
-            self._adicionar_camada_aleatoria(model)
+            filters = np.random.choice([16, 32, 64, 128])
+            kernel_size = np.random.choice([3, 5])
+            
+            encoder_layers.append(('conv', filters, kernel_size))
+            output_shape = self._calcular_saida_conv(output_shape, kernel_size)
+            encoder_layers.append(('maxpool', 2))
+            output_shape = self._calcular_saida_maxpool(output_shape)
+            
+            decoder_layers.insert(0, ('conv_transpose', filters, kernel_size, 2))
         
-        # Adiciona uma camada de saída densa com 10 unidades (pode ser ajustado conforme necessário)
-        model.add(tf.keras.layers.Flatten())
-        model.add(tf.keras.layers.Dense(10, activation='softmax'))
+        # Adiciona a camada final do decoder para reconstruir a imagem
+        decoder_layers.append(('conv_transpose', self.input_shape[-1], 3, 1))
         
+        return encoder_layers, decoder_layers
+
+    def _calcular_saida_conv(self, input_shape, kernel_size):
+        height, width, channels = input_shape
+        new_height = height
+        new_width = width
+        # Considerando padding 'same'
+        return (new_height, new_width, channels)
+
+    def _calcular_saida_maxpool(self, input_shape):
+        height, width, channels = input_shape
+        new_height = height // 2
+        new_width = width // 2
+        return (new_height, new_width, channels)
+
+    def _criar_encoder(self, layers):
+        model = tf.keras.Sequential()
+        model.add(tf.keras.layers.InputLayer(input_shape=self.input_shape))
+        
+        for layer in layers:
+            if layer[0] == 'conv':
+                model.add(tf.keras.layers.Conv2D(layer[1], kernel_size=(layer[2], layer[2]), padding="same", activation="relu"))
+            elif layer[0] == 'maxpool':
+                model.add(tf.keras.layers.MaxPool2D(pool_size=layer[1]))
+        
+        model.name = "Encoder"
         return model
 
-    def _adicionar_camada_aleatoria(self, model):
-        # Escolhe aleatoriamente o tipo de camada
-        layer_type = np.random.choice(['conv', 'dense', 'maxpool'])
+    def _criar_decoder(self, layers):
+        # A forma de entrada do decoder deve ser a forma de saída do encoder
+        encoder_output_shape = self.encoder.output_shape[1:]
         
-        if layer_type == 'conv':
-            self._adicionar_camada_conv(model)
-        elif layer_type == 'dense':
-            self._adicionar_camada_densa(model)
-        else:  # maxpool
-            self._adicionar_camada_maxpool(model)
+        model = tf.keras.Sequential()
+        model.add(tf.keras.layers.InputLayer(input_shape=encoder_output_shape))
         
-        # Adiciona Dropout aleatoriamente
-        if np.random.rand() > 0.5:
-            model.add(tf.keras.layers.Dropout(rate=np.random.uniform(0.1, 0.5)))
+        for i, layer in enumerate(layers):
+            if layer[0] == 'conv_transpose':
+                activation = "relu" if i < len(layers) - 1 else "sigmoid"
+                model.add(tf.keras.layers.Conv2DTranspose(layer[1], kernel_size=(layer[2], layer[2]), 
+                                                          strides=layer[3], padding="same", activation=activation))
+        
+        # A camada de Reshape pode não ser necessária se a forma estiver correta
+        model.add(tf.keras.layers.Reshape(self.input_shape))
+        
+        model.name = "Decoder"
+        return model
 
-    def _adicionar_camada_conv(self, model):
-        filters = np.random.choice([32, 64, 128, 256])
-        kernel_size = np.random.choice([3, 5])
-        model.add(tf.keras.layers.Conv2D(filters, (kernel_size, kernel_size), activation='relu'))
+    def compilar_modelo(self, autoencoder):
+        autoencoder.compile(optimizer='adam', loss='mse')
+        return autoencoder
 
-    def _adicionar_camada_densa(self, model):
-        units = np.random.choice([64, 128, 256, 512])
-        model.add(tf.keras.layers.Dense(units, activation='relu'))
-
-    def _adicionar_camada_maxpool(self, model):
-        pool_size = np.random.choice([2, 3])
-        model.add(tf.keras.layers.MaxPooling2D((pool_size, pool_size)))
-
-#gerador = GeradorRedeNeural()
-#modelo = gerador.gerar_modelo()
-#modelo.summary()
+# Exemplo de uso
+gerador = GeradorAutoencoder(input_shape=(64, 64, 3))
+autoencoder = gerador.gerar_modelo()
+autoencoder = gerador.compilar_modelo(autoencoder)
 
