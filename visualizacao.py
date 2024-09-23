@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 import seaborn as sns
 from sklearn.metrics import confusion_matrix
-import pandas
+import pandas as pd
 import os
 import numpy as np
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
@@ -32,12 +32,16 @@ def plot_history(history):
   plt.legend(['train', 'val'], loc='upper left')
   plt.show()
 
-def plot_imagens_com_csv(dataframe, img_por_coluna):
+def plot_imagens_com_csv(caminho_csv, img_por_coluna):
     """
-    Função para plotar imagens do DataFrame pegando o .Csv.
-    :param dataframe: DataFrame contendo caminhos de imagens .csv
+    Função para plotar imagens de um arquivo .csv contendo os caminhos de imagens.
+    
+    :param caminho_csv: caminho para o arquivo .csv contendo os caminhos de imagens
     :param img_por_coluna: número de imagens por coluna
     """
+    # Ler o CSV para um DataFrame
+    dataframe = pd.read_csv(caminho_csv)
+    
     _, axs = plt.subplots(img_por_coluna, img_por_coluna, figsize=(10, 10))
 
     # Iterar sobre as linhas do DataFrame
@@ -54,6 +58,7 @@ def plot_imagens_com_csv(dataframe, img_por_coluna):
 
     plt.tight_layout()
     plt.show()
+
      
 def plot_imagens_dataframe_gerador(dataframe_gerador, img_por_coluna):
     """
