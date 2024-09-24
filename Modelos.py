@@ -117,6 +117,9 @@ class GeradorAutoencoder:
                 model.add(tf.keras.layers.Conv2DTranspose(layer[1], kernel_size=(layer[2], layer[2]), 
                                                           strides=layer[3], padding="same", activation=activation))
         
+        # Adiciona a camada final do decoder para reconstruir a imagem
+        model.add(tf.keras.layers.Conv2DTranspose(3, kernel_size=(3, 3), padding="same", activation="sigmoid"))
+        
         # A camada de Reshape pode não ser necessária se a forma estiver correta
         model.add(tf.keras.layers.Reshape(self.input_shape))
         
