@@ -6,7 +6,7 @@ import pandas as pd
 import os
 import numpy as np
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
-
+from preprocessamento import mapear_rotulos_binarios, carregar_e_preprocessar_imagens
 
 def plot_history(history):
   """
@@ -58,7 +58,6 @@ def plot_imagens_com_csv(caminho_csv, img_por_coluna):
 
     plt.tight_layout()
     plt.show()
-
      
 def plot_imagens_dataframe_gerador(dataframe_gerador, img_por_coluna):
     """
@@ -70,7 +69,7 @@ def plot_imagens_dataframe_gerador(dataframe_gerador, img_por_coluna):
     imagens_por_plot = img_por_coluna ** 2 
     
     for i in range(imagens_por_plot):
-        if i >= len(dataframe_gerador.filenames):
+        if i >= len(dataframe_gerador.caminho_imagem):
             break
         
         # Carrega um batch de imagens e labels
@@ -196,10 +195,6 @@ def plot_autoencoder(x_test, Autoencoder):
         plt.axis("off")
 
     plt.show()
-
-
-import os
-from preprocessamento import mapear_rotulos_binarios, carregar_e_preprocessar_imagens
 
 def avaliar_modelo_em_datasets(modelo, datasets_info):
     """

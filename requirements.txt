@@ -1,6 +1,6 @@
 absl-py==1.4.0
 albucore==0.0.16
-albumentations==1.4.15
+albumentations==1.2.1
 annotated-types==0.7.0
 anyio==4.4.0
 argon2-cffi==23.1.0
@@ -48,6 +48,7 @@ h5py==3.11.0
 httpcore==1.0.5
 httpx==0.27.0
 idna==3.7
+ImageDataAugmentor @ git+https://github.com/mjkvaak/ImageDataAugmentor@9f16ebd3e667cc16cde49f1ec1e5211e7962cd5c
 imageio==2.35.1
 immutabledict==4.2.0
 importlib_resources==6.4.0
@@ -138,6 +139,7 @@ PyYAML==6.0.2
 pyzmq==26.1.1
 qtconsole==5.5.2
 QtPy==2.4.1
+qudida==0.0.4
 referencing==0.35.1
 regex==2024.7.24
 requests==2.31.0
