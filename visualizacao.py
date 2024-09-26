@@ -59,36 +59,38 @@ def plot_imagens_com_csv(caminho_csv, img_por_coluna):
     plt.tight_layout()
     plt.show()
      
-def plot_imagens_dataframe_gerador(dataframe_gerador, img_por_coluna):
+def plot_imagens_dataframe_gerador(dataframe_gerador, img_por_coluna=3):
     """
     Função para plotar imagens geradas pelo DataFrameIterator.
     :param dataframe_gerador: DataFrameIterator contendo as imagens geradas.
+    :param Autoencoder: Se True, não mostra a classe, apenas a imagem (como no Autoencoder).
     :param img_por_coluna: Número de imagens por coluna e por linha a serem plotadas.
     """
+    classes = ['Empty', 'Occupied']
+
+    # Define a figura com subplots
     fig, axs = plt.subplots(img_por_coluna, img_por_coluna, figsize=(10, 10))
     imagens_por_plot = img_por_coluna ** 2 
     
+    # Gera as imagens e labels a partir do gerador
+    imagens, labels = next(dataframe_gerador)
+
     for i in range(imagens_por_plot):
-        if i >= len(dataframe_gerador.caminho_imagem):
+        if i >= len(imagens):
             break
         
-        # Carrega um batch de imagens e labels
-        batch = next(dataframe_gerador)
-        imagens = batch[0]
-        labels = batch[1]
+        image = imagens[i]
+
+        # Normaliza a imagem para o intervalo [0, 1]
+        image = (image - image.min()) / (image.max() - image.min())
+
+        axs[i // img_por_coluna, i % img_por_coluna].imshow(image)
+        axs[i // img_por_coluna, i % img_por_coluna].axis('off')
+
+    plt.tight_layout()
+    plt.show()
         
-        # Itera sobre as imagens no batch
-        for j in range(len(imagens)):
-            image = imagens[j]
-            label = labels[j]
-            
-            # Normaliza os valores dos pixels para o intervalo [0, 1]
-            image = (image - image.min()) / (image.max() - image.min())
-            
-            # Plota a imagem no subplot correspondente
-            axs[i // img_por_coluna, i % img_por_coluna].imshow(image)
-            axs[i // img_por_coluna, i % img_por_coluna].axis('off')  
-            axs[i // img_por_coluna, i % img_por_coluna].set_title(f"Classe: {label}")  # Título da imagem
+        
 
     plt.tight_layout()
     plt.show()
