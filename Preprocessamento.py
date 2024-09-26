@@ -8,18 +8,6 @@ def preprocessamento_dataframe(caminho_csv: str, autoencoder: bool = False, data
 
     img_width, img_height = 64, 64
     batch_size = 32
-
-    transform = A.Compose([
-            A.ChannelDropout(channel_drop_range=(1, 2), fill_value=0, p=0.5),
-            A.Rotate(limit=50, p=1),
-            A.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.2,brightness_by_max=True, p=1),
-            A.AdvancedBlur(blur_limit=(7,9), noise_limit=(0.75, 1.25), p=1)
-    ])
-
-    def albumentations(img):
-        data = {"image": normalize_image(img)}
-        augmented = transform(**data)  #** para expandir o dicionário
-        return augmented['image']
         
     datagen = ImageDataGenerator(preprocessing_function=albumentations if data_algumentantation else normalize_image)
 
