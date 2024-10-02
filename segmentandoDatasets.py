@@ -3,7 +3,7 @@ import os
 import random
 from typing import Tuple, Optional
 
-def segmentando_datasets(quantidade_PUC:int=None, quantidade_UFPR04:int=None, quantidade_UFPR05:int=None) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+def segmentando_datasets(quantidade_PUC: Optional[int] = None, quantidade_UFPR04: Optional[int] = None, quantidade_UFPR05: Optional[int] = None) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
     Função para criar os datasets csv com uma divisão igual entre as classes 'Empty' e 'Occupied'.
     Retorna uma tupla com os datasets separados em ordem PUC, UFPR04, UFPR05.
@@ -11,9 +11,9 @@ def segmentando_datasets(quantidade_PUC:int=None, quantidade_UFPR04:int=None, qu
     faculdades = ['PUC', 'UFPR04', 'UFPR05']
     
     limites_padrao = {
-        'PUC': quantidade_PUC or float('inf'),
-        'UFPR04': quantidade_UFPR04 or float('inf'),
-        'UFPR05': quantidade_UFPR05 or float('inf')
+        'PUC': quantidade_PUC,
+        'UFPR04': quantidade_UFPR04,
+        'UFPR05': quantidade_UFPR05
     }
 
     tempos = ['Cloudy', 'Rainy', 'Sunny']
@@ -47,8 +47,8 @@ def segmentando_datasets(quantidade_PUC:int=None, quantidade_UFPR04:int=None, qu
                                     caminhos_occupied.append(os.path.join(full_class_dir, file))
 
         # Definir o limite de arquivos de acordo com a quantidade passada (metade para 'Empty', metade para 'Occupied')
-        limite_arquivos = limites_padrao[local]
-        limite_por_classe = limite_arquivos // 2
+        limite_arquivos = limites_padrao[local] if limites_padrao[local] is not None else float('inf')
+        limite_por_classe = min(len(caminhos_empty), len(caminhos_occupied), limite_arquivos // 2)
 
         # Embaralhar as listas para garantir a aleatoriedade
         random.shuffle(caminhos_empty)
@@ -66,13 +66,6 @@ def segmentando_datasets(quantidade_PUC:int=None, quantidade_UFPR04:int=None, qu
         combined_data = list(zip(caminhos_imagem, classes))
         random.shuffle(combined_data)
         caminhos_imagem, classes = zip(*combined_data)
-
-        """
-        classes_pandas = pd.Series(classes)
-
-        mapeamento = {'Occupied': 1, 'Empty': 0}
-        classes_numericas = classes_pandas.map(mapeamento)
-        """
 
         # Criar o DataFrame
         df = pd.DataFrame({
@@ -92,5 +85,7 @@ def segmentando_datasets(quantidade_PUC:int=None, quantidade_UFPR04:int=None, qu
         print(df.head())
         print('\n')
 
+    return tuple(dataframes)  # Retornar a tupla dos DataFrames
+
 # Exemplo de uso: 
-#segmentando_datasets(1000, 1000, 1000)
+# segmentando_datasets(1000, 1000, 1000)

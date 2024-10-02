@@ -171,3 +171,6 @@ cython_debug/
 Resultados/Predicoes/predicoes.numpy/
 
 .npy
+
+Modelos_keras/Autoencoders_Gerados/
+weights_finais/Autoencoders_Gerados/
