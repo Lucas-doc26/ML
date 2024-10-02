@@ -90,12 +90,10 @@ def plot_imagens_dataframe_gerador(dataframe_gerador, img_por_coluna=3):
     plt.tight_layout()
     plt.show()
         
-        
-
     plt.tight_layout()
     plt.show()
 
-def plot_confusion_matrix(y_true, y_pred, labels, save_path, title):
+def plot_confusion_matrix(y_true, y_pred, labels, title,  save_path=None):
     """
     Plota uma matriz de confusão.
 
@@ -110,8 +108,10 @@ def plot_confusion_matrix(y_true, y_pred, labels, save_path, title):
     plt.title(title)
     plt.xlabel('Predicted')
     plt.ylabel('True')
-    plt.savefig(save_path)
-    plt.close()
+    if save_path != None:
+        plt.savefig(save_path)
+        plt.close()
+    plt.show()
 
 def exibir_primeiras_imagens(dataframe):
     # Pegar os caminhos das 9 primeiras imagens
