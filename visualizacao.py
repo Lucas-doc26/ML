@@ -6,7 +6,7 @@ import pandas as pd
 import os
 import numpy as np
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
-from preprocessamento import mapear_rotulos_binarios, carregar_e_preprocessar_imagens
+from Preprocessamento import mapear_rotulos_binarios, carregar_e_preprocessar_imagens
 
 def plot_history(history):
   """

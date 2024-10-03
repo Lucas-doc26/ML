@@ -5,7 +5,6 @@ import pandas as pd
 
 from keras.layers import Input, Flatten, Dense, Reshape, Conv2D, MaxPooling2D, UpSampling2D
 from keras.models import Sequential, Model
-
 from datetime import datetime
 
 from visualizacao import *
@@ -41,7 +40,7 @@ class Autoencoder:
     def construir_modelo(self):
         return keras.models.Sequential([self.encoder(), self.decoder()])
 
-#Modo de uso:    
+#Exemplo de uso:    
 #autoencoder = Autoencoder()
 #modelo = autoencoder.model
 #encoder_model = autoencoder.encoder()
@@ -188,6 +187,13 @@ class Gerador:
         x, y = next(self.treino)
         plot_autoencoder(x, self.autoencoder)
 
+#Exemplo de uso:
+#gerador = Gerador(min_layers=2, max_layers=6) -> deve ser proporcional ao input_shape
+#modelo = gerador.construir_modelo()
+#encoder = gerador.encoder
+#decoder = gerador.decoder
+#gerador.Dataset(treino, validacao, teste)
+#gerador.treinar_autoencoder(epocas=30, salvar=True) -> treina o autoencoder, plota já a reconstrução 
 
 class GeradorClassificador:
     def __init__(self, encoder, pesos):
@@ -239,3 +245,9 @@ class GeradorClassificador:
         y_verdadeiro = mapear_rotulos_binarios(teste_csv['classe'])
 
         plot_confusion_matrix(y_verdadeiro, predicoes, ['Empty', 'Occupied'], 'PUC')
+
+#Exemplo de uso:
+#classificador = GeradorClassificador(encoder=encoder, pesos="pesos.weights.h5") -> crio o classificador encima do encodere seus pesos
+#classificador.Dataset(treino, validacao, teste)
+#classificador.treinamento()
+#classificador.predicao(teste_df) -> cria a matriz de confusão
