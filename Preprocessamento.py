@@ -1,9 +1,24 @@
 import pandas as pd
 import albumentations as A
+import numpy as np
+
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from sklearn.model_selection import train_test_split
+from tensorflow.keras.preprocessing.image import load_img, img_to_array
 
 def preprocessamento_dataframe(caminho_csv: str, autoencoder: bool = False, data_algumentantation:bool = True):
+    """
+    Ao passar um dataFrame .csv, ele irá retornar o gerador e dataframe
+    
+    Parâmetros:
+        caminho (str): Caminho para o arquivo CSV.
+        autoencoder (bool): Se True, prepara os dados para um autoencoder (class_mode='input').
+                            Se False, prepara os dados para classificação binária (class_mode='binary').
+        data_algumentation (bool): Se True, faz o aumento dos dados .
+
+    Retorna:
+        Gerador, dataframe
+    """
     dataframe = pd.read_csv(caminho_csv)
 
     img_width, img_height = 64, 64
@@ -13,7 +28,7 @@ def preprocessamento_dataframe(caminho_csv: str, autoencoder: bool = False, data
 
     class_mode = 'input' if autoencoder else 'binary'
 
-    Dataframe_preprocessado = datagen.flow_from_dataframe(
+    Gerador = datagen.flow_from_dataframe(
         dataframe=dataframe,
         x_col='caminho_imagem',
         y_col='caminho_imagem' if autoencoder else 'classe',
@@ -23,7 +38,7 @@ def preprocessamento_dataframe(caminho_csv: str, autoencoder: bool = False, data
         shuffle=True
     )
 
-    return Dataframe_preprocessado, dataframe
+    return Gerador, dataframe
 
 def preprocessamento(caminho: str, proporcao_treino: float = 0.6, proporcao_teste: float = 0.2, proporcao_validacao: float = 0.2, autoencoder: bool = True, data_algumentantation = True):
     """
@@ -36,6 +51,8 @@ def preprocessamento(caminho: str, proporcao_treino: float = 0.6, proporcao_test
         proporcao_validacao (float): Proporção de dados de validação.
         autoencoder (bool): Se True, prepara os dados para um autoencoder (class_mode='input').
                             Se False, prepara os dados para classificação binária (class_mode='binary').
+        data_algumentation (bool): Se True, faz o aumento dos dados .
+
     
     Retorna:
         treino_gerador, validacao_gerador, teste_gerador, treino, validacao, teste
@@ -92,6 +109,7 @@ def preprocessamento(caminho: str, proporcao_treino: float = 0.6, proporcao_test
     return treino_gerador, validacao_gerador, teste_gerador, treino, validacao, teste
 
 #DataAugmentation com Albumentations 
+#Transformações escolhidas: 
 transform = A.Compose([
             A.RandomRain(
                 drop_length=8, drop_width=1,
@@ -107,9 +125,46 @@ transform = A.Compose([
 
 #Funções auxiliares ao preprocessamento
 def normalize_image(img):
+    """
+    Retorna a imagem normalizada 
+    """
     return img / 255.0
 
 def albumentations(img):
-            data = {"image": normalize_image(img)}
-            augmented = transform(**data)  #** para expandir o dicionário
-            return augmented['image']
+        """
+        Faz a transformação da imagem a partir do transform definido
+        """
+        data = {"image": normalize_image(img)}
+        augmented = transform(**data)  #** para expandir o dicionário
+        return augmented['image']
+
+#Funções auxiliares aos plots
+def carregar_e_preprocessar_imagens(caminhos_imagens, target_size=(256, 256)):
+    """
+    Carrega e processa imagens a partir de caminhos fornecidos. Retornando um array numpy contendo todas as imgs. 
+
+    Como usar:
+    - caminhos_imagens = dataset_df['caminho_imagem'].tolist() 
+    - passa a variável como argumento 
+    """
+
+    imagens = []
+    for caminho in caminhos_imagens:
+        img = load_img(caminho, target_size=target_size)
+        img_array = img_to_array(img)
+        img_array = np.expand_dims(img_array, axis=0)
+        imagens.append(img_array)
+    return np.vstack(imagens)
+
+# Exemplo de uso:
+# caminhos_imagens = dataset_df['caminho_imagem'].tolist() 
+# imagens = carregar_e_preprocessar_imagens(caminhos_imagens)
+# modelo.predict(imagens).argmax(axis=1) -> assim que faz a previsão 
+
+def mapear_rotulos_binarios(classes):
+    """
+    Converte as classes em binários: 
+    - Occupied vira 1 
+    - Empty vira 0
+    """
+    return np.array([1 if classe == 'Occupied' else 0 for classe in classes])
