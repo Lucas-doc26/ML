@@ -6,7 +6,7 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 
-def preprocessamento_dataframe(caminho_csv: str, autoencoder: bool = False, data_algumentantation:bool = True):
+def preprocessamento_dataframe(caminho_csv: str, autoencoder: bool = False, data_algumentantation:bool = True, input_shape:int=(64,64)):
     """
     Ao passar um dataFrame .csv, ele irá retornar o gerador e dataframe
     
@@ -20,8 +20,6 @@ def preprocessamento_dataframe(caminho_csv: str, autoencoder: bool = False, data
         Gerador, dataframe
     """
     dataframe = pd.read_csv(caminho_csv)
-
-    img_width, img_height = 64, 64
     batch_size = 32
         
     datagen = ImageDataGenerator(preprocessing_function=albumentations if data_algumentantation else normalize_image)
@@ -32,7 +30,7 @@ def preprocessamento_dataframe(caminho_csv: str, autoencoder: bool = False, data
         dataframe=dataframe,
         x_col='caminho_imagem',
         y_col='caminho_imagem' if autoencoder else 'classe',
-        target_size=(img_width, img_height),
+        target_size=(input_shape),
         batch_size=batch_size,
         class_mode=class_mode,
         shuffle=True
@@ -40,7 +38,7 @@ def preprocessamento_dataframe(caminho_csv: str, autoencoder: bool = False, data
 
     return Gerador, dataframe
 
-def preprocessamento(caminho: str, proporcao_treino: float = 0.6, proporcao_teste: float = 0.2, proporcao_validacao: float = 0.2, autoencoder: bool = True, data_algumentantation = True):
+def preprocessamento(caminho: str, proporcao_treino: float = 0.6, proporcao_teste: float = 0.2, proporcao_validacao: float = 0.2, autoencoder: bool = True, data_algumentantation = True, input_shape:int=(64,64)):
     """
     Ao passar um dataFrame .csv, ele irá retornar geradores de dados para treino, teste e validação + os 3 .csv dividos igualmente os geradores.
     
@@ -62,7 +60,6 @@ def preprocessamento(caminho: str, proporcao_treino: float = 0.6, proporcao_test
     treino, teste = train_test_split(dataframe, test_size=proporcao_teste, random_state=42)
     treino, validacao = train_test_split(treino, test_size=proporcao_validacao / (1 - proporcao_teste), random_state=42)
 
-    img_width, img_height = 64, 64
     batch_size = 32
 
     treino_datagen = ImageDataGenerator(preprocessing_function=albumentations if data_algumentantation else normalize_image)
@@ -80,7 +77,7 @@ def preprocessamento(caminho: str, proporcao_treino: float = 0.6, proporcao_test
         dataframe=treino,
         x_col='caminho_imagem',
         y_col=y_col, #Usar a imagem como saída se for autoencoder
-        target_size=(img_width, img_height),
+        target_size=(input_shape),
         batch_size=batch_size,
         class_mode=class_mode,  #Class mode baseado no parâmetro autoencoder
         shuffle=False
@@ -90,7 +87,7 @@ def preprocessamento(caminho: str, proporcao_treino: float = 0.6, proporcao_test
         dataframe=validacao,
         x_col='caminho_imagem',
         y_col=y_col,  
-        target_size=(img_width, img_height),
+        target_size=(input_shape),
         batch_size=batch_size,
         class_mode=class_mode, 
         shuffle=False
@@ -100,7 +97,7 @@ def preprocessamento(caminho: str, proporcao_treino: float = 0.6, proporcao_test
         dataframe=teste,
         x_col='caminho_imagem',
         y_col='classe',  
-        target_size=(img_width, img_height),
+        target_size=(input_shape),
         batch_size=batch_size,
         class_mode=class_mode, 
         shuffle=False
