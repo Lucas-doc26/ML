@@ -88,7 +88,7 @@ class Gerador:
     Dados de entrada: input_shape=(64, 64, 3), min_layers=2, max_layers=6\n
     Caso queira aumentar as camadas, deve aumentar o tamanho do input
     """
-    def __init__(self, input_shape=(64, 64, 3), min_layers=2, max_layers=8):
+    def __init__(self, input_shape=(64, 64, 3), min_layers=2, max_layers=6, nomeModelo:str=None):
         self.input_shape = input_shape
         self.min_layers = min_layers
         self.max_layers = max_layers
@@ -98,7 +98,15 @@ class Gerador:
         self.treino = None
         self.validacao = None
         self.teste = None
+        self.nomeModelo = nomeModelo
 
+    def setNome(self, nome):
+        self.nomeModelo = nome
+
+    def getPesos(self):
+        dir = f"weights_finais/Autoencoders_Gerados/{self.nomeModelo}.weights.h5"
+        return str(dir)
+    
     def calcular_camadas(self):
         num_layers = np.random.randint(self.min_layers, self.max_layers + 1)
         
@@ -109,20 +117,18 @@ class Gerador:
         
         # Encoder
         for i in range(num_layers):
-            filters = np.random.randint(16, 512)
+            filters = np.random.randint(16, 256)
             encoder_layers.append(Conv2D(filters, (3, 3), activation='relu', padding='same'))
             encoder_layers.append(MaxPooling2D((2, 2), padding='same'))
             shape_atual = (shape_atual[0] // 2, shape_atual[1] // 2, filters) #att por conta da divisão do maxpool
-        encoder_layers.append(Flatten())
-        
-
-        print(f"Current shape after encoder: {shape_atual}")  # Debugging
         latent_dim = np.prod(shape_atual)
-        print(f"Latent dimension: {latent_dim}")
+        encoder_layers.append(Flatten())
 
         # Decoder
-        decoder_layers.append(Dense(latent_dim, activation='relu'))
-        decoder_layers.append(Reshape(shape_atual))
+        decoder_layers = [
+            Dense(np.prod(shape_atual), activation='relu'),
+            Reshape(shape_atual)
+        ]
         
         for i in range(num_layers):
             filters = np.random.randint(16, 512)
@@ -153,6 +159,10 @@ class Gerador:
         encoded = self.encoder(inputs)
         decoded = self.decoder(encoded)
         self.autoencoder = Model(inputs, decoded, name='autoencoder')
+
+        print(f"Encoder output shape: {self.encoder.output_shape}")
+        print(f"Decoder input shape: {self.decoder.input_shape}")
+        print(f"Decoder output shape: {self.decoder.output_shape}")
         
         return self.autoencoder
 
@@ -168,10 +178,7 @@ class Gerador:
         history = self.autoencoder.fit(self.treino, epochs=epocas, batch_size=batch_size, validation_data=(self.validacao))
         pd.DataFrame(history.history).plot()
 
-        if salvar == True:
-            data = datetime.now()
-            nome = f"Autoencoder_Modelo_salvo_em__{data.day}_{data.month}_{data.year}_{data.hour}_{data.minute}"
-
+        if salvar == True and self.nomeModelo !=None:
             save_dir_models = "Modelos_keras/Autoencoders_Gerados"
             save_dir_weights = "weights_finais/Autoencoders_Gerados"
 
@@ -181,11 +188,20 @@ class Gerador:
             if not os.path.exists(save_dir_weights):
                 os.makedirs(save_dir_weights)
 
-            self.autoencoder.save(f"{save_dir_models}/{nome}.keras")
-            self.autoencoder.save_weights(f"{save_dir_weights}/{nome}.weights.h5")
+            self.autoencoder.save(f"{save_dir_models}/{self.nomeModelo}.keras")
+            self.autoencoder.save_weights(f"{save_dir_weights}/{self.nomeModelo}.weights.h5")
 
         x, y = next(self.treino)
-        plot_autoencoder(x, self.autoencoder)
+        plot_autoencoder(x, self.autoencoder, self.input_shape[0], self.input_shape[1])
+
+    def carrega_modelo(self, modelo:str, pesos:str):
+        self.autoencoder = tf.keras.models.load_model(modelo)
+        self.autoencoder.load_weights(pesos)
+
+        self.decoder = self.autoencoder.get_layer('decoder')
+        self.encoder = self.autoencoder.get_layer('encoder')
+
+        return self.autoencoder, self.encoder, self.decoder
 
 #Exemplo de uso:
 #gerador = Gerador(min_layers=2, max_layers=6) -> deve ser proporcional ao input_shape
@@ -196,7 +212,7 @@ class Gerador:
 #gerador.treinar_autoencoder(epocas=30, salvar=True) -> treina o autoencoder, plota já a reconstrução 
 
 class GeradorClassificador:
-    def __init__(self, encoder, pesos):
+    def __init__(self, encoder, pesos, nomeModelo:str=None):
         self.encoder = encoder
         self.model = self.modelo(self.encoder)
         self.compila()
@@ -204,6 +220,7 @@ class GeradorClassificador:
         self.treino = None
         self.validacao = None
         self.teste = None
+        self.nomeModelo = nomeModelo
 
     def modelo(self, encoder):
         for layer in self.encoder.layers:
@@ -229,9 +246,23 @@ class GeradorClassificador:
         except Exception as e:
             print(f"Erro ao carregar os pesos: {e}")
 
-    def treinamento(self, epocas=10):
-        history = self.model.fit(self.treino, epochs=epocas, batch_size=32 ,validation_data=self.validacao)
+    def treinamento(self, salvar=False, epocas=10, batch_size=32):
+        history = self.model.fit(self.treino, epochs=epocas, batch_size=batch_size ,validation_data=self.validacao)
         pd.DataFrame(history.history).plot()
+
+        if salvar == True and self.nome !=None:
+            save_dir_models = "Modelos_keras/Autoencoders_Gerados"
+            save_dir_weights = "weights_finais/Autoencoders_Gerados"
+
+            if not os.path.exists(save_dir_models):
+                os.makedirs(save_dir_models)
+
+            if not os.path.exists(save_dir_weights):
+                os.makedirs(save_dir_weights)
+
+            self.autoencoder.save(f"{save_dir_models}/Classificador-{self.nome}.keras")
+            self.autoencoder.save_weights(f"{save_dir_weights}/Classificador-{self.nome}.weights.h5")
+
 
     def Dataset(self, treino, validacao, teste):
         self.treino = treino
@@ -244,7 +275,17 @@ class GeradorClassificador:
 
         y_verdadeiro = mapear_rotulos_binarios(teste_csv['classe'])
 
-        plot_confusion_matrix(y_verdadeiro, predicoes, ['Empty', 'Occupied'], 'PUC')
+        plot_confusion_matrix(y_verdadeiro, predicoes, ['Empty', 'Occupied'], f'{self.nomeModelo}')
+
+        return predicoes
+
+    def predicao_diferente_dataset(self, teste, teste_csv):
+        predicoes = self.model.predict(teste)
+        predicoes = np.argmax(predicoes, axis=1)
+
+        return predicoes
+
+
 
 #Exemplo de uso:
 #classificador = GeradorClassificador(encoder=encoder, pesos="pesos.weights.h5") -> crio o classificador encima do encodere seus pesos

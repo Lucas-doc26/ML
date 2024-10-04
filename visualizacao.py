@@ -8,30 +8,6 @@ import numpy as np
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from Preprocessamento import mapear_rotulos_binarios, carregar_e_preprocessar_imagens
 
-def plot_history(history):
-  """
-  Irá plotar o seu history(modelo treinado), fazendo dois gráficos: \n
-  época X accuracy \n
-  época X loss
-  """
-
-  print(history.history.keys())
-  plt.plot(history.history['accuracy'])
-  plt.plot(history.history['val_accuracy'])
-  plt.title('model accuracy')
-  plt.ylabel('accuracy')
-  plt.xlabel('epoch')
-  plt.legend(['train', 'val'], loc='upper left')
-  plt.show()
-
-  plt.plot(history.history['loss'])
-  plt.plot(history.history['val_loss'])
-  plt.title('model loss')
-  plt.ylabel('loss')
-  plt.xlabel('epoch')
-  plt.legend(['train', 'val'], loc='upper left')
-  plt.show()
-
 def plot_imagens_com_csv(caminho_csv, img_por_coluna):
     """
     Função para plotar imagens de um arquivo .csv contendo os caminhos de imagens.
@@ -173,7 +149,7 @@ def plot_imagens_incorretas(y_binario, y_predicao, caminhos_imagens, modelo_nome
     plt.savefig(save_path_imgs)
     plt.close()
 
-def plot_autoencoder(x_test, Autoencoder):
+def plot_autoencoder(x_test, Autoencoder, width=64, height=64):
     def normalize(image):
         image = np.clip(image, 0, 1)  # Garante que a imagem esteja no intervalo [0, 1]
         return (image - image.min()) / (image.max() - image.min()) if image.max() != image.min() else image
@@ -188,7 +164,7 @@ def plot_autoencoder(x_test, Autoencoder):
         plt.axis("off")
 
         # Predição e normalização
-        pred = Autoencoder.predict(x_test[i].reshape((1, 64, 64, 3)))
+        pred = Autoencoder.predict(x_test[i].reshape((1,width, height,3)))
         pred_img = normalize(pred[0])
 
         plt.subplot(2, 8, i + 8 + 1)
