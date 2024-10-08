@@ -253,7 +253,7 @@ class GeradorClassificador:
         history = self.model.fit(self.treino, epochs=epocas, batch_size=batch_size ,validation_data=self.validacao)
         pd.DataFrame(history.history).plot()
 
-        if salvar == True and self.nome !=None:
+        if salvar == True and self.nomeModelo !=None:
             save_dir_models = "Modelos_keras/Classificador_Gerados"
             save_dir_weights = "weights_finais/Classificador_Gerados"
 
@@ -263,8 +263,8 @@ class GeradorClassificador:
             if not os.path.exists(save_dir_weights):
                 os.makedirs(save_dir_weights)
 
-            self.autoencoder.save(f"{save_dir_models}/Classificador-{self.nome}.keras")
-            self.autoencoder.save_weights(f"{save_dir_weights}/Classificador-{self.nome}.weights.h5")
+            self.model.save(f"{save_dir_models}/Classificador-{self.nomeModelo}.keras")
+            self.model.save_weights(f"{save_dir_weights}/Classificador-{self.nomeModelo}.weights.h5")
 
 
     def Dataset(self, treino, validacao, teste):
