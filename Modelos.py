@@ -214,13 +214,13 @@ class Gerador:
 class GeradorClassificador:
     def __init__(self, encoder, pesos, nomeModelo:str=None):
         self.encoder = encoder
+        self.nomeModelo = nomeModelo
         self.model = self.modelo(self.encoder)
         self.compila()
         self.carrega_pesos(pesos)
         self.treino = None
         self.validacao = None
         self.teste = None
-        self.nomeModelo = nomeModelo
 
     def modelo(self, encoder):
         for layer in self.encoder.layers:
@@ -232,9 +232,12 @@ class GeradorClassificador:
                 keras.layers.Dropout(0.3),  
                 keras.layers.Dense(128, activation='relu'),  
                 keras.layers.Dense(2, activation='softmax')  
-            ], name='classificador')
+            ], name=f'classificador{self.nomeModelo}')
         
         return classificador
+    
+    def setNome(self, nome):
+        self.nomeModelo = nome
     
     def compila(self):
         self.model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
@@ -251,8 +254,8 @@ class GeradorClassificador:
         pd.DataFrame(history.history).plot()
 
         if salvar == True and self.nome !=None:
-            save_dir_models = "Modelos_keras/Autoencoders_Gerados"
-            save_dir_weights = "weights_finais/Autoencoders_Gerados"
+            save_dir_models = "Modelos_keras/Classificador_Gerados"
+            save_dir_weights = "weights_finais/Classificador_Gerados"
 
             if not os.path.exists(save_dir_models):
                 os.makedirs(save_dir_models)
@@ -278,6 +281,12 @@ class GeradorClassificador:
         plot_confusion_matrix(y_verdadeiro, predicoes, ['Empty', 'Occupied'], f'{self.nomeModelo}')
 
         return predicoes
+    
+    def carrega_modelo(self, modelo:str, pesos:str):
+        self.model = tf.keras.models.load_model(modelo)
+        self.model.load_weights(pesos)
+
+        return self.model
 
     def predicao_diferente_dataset(self, teste, teste_csv):
         predicoes = self.model.predict(teste)
