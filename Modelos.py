@@ -7,6 +7,8 @@ from keras.layers import Input, Flatten, Dense, Reshape, Conv2D, MaxPooling2D, U
 from keras.models import Sequential, Model
 from datetime import datetime
 
+from sklearn.base import BaseEstimator, ClassifierMixin
+
 from visualizacao import *
 
 
@@ -108,16 +110,18 @@ class Gerador:
         return str(dir)
     
     def calcular_camadas(self):
-        num_layers = np.random.randint(self.min_layers, self.max_layers + 1)
+        num_layers = np.random.randint(self.min_layers, self.max_layers + 1)#+1 por conta do randint ser somente de (min - max-1)
         
         encoder_layers = []
         decoder_layers = []
         
         shape_atual = self.input_shape
+        filter_sizes = [] 
         
         # Encoder
         for i in range(num_layers):
             filters = np.random.randint(16, 256)
+            filter_sizes.append(filters)
             encoder_layers.append(Conv2D(filters, (3, 3), activation='relu', padding='same'))
             encoder_layers.append(MaxPooling2D((2, 2), padding='same'))
             shape_atual = (shape_atual[0] // 2, shape_atual[1] // 2, filters) #att por conta da divisão do maxpool
@@ -126,12 +130,12 @@ class Gerador:
 
         # Decoder
         decoder_layers = [
-            Dense(np.prod(shape_atual), activation='relu'),
+            Dense(np.prod(shape_atual), activation='relu'), #calcula o vetor latente 
             Reshape(shape_atual)
         ]
         
         for i in range(num_layers):
-            filters = np.random.randint(16, 512)
+            filters = filter_sizes[-(i+1)]
             decoder_layers.append(Conv2D(filters, (3, 3), activation='relu', padding='same'))
             decoder_layers.append(UpSampling2D((2, 2))) #maxpool ao contrário, aumenta a resolução 
         decoder_layers.append(Conv2D(self.input_shape[2], (3, 3), activation='sigmoid', padding='same'))
@@ -159,10 +163,6 @@ class Gerador:
         encoded = self.encoder(inputs)
         decoded = self.decoder(encoded)
         self.autoencoder = Model(inputs, decoded, name='autoencoder')
-
-        print(f"Encoder output shape: {self.encoder.output_shape}")
-        print(f"Decoder input shape: {self.decoder.input_shape}")
-        print(f"Decoder output shape: {self.decoder.output_shape}")
         
         return self.autoencoder
 
@@ -294,10 +294,106 @@ class GeradorClassificador:
 
         return predicoes
 
-
-
 #Exemplo de uso:
 #classificador = GeradorClassificador(encoder=encoder, pesos="pesos.weights.h5") -> crio o classificador encima do encodere seus pesos
 #classificador.Dataset(treino, validacao, teste)
 #classificador.treinamento()
 #classificador.predicao(teste_df) -> cria a matriz de confusão
+
+
+#testes:
+"""class GeradorClassificador(BaseEstimator, ClassifierMixin):
+
+    def __init__(self, encoder, pesos=None, nomeModelo:str=None):
+        self.encoder = encoder
+        self.nomeModelo = nomeModelo
+        self.model = self.modelo(self.encoder)
+        self.compila()
+        self.pesos = pesos
+        self.treino = None
+        self.validacao = None
+        self.teste = None
+
+        if self.pesos is not None:
+            self.carrega_pesos(self.pesos)
+
+    def modelo(self, encoder):
+        for layer in self.encoder.layers:
+            layer.trainable = False
+
+        classificador = keras.models.Sequential([
+                self.encoder, 
+                keras.layers.Flatten(),  
+                keras.layers.Dropout(0.3),  
+                keras.layers.Dense(128, activation='relu'),  
+                keras.layers.Dense(2, activation='softmax')  
+            ], name=f'classificador{self.nomeModelo}')
+        
+        return classificador
+    
+    def setNome(self, nome):
+        self.nomeModelo = nome
+    
+    def compila(self):
+        self.model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+
+    def carrega_pesos(self, peso):
+        try:
+            self.model.load_weights(peso, skip_mismatch=True)
+            print("Pesos carregados com sucesso")
+        except Exception as e:
+            print(f"Erro ao carregar os pesos: {e}")
+
+    def fit(self, train_generator, validation_generator, epochs=10, verbose=1, salvar=False):
+        history = self.model.fit(train_generator, 
+                       epochs=epochs, 
+                       validation_data=validation_generator, 
+                       verbose=verbose)
+        
+        pd.DataFrame(history.history).plot()
+
+        if salvar == True and self.nomeModelo !=None:
+            save_dir_models = "Modelos_keras/Classificador_Gerados"
+            save_dir_weights = "weights_finais/Classificador_Gerados"
+
+            if not os.path.exists(save_dir_models):
+                os.makedirs(save_dir_models)
+
+            if not os.path.exists(save_dir_weights):
+                os.makedirs(save_dir_weights)
+
+            self.model.save(f"{save_dir_models}/Classificador-{self.nomeModelo}.keras")
+            self.model.save_weights(f"{save_dir_weights}/Classificador-{self.nomeModelo}.weights.h5")
+
+        return self
+
+    def predict(self, X):
+        predicoes = self.model.predict(X)
+        return np.argmax(predicoes, axis=1)
+
+    def score(self, X, y):
+        return self.model.evaluate(X, y, verbose=0)[1] 
+
+
+    def Dataset(self, treino, validacao, teste):
+        self.treino = treino
+        self.validacao = validacao
+        self.teste = teste
+
+    def predicao(self, teste_csv):
+        predicoes = self.model.predict(self.teste)
+        predicoes = np.argmax(predicoes, axis=1)
+
+        y_verdadeiro = mapear_rotulos_binarios(teste_csv['classe'])
+
+        plot_confusion_matrix(y_verdadeiro, predicoes, ['Empty', 'Occupied'], f'{self.nomeModelo}')
+
+        return predicoes
+    
+    def carrega_modelo(self, modelo:str, pesos:str):
+        self.model = tf.keras.models.load_model(modelo)
+        self.model.load_weights(pesos)
+
+        return self.model
+
+"""
