@@ -110,7 +110,7 @@ def preprocessamento(caminho: str, proporcao_treino: float = 0.6, proporcao_test
 transform = A.Compose([
             A.RandomRain(
                 drop_length=8, drop_width=1,
-                drop_color=(180, 180, 180),  blur_value=5,brightness_coefficient=0.8, p=1
+                drop_color=(180, 180, 180),  blur_value=5,brightness_coefficient=0.8, p=0.15
             ),
             A.GaussNoise(var_limit=(0.0, 0.0007), mean=0, p=0.15),
             A.ChannelShuffle(p=0.15),

@@ -17,6 +17,8 @@ def segmentando_datasets(quantidade_PUC: Optional[int] = None, quantidade_UFPR04
     }
 
     tempos = ['Cloudy', 'Rainy', 'Sunny']
+
+
     
     dataframes = [] 
 
@@ -89,3 +91,22 @@ def segmentando_datasets(quantidade_PUC: Optional[int] = None, quantidade_UFPR04
 
 # Exemplo de uso: 
 # segmentando_datasets(1000, 1000, 1000)
+
+def segmentando(quantidade, dias, faculdade):
+    """
+    Função para criar os datasets csv com uma divisão igual entre as classes 'Empty' e 'Occupied'.
+    Retorna uma tupla com os datasets separados em ordem PUC, UFPR04, UFPR05.
+    """
+    tempos = ['Cloudy', 'Rainy', 'Sunny']
+    dias = []
+
+    caminho = r"/home/lucas/Downloads/PKLot/PKLotSegmented/"
+    pastas = [nome for nome in os.listdir(caminho) if os.path.isdir(os.path.join(caminho, nome))]
+
+
+    dataframes = [] 
+
+    return tuple(dataframes)  # Retornar a tupla dos DataFrames
+
+
+    

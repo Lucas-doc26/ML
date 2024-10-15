@@ -69,7 +69,7 @@ def plot_imagens_dataframe_gerador(dataframe_gerador, img_por_coluna=3):
     plt.tight_layout()
     plt.show()
 
-def plot_confusion_matrix(y_true, y_pred, labels, title,  save_path=None):
+def plot_confusion_matrix(y_true, y_pred, labels=['Empty', 'Occupied'], title=None,  save_path=None):
     """
     Plota uma matriz de confusão.
 
@@ -81,7 +81,7 @@ def plot_confusion_matrix(y_true, y_pred, labels, title,  save_path=None):
     cm = confusion_matrix(y_true, y_pred)
     plt.figure(figsize=(10, 7))
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=labels, yticklabels=labels)
-    plt.title(title)
+    plt.title('' if title == None else title)
     plt.xlabel('Predicted')
     plt.ylabel('True')
     if save_path != None:
