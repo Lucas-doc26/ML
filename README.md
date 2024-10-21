@@ -86,8 +86,8 @@ Composto por imagens coletadas de novembro de 2015 a fevereiro de 2016 sob diver
 <table>
   <tr>
     <td align="center">
-      <a href="#">
-        <img src="https://avatars.githubusercontent.com/u/89359426?v=4" width="100px;" alt="Fernanda Kipper Profile Picture"/><br>
+      <a href="https://www.linkedin.com/in/lucasdoc/">
+        <img src="https://avatars.githubusercontent.com/u/89359426?v=4" width="100px;" alt="Lucas Cunha"/><br>
         <sub>
           <b>Lucas Cunha</b>
         </sub>

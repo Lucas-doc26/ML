@@ -158,3 +158,12 @@ Modelos_keras/Autoencoders_Gerados/
 
 # PKLot (imagens)
 PKLot/
+
+# CNR 
+CNR-EXT-Patches-150x150/ 
+CNR-EXT-Patches-150x150.zip
+
+# Qualquer zip ou tar 
+.zip
+.tar 
+.gz

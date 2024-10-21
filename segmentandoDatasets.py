@@ -18,8 +18,6 @@ def segmentando_datasets(quantidade_PUC: Optional[int] = None, quantidade_UFPR04
 
     tempos = ['Cloudy', 'Rainy', 'Sunny']
 
-
-    
     dataframes = [] 
 
     for local in faculdades:
