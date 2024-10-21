@@ -35,21 +35,7 @@
 Programa Institucional de Bolsas de Iniciação Científica (PIBIC), desenvolvendo uma pesquisa intitulada: **"Adaptação de Domínio em Modelos Profundos de Classificação Aplicados à Detecção de Vagas de Estacionamento"**, com apoio da CNPq (Conselho Nacional de Desenvolvimento Científico e Tecnológico).
 
 
-
-![Estado do projeto!](https://img.shields.io/badge/Estado:-Em%20produção-1abc9c.svg)
-
-<h3>Como executar o código:</h3>
-
-```bash
-git clone https://github.com/Lucas-doc26/ML
-git checkout -b PIBIC
-```
-
-<h3>📝 Documentação</h3>
-
-[📝](https:)
-
-[💾](https://)
+![Estado do projeto!](https://img.shields.io/badge/Estado:-Em%20produção-FFFF00.svg)
 
 <h2 id="Objetivos">🚀Objetivos do Projeto</h2>
 
