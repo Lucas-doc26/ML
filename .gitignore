@@ -176,3 +176,26 @@ weights_finais/Autoencoders_Geradosweights_finais/Autoencoders_Gerados/
 Modelos_keras/Autoencoders_Gerados/
 
 .pyc
+
+#Bases 
+PKLot/ 
+CNR-EXT-Patches-150x150/ 
+
+
+#Csv
+.csv
+
+
+.idea/
+.venv/
+.vscode/
+__pycache__/
+
+
+#Modelos e pesos 
+weights_parciais/
+.h5 
+.keras
+
+
+.pyc

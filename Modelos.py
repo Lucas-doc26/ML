@@ -5,6 +5,7 @@ import pandas as pd
 
 from keras.layers import Input, Flatten, Dense, Reshape, Conv2D, MaxPooling2D, UpSampling2D
 from keras.models import Sequential, Model
+from keras.callbacks import ModelCheckpoint
 from datetime import datetime
 
 from sklearn.base import BaseEstimator, ClassifierMixin
@@ -142,7 +143,7 @@ class Gerador:
         
         return encoder_layers, decoder_layers, latent_dim
 
-    def construir_modelo(self):
+    def construir_modelo(self, salvar=False):
         encoder_layers, decoder_layers, latent_dim = self.calcular_camadas()
         
         # Construir encoder
@@ -162,8 +163,13 @@ class Gerador:
         # Construir autoencoder
         encoded = self.encoder(inputs)
         decoded = self.decoder(encoded)
-        self.autoencoder = Model(inputs, decoded, name='autoencoder')
-        
+        self.autoencoder = Model(inputs, decoded, name=f'autoencoder {self.nome}')
+
+
+        if salvar == True:
+            save_dir_models = "Modelos_keras/Autoencoders_Gerados"
+            self.autoencoder.save(f"{save_dir_models}/{self.nomeModelo}.keras")
+
         return self.autoencoder
 
     def compilar_modelo(self, optimizer='adam', loss='mse'):
@@ -175,7 +181,16 @@ class Gerador:
         self.teste = teste
 
     def treinar_autoencoder(self, salvar=False, epocas=10, batch_size=16):
-        history = self.autoencoder.fit(self.treino, epochs=epocas, batch_size=batch_size, validation_data=(self.validacao))
+
+        checkpoint_path = 'weights_parciais/weights-improvement-{epoch:02d}-{val_loss:.2f}.weights.h5'
+        cp_callback = ModelCheckpoint(filepath=checkpoint_path, 
+                                        save_weights_only=True, 
+                                        monitor='val_loss', 
+                                        mode='max', 
+                                        save_best_only=True, 
+                                        verbose=1)
+
+        history = self.autoencoder.fit(self.treino, epochs=epocas,callbacks=[cp_callback],batch_size=batch_size, validation_data=(self.validacao))
         pd.DataFrame(history.history).plot()
 
         if salvar == True and self.nomeModelo !=None:
@@ -194,12 +209,15 @@ class Gerador:
         x, y = next(self.treino)
         plot_autoencoder(x, self.autoencoder, self.input_shape[0], self.input_shape[1])
 
-    def carrega_modelo(self, modelo:str, pesos:str):
+    def carrega_modelo(self, modelo:str, pesos:str=None):
         self.autoencoder = tf.keras.models.load_model(modelo)
-        self.autoencoder.load_weights(pesos)
+        if pesos !=None:  
+            self.autoencoder.load_weights(pesos)
 
         self.decoder = self.autoencoder.get_layer('decoder')
         self.encoder = self.autoencoder.get_layer('encoder')
+
+        self.autoencoder.summary()
 
         return self.autoencoder, self.encoder, self.decoder
 
