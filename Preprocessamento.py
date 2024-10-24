@@ -38,6 +38,7 @@ def preprocessamento_dataframe(caminho_csv: str, autoencoder: bool = False, data
 
     return Gerador, dataframe
 
+#Preprocessamento que estava usando para separar em treino, val, teste 
 def preprocessamento(caminho: str, proporcao_treino: float = 0.6, proporcao_teste: float = 0.2, proporcao_validacao: float = 0.2, autoencoder: bool = True, data_algumentantation = True, input_shape:int=(64,64)):
     """
     Ao passar um dataFrame .csv, ele irá retornar geradores de dados para treino, teste e validação + os 3 .csv dividos igualmente os geradores.
