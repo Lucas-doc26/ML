@@ -24,7 +24,8 @@ def preprocessamento_dataframe(caminho_csv: str, autoencoder: bool = False, data
         
     datagen = ImageDataGenerator(preprocessing_function=albumentations if data_algumentantation else normalize_image)
 
-    class_mode = 'input' if autoencoder else 'binary'
+    dataframe['classe'] = dataframe['classe'].astype(str)
+    class_mode = 'input' if autoencoder else 'sparse'
 
     Gerador = datagen.flow_from_dataframe(
         dataframe=dataframe,
