@@ -6,6 +6,7 @@ import urllib.request
 import tarfile
 from pathlib import PurePath
 from typing import Tuple, Optional
+import os
 
 #Função antiga - Sem balanceamento
 def segmentando_datasets(quantidade_PUC: Optional[int] = None, quantidade_UFPR04: Optional[int] = None, quantidade_UFPR05: Optional[int] = None) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
@@ -95,12 +96,18 @@ def segmentando_datasets(quantidade_PUC: Optional[int] = None, quantidade_UFPR04
     return tuple(dataframes)  # Retornar a tupla dos DataFrames
 
 #Função de segmentar o PKLot Balanceado
-def segmentacaoPklot(imagens_treino:int=1000, dias_treino:int=5, imagens_validacao:int=300, dias_validaco:int=2, imagens_teste:int=2000, dias_teste=3):
+def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_validacao:int=300, dias_validaco:int=2, imagens_teste:int=2000, dias_teste=3, faculdades = ['PUC', 'UFPR04', 'UFPR05'] ):
     """
     A soma máxima do número de dias, deve ser igual a 8 caso queira dias distintos entre treino/validacao/teste
     """
+
+    if len(faculdades) == 1:
+        nome_faculdade = faculdades[0]
+    else:
+        nome_faculdade = "PKLot"
+
+
     data_dir = 'PKLot'
-    faculdades = ['PUC', 'UFPR04', 'UFPR05']
     tempos = ['Cloudy', 'Rainy', 'Sunny']
     classes = ['Empty', 'Occupied']
     path_base = 'PKLot/PKLotSegmented'
@@ -136,7 +143,11 @@ def segmentacaoPklot(imagens_treino:int=1000, dias_treino:int=5, imagens_validac
             dfs.append(df)
 
         df_final = pd.concat(dfs, axis=0, ignore_index=True)
-        df_final.to_csv("PKLot.csv", index=False)
+
+        if not os.path.isdir("CSV"):
+            os.makedirs("CSV")
+
+        df_final.to_csv(f"CSV/{nome_faculdade}.csv", index=False)
 
     def contagem_imagens():
         dic = {}
@@ -220,7 +231,7 @@ def segmentacaoPklot(imagens_treino:int=1000, dias_treino:int=5, imagens_validac
         return valores
     
     def criar_csv(n_dias, valores, nome:str=''):
-        df = pd.read_csv('PKLot.csv')
+        df = pd.read_csv(f'CSV/{nome_faculdade}.csv')
         data = []
         df_final = pd.DataFrame()
 
@@ -268,7 +279,9 @@ def segmentacaoPklot(imagens_treino:int=1000, dias_treino:int=5, imagens_validac
 
         df_final = pd.concat(data, ignore_index=True)
 
-        df_final.to_csv(f'PKLot_Segmentado{nome}.csv', index=False)
+        df_final['classe'] = df_final['classe'].replace({'Empty': 1, 'Occupied': 0})
+
+        df_final.to_csv(f'CSV/{nome_faculdade}_Segmentado_{nome}.csv', index=False)
 
     if os.path.isdir(data_dir):
         print("Começando Segmentação do PKLot")
@@ -293,10 +306,14 @@ def segmentacaoPklot(imagens_treino:int=1000, dias_treino:int=5, imagens_validac
     criar_csv(n_dias=dias_treino, valores=imagens_distribuidas(imagens_treino), nome='Treino')
     criar_csv(n_dias=dias_validaco, valores=imagens_distribuidas(imagens_validacao), nome='Validacao')
     criar_csv(n_dias=dias_teste, valores=imagens_distribuidas(imagens_teste), nome ='Teste')
-#Exemplo de uso:
-#segmentacaoPklot(imagens_treino=1000, dias_treino=5, imagens_validacao=300, dias_validaco=1, imagens_teste=1000, dias_teste=2)
 
-def segmentacaoCNR(imagens_treino:int=1000, dias_treino:int=5, imagens_validacao:int=300, dias_validaco:int=2, imagens_teste:int=2000, dias_teste:int=3):
+#Exemplo de uso:
+#segmentacao_Pklot(imagens_treino=1000, dias_treino=5, imagens_validacao=300, dias_validaco=1, imagens_teste=1000, dias_teste=2, faculdades=["PUC"])
+#segmentacao_Pklot(imagens_treino=1000, dias_treino=5, imagens_validacao=300, dias_validaco=1, imagens_teste=1000, dias_teste=2, faculdades=["UFPR05"])
+#segmentacao_Pklot(imagens_treino=1000, dias_treino=5, imagens_validacao=300, dias_validaco=1, imagens_teste=1000, dias_teste=2, faculdades=["UFPR04"])
+#segmentacao_Pklot(imagens_treino=1000, dias_treino=5, imagens_validacao=300, dias_validaco=1, imagens_teste=1000, dias_teste=2)
+
+def segmentacao_CNR(imagens_treino:int=1000, dias_treino:int=5, imagens_validacao:int=300, dias_validaco:int=2, imagens_teste:int=2000, dias_teste:int=3):
     path_labels = 'CNR-EXT-Patches-150x150/LABELS/all.txt'
     path_imgs = 'CNR-EXT-Patches-150x150/PATCHES'
     tempos = ['OVERCAST','RAINY', 'SUNNY']
@@ -313,7 +330,8 @@ def segmentacaoCNR(imagens_treino:int=1000, dias_treino:int=5, imagens_validacao
 
                 if len(partes) == 2:
                     caminho_imagem = partes[0]
-                    caminhos_imagens.append(caminho_imagem)
+                    caminho_imagem_completo = 'CNR-EXT-Patches-150x150/PATCHES/' + caminho_imagem
+                    caminhos_imagens.append(caminho_imagem_completo)
                     classe = partes[1]
                     if classe == '0':
                         classe = 'Empty'
@@ -326,7 +344,10 @@ def segmentacaoCNR(imagens_treino:int=1000, dias_treino:int=5, imagens_validacao
             'classe': classes
         })
 
-        df.to_csv("CNR.csv", index=False)
+        if not os.path.isdir("CSV"):
+            os.makedirs("CSV")
+
+        df.to_csv("CSV/CNR.csv", index=False)
 
     def imagens_distribuidas_cnr(n_imgs):
         n_tempos = len(tempos)
@@ -393,8 +414,9 @@ def segmentacaoCNR(imagens_treino:int=1000, dias_treino:int=5, imagens_validacao
 
     def criar_csv_cnr(n_dias, valores, nome: str = ''):
         print(nome)
-        df = pd.read_csv('CNR.csv')
-        data = [] 
+        df = pd.read_csv('CSV/CNR.csv')
+        data = []
+        df_final = pd.DataFrame()
 
         for tempo in tempos:
             df_tempo = df[df['caminho_imagem'].str.contains(tempo)]
@@ -409,37 +431,90 @@ def segmentacaoCNR(imagens_treino:int=1000, dias_treino:int=5, imagens_validacao
             else:
                 dias_selecionados = dias_dir[-n_dias:]
 
-            for camera in cameras:
+            for i, camera in enumerate(cameras):
                 df_camera = df_tempo[df_tempo['caminho_imagem'].str.contains(camera)]
 
                 for classe in classes:
                     df_classe = df_camera[df_camera['classe'].str.contains(classe)]
                     valor = valores[tempo][camera][classe]
-
-                    while valor > 0:
+                    
+                    if len(dias_selecionados) < 2:
+                        dia = dias_selecionados[0]
                         imagens_disponiveis = df_classe.copy()
-                        for dia in dias_selecionados:
+                        while valor > 0 and not imagens_disponiveis.empty:
                             df_dia = imagens_disponiveis[imagens_disponiveis['caminho_imagem'].str.contains(dia)]
-
+                            
                             if not df_dia.empty:
                                 imagem_selecionada = df_dia.sample(1)
                                 data.append(imagem_selecionada)
                                 valor -= 1
 
                                 imagens_disponiveis = imagens_disponiveis.drop(imagem_selecionada.index)
+                            else:
+                                if valor > 0:
+                                    # Transfere o valor restante para a próxima câmera, se houver
+                                    if i + 1 < len(cameras):
+                                        valores[tempo][cameras[i + 1]][classe] += valor
+                                    valor = 0 
+                                
+                            if imagens_disponiveis.empty:
+                                break
+
+                    else:
+                        imagens_disponiveis = df_classe.copy()
+                        while valor > 0 and not imagens_disponiveis.empty:
+                            for dia in dias_selecionados:
+                                df_dia = imagens_disponiveis[imagens_disponiveis['caminho_imagem'].str.contains(dia)]
+
+                                if not df_dia.empty:
+                                    imagem_selecionada = df_dia.sample(1)
+                                    data.append(imagem_selecionada)
+                                    valor -= 1
+
+                                    imagens_disponiveis = imagens_disponiveis.drop(imagem_selecionada.index)
+
+                                if valor == 0 or imagens_disponiveis.empty:
+                                    break
 
                             if imagens_disponiveis.empty:
                                 break
 
-                        if imagens_disponiveis.empty:
-                            break
+            df_final = pd.concat(data, ignore_index=True)
 
-        # Concatena todos os DataFrames de uma vez só no final
-        df_final = pd.concat(data, ignore_index=True)
-        df_final.to_csv(f'CNR_Segmentado{nome}.csv', index=False)
+        df_final.to_csv(f'CSV/CNR_Segmentado_{nome}.csv', index=False)
+
+    cria_CNR()
 
     criar_csv_cnr(n_dias=dias_treino, valores=imagens_distribuidas_cnr(imagens_treino), nome='Treino')
     criar_csv_cnr(n_dias=dias_validaco, valores=imagens_distribuidas_cnr(imagens_validacao), nome='Validacao')
     criar_csv_cnr(n_dias=dias_teste, valores=imagens_distribuidas_cnr(imagens_teste), nome ='Teste')
+    
+#Exemplo de uso:
+#segmentacao_CNR(imagens_treino=1000, dias_treino=5, imagens_validacao=300, dias_validaco=1, imagens_teste=1000, dias_teste=2)
 
-segmentacaoCNR(imagens_treino=20, dias_treino=5, imagens_validacao=30, dias_validaco=1, imagens_teste=10, dias_teste=2)
+def segmentacao_Kyoto():
+    caminho_imagens = []
+
+    path = 'kyoto'
+    imagens = os.listdir(path)
+
+    for img in imagens:
+        full_path = os.path.join(path, img)
+        caminho_imagens.append(full_path)
+
+    df = pd.DataFrame({
+            'caminho_imagem': sorted(caminho_imagens)
+    })
+
+    print(df)
+
+    df_treino = df['caminho_imagem'][:32]
+    df_validacao = df['caminho_imagem'][32:32+10]
+    df_teste = df['caminho_imagem'][-20:]
+
+    if not os.path.isdir("CSV"):
+            os.makedirs("CSV")
+
+    df_treino.to_csv('CSV/Kyoto_Segmentado_Treino.csv', index=False)
+    df_validacao.to_csv('CSV/Kyoto_Segmentado_Validacao.csv', index=False)
+    df_teste.to_csv('CSV/Kyoto_Segmentado_Teste.csv', index=False)
