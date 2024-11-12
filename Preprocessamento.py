@@ -25,6 +25,9 @@ def preprocessamento_dataframe(caminho_csv: str, autoencoder: bool = False, data
     datagen = ImageDataGenerator(preprocessing_function=albumentations if data_algumentantation else normalize_image)
 
     dataframe['classe'] = dataframe['classe'].astype(str)
+
+    #Embaralho o dataframe aqui e não no shuffle, para garantir o mesmo csv sempre 
+    dataframe = dataframe.sample(frac=1).reset_index(drop=True)
     class_mode = 'input' if autoencoder else 'sparse'
 
     Gerador = datagen.flow_from_dataframe(
@@ -34,7 +37,7 @@ def preprocessamento_dataframe(caminho_csv: str, autoencoder: bool = False, data
         target_size=(input_shape),
         batch_size=batch_size,
         class_mode=class_mode,
-        shuffle=True
+        shuffle=False
     )
 
     return Gerador, dataframe
@@ -167,3 +170,4 @@ def mapear_rotulos_binarios(classes):
     - Empty vira 0
     """
     return np.array([1 if classe == 'Occupied' else 0 for classe in classes])
+
