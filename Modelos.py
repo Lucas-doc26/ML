@@ -223,11 +223,15 @@ class Gerador:
 
         shutil.rmtree('Pesos_parciais')
 
+        caminho_img = None
         if salvar == True and self.nome_modelo != None:
             save_dir = os.path.join("Modelos", self.nome_modelo)
             dir_raiz = os.path.join(save_dir, "Modelo-Base")
             dir_modelo = os.path.join(dir_raiz, "Estrutura")
             dir_pesos = os.path.join(dir_raiz, "Pesos")
+            dir_imagens = os.path.join(dir_raiz, "Plots")
+
+            
 
 
             if os.listdir(dir_modelo) == []:
@@ -238,8 +242,9 @@ class Gerador:
 
             self.autoencoder.save_weights(f"{dir_pesos}/{self.nome_modelo}_Base:{nome_da_base}.weights.h5")
 
+
         x, y = next(self.treino)
-        plot_autoencoder(x, self.autoencoder, self.input_shape[0], self.input_shape[1])
+        plot_autoencoder(x, self.autoencoder, self.input_shape[0], self.input_shape[1],caminho_para_salvar=caminho_img)
 
     def carrega_modelo(self, modelo:str, pesos:str=None):
         self.autoencoder = tf.keras.models.load_model(modelo)
@@ -466,7 +471,7 @@ class GeradorClassificador:
 
         y_verdadeiro = mapear(teste_csv['classe'])
 
-        plot_confusion_matrix(y_verdadeiro, predicoes, ['Empty', 'Occupied'], f'{self.nome_modelo}')
+        plot_confusion_matrix(y_verdadeiro, predicoes, ['Empty', 'Occupied'], title=f'{self.nome_modelo}')
 
         return predicoes
     
@@ -498,9 +503,11 @@ def cria_classificadores(n_modelos=10, nome_modelo=None, base_usada=None, treino
         gerador.carrega_modelo(f'Modelos/{nome_modelo}-{i}/Modelo-Base/Estrutura/{nome_modelo}-{i}.keras')
         encoder = gerador.encoder
 
+
         classificador = GeradorClassificador(encoder=encoder, pesos=f'Modelos/{nome_modelo}-{i}/Modelo-Base/Pesos/{nome_modelo}-{i}_Base:{base_usada}.weights.h5')
         classificador.Dataset(treino, validacao, teste)
         classificador.compila()
+        classificador.setNome(f'{nome_modelo}-{i}')
         classificador.treinamento(epocas=10)
         classificador.predicao(teste_csv)
 

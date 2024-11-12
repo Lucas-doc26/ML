@@ -1,10 +1,11 @@
 import matplotlib.pyplot as plt
 from PIL import Image
 import seaborn as sns
-from sklearn.metrics import confusion_matrix
+from sklearn.metrics import confusion_matrix, accuracy_score
 import pandas as pd
 import os
 import numpy as np
+import math
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from Preprocessamento import mapear_rotulos_binarios, carregar_e_preprocessar_imagens
 
@@ -69,7 +70,7 @@ def plot_imagens_dataframe_gerador(dataframe_gerador, img_por_coluna=3):
     plt.tight_layout()
     plt.show()
 
-def plot_confusion_matrix(y_true, y_pred, labels=['Empty', 'Occupied'], title=None,  save_path=None):
+def plot_confusion_matrix(y_true, y_pred, labels=['Empty', 'Occupied'], title=None, save_path=None):
     """
     Plota uma matriz de confusão.
 
@@ -79,15 +80,26 @@ def plot_confusion_matrix(y_true, y_pred, labels=['Empty', 'Occupied'], title=No
     - labels (list): lista de rótulos das classes.
     """
     cm = confusion_matrix(y_true, y_pred)
+    
+    # Calcular a acurácia
+    accuracy = accuracy_score(y_true, y_pred)
+
+    # Criar o gráfico
     plt.figure(figsize=(10, 7))
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=labels, yticklabels=labels)
-    plt.title('' if title == None else title)
+    
+    # Adicionar título com a acurácia
+    accuracy_text = f"Accuracy: {accuracy * 100:.2f}%"
+    plt.title('' if title is None else f"{title}\n{accuracy_text}")
+    
     plt.xlabel('Predicted')
     plt.ylabel('True')
-    if save_path != None:
+
+    if save_path is not None:
         plt.savefig(save_path)
         plt.close()
-    plt.show()
+    else:
+        plt.show()
 
 def exibir_primeiras_imagens(dataframe):
     # Pegar os caminhos das 9 primeiras imagens
@@ -149,7 +161,7 @@ def plot_imagens_incorretas(y_binario, y_predicao, caminhos_imagens, modelo_nome
     plt.savefig(save_path_imgs)
     plt.close()
 
-def plot_autoencoder(x_test, Autoencoder, width=64, height=64):
+def plot_autoencoder(x_test, Autoencoder, width=64, height=64, caminho_para_salvar=None):
     def normalize(image):
         image = np.clip(image, 0, 1)  # Garante que a imagem esteja no intervalo [0, 1]
         return (image - image.min()) / (image.max() - image.min()) if image.max() != image.min() else image
@@ -172,6 +184,37 @@ def plot_autoencoder(x_test, Autoencoder, width=64, height=64):
         plt.title("Reconstruída")
         plt.axis("off")
 
+    plt.show()
+    if caminho_para_salvar != None:
+        save_path = os.path.join(caminho_para_salvar, 'Autoencoder.png')
+        plt.savefig(save_path_imgs)
+
+def plot_batch(batch, batch_size):
+
+    img_por_coluna = int(math.sqrt(batch_size))
+
+    classes = ['Empty', 'Occupied']
+
+    # Define a figura com subplots
+    fig, axs = plt.subplots(img_por_coluna, img_por_coluna, figsize=(10, 10))
+    
+    imagens, _ = next(batch)  # Obtém as imagens (e os rótulos, que não estamos usando)
+    print(f'Total de imagens no lote: {len(imagens)}')  # Imprime a quantidade de imagens
+
+    for i in range(batch_size):
+        if i >= len(imagens):
+            print(f'Número de imagens no lote é menor que o esperado! Apenas {len(imagens)} imagens foram retornadas.')
+            break
+        
+        image = imagens[i]
+
+        # Normaliza a imagem para o intervalo [0, 1]
+        image = (image - image.min()) / (image.max() - image.min())
+
+        axs[i // img_por_coluna, i % img_por_coluna].imshow(image)
+        axs[i // img_por_coluna, i % img_por_coluna].axis('off')
+
+    plt.tight_layout()
     plt.show()
 
 def avaliar_modelo_em_datasets(modelo, datasets_info):
