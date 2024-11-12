@@ -79,6 +79,9 @@ def criar_diretorio_novo(caminho):
     os.makedirs(caminho)
 
 
+def mapear(classes):
+    return np.array([1 if classe == '1' else 0 for classe in classes])
+
 """------------------Gerador de Autoencoders----------------------"""
 
 class Gerador:
@@ -391,15 +394,15 @@ class GeradorClassificador:
         self.encoder = encoder
         self.nome_modelo = nome_modelo
         self.model = self.modelo(self.encoder)
-        self.compila()
         self.carrega_pesos(pesos)
+        self.compila()
         self.treino = None
         self.validacao = None
         self.teste = None
 
     def modelo(self, encoder):
         for layer in self.encoder.layers:
-            layer.trainable = True
+            layer.trainable = False
 
         classificador = keras.models.Sequential([
                 self.encoder,  
@@ -425,7 +428,16 @@ class GeradorClassificador:
             print(f"Erro ao carregar os pesos: {e}")
 
     def treinamento(self, salvar=False, epocas=10, batch_size=32):
-        history = self.model.fit(self.treino, epochs=epocas, batch_size=batch_size ,validation_data=self.validacao)
+        checkpoint_path = 'Pesos_parciais/weights-improvement-{epoch:02d}-{val_loss:.2f}.weights.h5'
+        cp_callback = ModelCheckpoint(filepath=checkpoint_path, 
+                                        save_weights_only=True, 
+                                        monitor='val_loss', 
+                                        mode='max', 
+                                        save_best_only=True, 
+                                        verbose=1)
+
+
+        history = self.model.fit(self.treino, epochs=epocas, callbacks=[cp_callback], batch_size=batch_size ,validation_data=self.validacao)
         pd.DataFrame(history.history).plot()
 
         """if salvar == True and self.nome_modelo !=None:
@@ -452,7 +464,7 @@ class GeradorClassificador:
 
         print(predicoes)
 
-        y_verdadeiro = mapear_rotulos_binarios(teste_csv['classe'])
+        y_verdadeiro = mapear(teste_csv['classe'])
 
         plot_confusion_matrix(y_verdadeiro, predicoes, ['Empty', 'Occupied'], f'{self.nome_modelo}')
 
@@ -476,6 +488,24 @@ class GeradorClassificador:
 #classificador.Dataset(treino, validacao, teste)
 #classificador.treinamento()
 #classificador.predicao(teste_df) -> cria a matriz de confusão
+
+"""------------------Funções para usar diversos classificadores----------------------"""
+def cria_classificadores(n_modelos=10, nome_modelo=None, base_usada=None, treino=None, validacao=None, teste=None, teste_csv=None):
+    gerador = Gerador()
+    for i in range(n_modelos):  
+        limpa_memoria()
+
+        gerador.carrega_modelo(f'Modelos/{nome_modelo}-{i}/Modelo-Base/Estrutura/{nome_modelo}-{i}.keras')
+        encoder = gerador.encoder
+
+        classificador = GeradorClassificador(encoder=encoder, pesos=f'Modelos/{nome_modelo}-{i}/Modelo-Base/Pesos/{nome_modelo}-{i}_Base:{base_usada}.weights.h5')
+        classificador.Dataset(treino, validacao, teste)
+        classificador.compila()
+        classificador.treinamento(epocas=10)
+        classificador.predicao(teste_csv)
+
+        limpa_memoria()
+
 
 
 """_________________Primeiro Autoencoder/Gerador______________________"""
