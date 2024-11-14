@@ -19,9 +19,14 @@ def preprocessamento_dataframe(caminho_csv: str, autoencoder: bool = False, data
     Retorna:
         Gerador, dataframe
     """
+
+    
+
     dataframe = pd.read_csv(caminho_csv)
     batch_size = 64
-        
+
+    print("Colunas no DataFrame:", dataframe.columns)
+
     datagen = ImageDataGenerator(preprocessing_function=albumentations if data_algumentantation else normalize_image)
 
     dataframe['classe'] = dataframe['classe'].astype(str)
@@ -173,26 +178,6 @@ def mapear_rotulos_binarios(classes):
     """
     return np.array([1 if classe == 'Occupied' else 0 for classe in classes])
 
-def dividir_em_batches(csv, n_batches=10):
-    dataframe = pd.read_csv(csv)
-
-    for i in range(n_batches):
-        imgs = []
-        
-        for classe in [0, 1]:
-            dataframe_classe = dataframe[dataframe['classe'] == classe]
-            
-            if len(dataframe_classe) >= 32:
-                sampled_data = dataframe_classe.sample(n=32)
-                imgs.append(sampled_data)
-                dataframe = dataframe.drop(sampled_data.index)
-            else:
-                imgs.append(dataframe_classe)
-                dataframe = dataframe.drop(dataframe_classe.index)
-
-        df_final = pd.concat(imgs, ignore_index=True)
-
-        df_final.to_csv(f'CSV/batch_{i}.csv', index=False)
 
 
 

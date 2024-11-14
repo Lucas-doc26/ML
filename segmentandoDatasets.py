@@ -106,7 +106,6 @@ def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_valida
     else:
         nome_faculdade = "PKLot"
 
-
     data_dir = 'PKLot'
     tempos = ['Cloudy', 'Rainy', 'Sunny']
     classes = ['Empty', 'Occupied']
@@ -146,8 +145,12 @@ def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_valida
 
         if not os.path.isdir("CSV"):
             os.makedirs("CSV")
+            os.makedirs(f"CSV/{nome_faculdade}")
+        
+        if not os.path.isdir(f"CSV/{nome_faculdade}"):
+            os.makedirs(f"CSV/{nome_faculdade}")
 
-        df_final.to_csv(f"CSV/{nome_faculdade}.csv", index=False)
+        df_final.to_csv(f"CSV/{nome_faculdade}/{nome_faculdade}.csv", index=False)
 
     def contagem_imagens():
         dic = {}
@@ -231,7 +234,7 @@ def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_valida
         return valores
     
     def criar_csv(n_dias, valores, nome:str=''):
-        df = pd.read_csv(f'CSV/{nome_faculdade}.csv')
+        df = pd.read_csv(f'CSV/{nome_faculdade}/{nome_faculdade}.csv')
         data = []
         df_final = pd.DataFrame()
 
@@ -281,7 +284,7 @@ def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_valida
 
         df_final['classe'] = df_final['classe'].replace({'Empty': 1, 'Occupied': 0})
 
-        df_final.to_csv(f'CSV/{nome_faculdade}_Segmentado_{nome}.csv', index=False)
+        df_final.to_csv(f'CSV/{nome_faculdade}/{nome_faculdade}_Segmentado_{nome}.csv', index=False)
 
     if os.path.isdir(data_dir):
         print("Começando Segmentação do PKLot")
@@ -346,8 +349,11 @@ def segmentacao_CNR(imagens_treino:int=1000, dias_treino:int=5, imagens_validaca
 
         if not os.path.isdir("CSV"):
             os.makedirs("CSV")
+            os.makedirs("CSV/CNR")
+        if not os.path.isdir("CSV/CNR"):
+            os.makedirs("CSV/CNR")
 
-        df.to_csv("CSV/CNR.csv", index=False)
+        df.to_csv("CSV/CNR/CNR.csv", index=False)
 
     def imagens_distribuidas_cnr(n_imgs):
         n_tempos = len(tempos)
@@ -414,7 +420,7 @@ def segmentacao_CNR(imagens_treino:int=1000, dias_treino:int=5, imagens_validaca
 
     def criar_csv_cnr(n_dias, valores, nome: str = ''):
         print(nome)
-        df = pd.read_csv('CSV/CNR.csv')
+        df = pd.read_csv('CSV/CNR/CNR.csv')
         data = []
         df_final = pd.DataFrame()
 
@@ -481,7 +487,7 @@ def segmentacao_CNR(imagens_treino:int=1000, dias_treino:int=5, imagens_validaca
 
             df_final = pd.concat(data, ignore_index=True)
 
-        df_final.to_csv(f'CSV/CNR_Segmentado_{nome}.csv', index=False)
+        df_final.to_csv(f'CSV/CNR/CNR_Segmentado_{nome}.csv', index=False)
 
     cria_CNR()
 
@@ -492,7 +498,7 @@ def segmentacao_CNR(imagens_treino:int=1000, dias_treino:int=5, imagens_validaca
 #Exemplo de uso:
 #segmentacao_CNR(imagens_treino=1000, dias_treino=5, imagens_validacao=300, dias_validaco=1, imagens_teste=1000, dias_teste=2)
 
-def segmentacao_Kyoto():
+def segmentacao_Kyoto(treino=32, validacao=10, teste=20):
     caminho_imagens = []
 
     path = 'kyoto'
@@ -508,13 +514,53 @@ def segmentacao_Kyoto():
 
     print(df)
 
-    df_treino = df['caminho_imagem'][:32]
-    df_validacao = df['caminho_imagem'][32:32+10]
-    df_teste = df['caminho_imagem'][-20:]
+    df_treino = df['caminho_imagem'][:treino]
+    df_validacao = df['caminho_imagem'][treino:treino+validacao]
+    df_teste = df['caminho_imagem'][-teste:]
 
     if not os.path.isdir("CSV"):
-            os.makedirs("CSV")
+        os.makedirs("CSV")
+        os.makedirs("CSV/Kyoto")
 
-    df_treino.to_csv('CSV/Kyoto_Segmentado_Treino.csv', index=False)
-    df_validacao.to_csv('CSV/Kyoto_Segmentado_Validacao.csv', index=False)
-    df_teste.to_csv('CSV/Kyoto_Segmentado_Teste.csv', index=False)
+    if not os.path.isdir("CSV/Kyoto"):
+        os.makedirs("CSV/Kyoto")
+
+    df_treino.to_csv('CSV/Kyoto/Kyoto_Segmentado_Treino.csv', index=False)
+    df_validacao.to_csv('CSV/Kyoto/Kyoto_Segmentado_Validacao.csv', index=False)
+    df_teste.to_csv('CSV/Kyoto/Kyoto_Segmentado_Teste.csv', index=False)
+
+def dividir_em_batches(csv, n_batches=10):
+    nome, estado = retorna_nome_base(csv)
+
+    dataframe = pd.read_csv(csv)
+
+    if len(dataframe)/64 < n_batches or len(dataframe) > n_batches :
+        n_batches = int(len(dataframe)/64)
+        print("Quantidade de batches sendo alterada para: ", n_batches)
+
+    for i in range(n_batches):
+        imgs = []
+        
+        for classe in [0, 1]:
+            dataframe_classe = dataframe[dataframe['classe'] == classe]
+            
+            if len(dataframe_classe) >= 32:
+                sampled_data = dataframe_classe.sample(n=32, replace=False)
+                imgs.append(sampled_data)
+                dataframe = dataframe.drop(sampled_data.index)
+            else:
+                imgs.append(dataframe_classe)
+                dataframe = dataframe.drop(dataframe_classe.index)
+
+        df_final = pd.concat(imgs, ignore_index=True)
+
+        if not os.path.isdir(f'CSV/{nome}/batch'):
+            os.makedirs(f'CSV/{nome}/batch')
+
+        df_final.to_csv(f'CSV/{nome}/batch/batch_{nome}_{estado}_{i}.csv', index=False)
+
+def retorna_nome_base(caminho):
+    nome = caminho.split('/')[-1]
+    nome = nome.rsplit('.csv', 1)[0]
+    nome = nome.split('_')
+    return (nome[0], nome[2])
