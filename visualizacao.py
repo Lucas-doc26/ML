@@ -249,17 +249,14 @@ def grafico_batches(x, y, nome_modelo):
     plt.show()
 
 def comparacao(resultados):
-
     plt.figure(figsize=(10, 6))
-
-    # Iterando sobre os resultados (x, y)
-    for i, resultado in enumerate(resultados):
-        x, y = resultado
-        plt.plot(x, y, label=f"Linha {i + 1}") 
-
+    
+    for resultado in resultados:
+        x, y, nome = resultado
+        plt.plot(x, y, label=f"{nome}", marker='o') 
     plt.title('Gráfico de Linhas')
-    plt.xlabel('Eixo X')
-    plt.ylabel('Variação Y')
+    plt.xlabel('Número de batchs')
+    plt.ylabel('Acurácia')
     plt.legend()
 
     plt.show()
