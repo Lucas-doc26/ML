@@ -25,11 +25,10 @@ def preprocessamento_dataframe(caminho_csv: str, autoencoder: bool = False, data
     dataframe = pd.read_csv(caminho_csv)
     batch_size = 64
 
-    print("Colunas no DataFrame:", dataframe.columns)
-
     datagen = ImageDataGenerator(preprocessing_function=albumentations if data_algumentantation else normalize_image)
 
-    dataframe['classe'] = dataframe['classe'].astype(str)
+    if len(dataframe.columns) > 1:
+        dataframe['classe'] = dataframe['classe'].astype(str)
 
     #Embaralho o dataframe aqui e não no shuffle, para garantir o mesmo csv sempre 
     dataframe = dataframe.sample(frac=1).reset_index(drop=True)
