@@ -68,6 +68,11 @@ Composto por imagens coletadas de novembro de 2015 a fevereiro de 2016 sob diver
 <br>
 <img src="https://lh3.googleusercontent.com/proxy/p-9dUexhRfdxfbh58L61VNsaFatf8KH-Bh7mVzWT8d35bqPE4GXaKuT_BNE5z-RLwJR6">
 
+<h2 id="usar">Como usar</h2>
+-> instalar o graphviz
+-> por conta do pydot 
+
+
 <h2 id="Autor">🤝Autor</h2>
 <table>
   <tr>

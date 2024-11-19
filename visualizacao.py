@@ -240,23 +240,64 @@ def avaliar_modelo_em_datasets(modelo, datasets_info):
         plot_confusion_matrix(y_binario, y_predicao, labels, save_path_matriz, titulo_matriz)
         plot_imagens_incorretas(y_binario, y_predicao, caminhos_imagens, modelo.name, dataset_nome, 3)
 
-def grafico_batches(x, y, nome_modelo):
-    plt.title(f"Comparação de acurácia conforme os batches - {nome_modelo}")
-    plt.xlabel('Número de Batches')
-    plt.ylabel('Acuracia')
+def grafico_batchs(x, y, nome_modelo, caminho_para_salvar=None):
+    plt.title(f"Comparação de acurácia conforme os batchs - {nome_modelo}")
+    plt.xlabel('Número de Batchs')
+    plt.ylabel('Acurácia')
     plt.plot(x, y, marker='o', linestyle='-', color='b', label='Acurácia')
+
+    for xi, yi in zip(x, y):
+            plt.text(xi, yi, f"{yi:.3f}", fontsize=6, ha='left', va='top') 
+
     plt.legend()
+
+    if caminho_para_salvar != None:
+        save_path = os.path.join(caminho_para_salvar, f'Grafico-{nome_modelo}.png')
+        plt.savefig(save_path)
+
     plt.show()
 
-def comparacao(resultados):
+def comparacao(resultados, caminho_para_salvar=None, nome_modelo=None):
     plt.figure(figsize=(10, 6))
     
     for resultado in resultados:
         x, y, nome = resultado
         plt.plot(x, y, label=f"{nome}", marker='o') 
-    plt.title('Gráfico de Linhas')
+
+        for xi, yi in zip(x, y):
+            plt.text(xi, yi, f"{yi:.3f}", fontsize=6, ha='left', va='top') 
+            
+    plt.title(f'Comparação entre os diferentes {nome_modelo}')
     plt.xlabel('Número de batchs')
     plt.ylabel('Acurácia')
+
     plt.legend()
+
+    if caminho_para_salvar != None:
+        save_path = os.path.join(caminho_para_salvar, f'Grafico-Comparacao-{nome_modelo}.png')
+        plt.savefig(save_path)
+
+    plt.show()
+
+def plot_model_manual(model):
+    """
+    Plota manualmente a estrutura do modelo exibindo camadas e formatos.
+    """
+    fig, ax = plt.subplots(figsize=(12, len(model.layers) * 1.2))
+    ax.axis('off')
+
+    # Desenha a estrutura do modelo
+    for i, layer in enumerate(model.layers):
+        name = layer.name
+        class_name = layer.__class__.__name__
+        input_shape = layer.input_shape if hasattr(layer, 'input_shape') else 'N/A'
+        output_shape = layer.output_shape if hasattr(layer, 'output_shape') else 'N/A'
+        
+        text = f"{class_name}\n{name}\nInput: {input_shape}\nOutput: {output_shape}"
+        
+        # Adiciona uma caixa para cada camada
+        ax.text(0.5, len(model.layers) - i, text, 
+                fontsize=10, ha='center', va='center', 
+                bbox=dict(boxstyle="round", facecolor="lightblue", edgecolor="black"))
 
     plt.show()
