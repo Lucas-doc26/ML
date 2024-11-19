@@ -27,7 +27,6 @@ def segmentando_datasets(quantidade_PUC: Optional[int] = None, quantidade_UFPR04
     tempos = ['Cloudy', 'Rainy', 'Sunny']
 
 
-    
     dataframes = [] 
 
     for local in faculdades:
@@ -98,7 +97,7 @@ def segmentando_datasets(quantidade_PUC: Optional[int] = None, quantidade_UFPR04
     return tuple(dataframes)  # Retornar a tupla dos DataFrames
 
 #Função de segmentar o PKLot Balanceado
-def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_validacao:int=300, dias_validaco:int=2, imagens_teste:int=2000, dias_teste=3, faculdades = ['PUC', 'UFPR04', 'UFPR05'] ):
+def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_validacao:int=300, dias_validaco:int=2, imagens_teste:int=2000, dias_teste=3, faculdades = ['PUC', 'UFPR04', 'UFPR05']):
     """
     A soma máxima do número de dias, deve ser igual a 8 caso queira dias distintos entre treino/validacao/teste
     """
@@ -306,11 +305,55 @@ def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_valida
         os.remove('PKLot.tar.gz')
         cria_PKLot()
 
+    def imagens_para_teste():
+        nome = 'Teste'
+        df = pd.read_csv(f'CSV/{nome_faculdade}/{nome_faculdade}.csv')
+        data = []
+        df_final = pd.DataFrame()
+
+        for faculdade in faculdades:
+            df_facul = df[df['caminho_imagem'].str.contains(faculdade)]
+            
+            for tempo in tempos: 
+                df_tempo = df_facul[df_facul['caminho_imagem'].str.contains(tempo)]
+
+                dias_dir = sorted(os.listdir(os.path.join(path_base, faculdade, tempo)))
+                total_dias = len(dias_dir)
+
+                dias_usados = dias_treino + dias_validaco
+
+                dias_selecionados = dias_dir[-(total_dias-dias_usados):]
+
+                for classe in classes:
+                    df_classe = df_tempo[df_tempo['classe'].str.contains(classe)]
+                    imagens_disponiveis = df_classe.copy()
+
+                    for dia in dias_selecionados:
+                        df_dia = imagens_disponiveis[imagens_disponiveis['caminho_imagem'].str.contains(dia)]
+                                
+                        if not df_dia.empty:  
+                            imagens = df_dia.sample(len(df_dia))
+                            data.append(imagens)
+                            imagens_disponiveis = imagens_disponiveis.drop(imagens.index)  
+
+                df.reset_index(drop=True, inplace=True)
+
+        df_final = pd.concat(data, ignore_index=True)
+
+        df_final['classe'] = df_final['classe'].replace({'Empty': 1, 'Occupied': 0})
+
+        df_final.to_csv(f'CSV/{nome_faculdade}/{nome_faculdade}_Segmentado_{nome}.csv', index=False)
+                  
     contagem_imagens()
+
     
     criar_csv(n_dias=dias_treino, valores=imagens_distribuidas(imagens_treino), nome='Treino')
     criar_csv(n_dias=dias_validaco, valores=imagens_distribuidas(imagens_validacao), nome='Validacao')
-    criar_csv(n_dias=dias_teste, valores=imagens_distribuidas(imagens_teste), nome ='Teste')
+
+    if imagens_teste == None and dias_teste == None:
+        imagens_para_teste()
+    else:
+        criar_csv(n_dias=dias_teste, valores=imagens_distribuidas(imagens_teste), nome ='Teste')
 
 #Exemplo de uso:
 #segmentacao_Pklot(imagens_treino=1000, dias_treino=5, imagens_validacao=300, dias_validaco=1, imagens_teste=1000, dias_teste=2, faculdades=["PUC"])
@@ -501,7 +544,6 @@ def segmentacao_CNR(imagens_treino:int=1000, dias_treino:int=5, imagens_validaca
 #segmentacao_CNR(imagens_treino=1000, dias_treino=5, imagens_validacao=300, dias_validaco=1, imagens_teste=1000, dias_teste=2)
 
 
-
 def segmentacao_Kyoto(treino=32, validacao=10, teste=20):
     def download_Kyoto():
         kyoto_path.mkdir(exist_ok=True)
@@ -606,22 +648,25 @@ def segmentacao_Kyoto(treino=32, validacao=10, teste=20):
     df_validacao.to_csv('CSV/Kyoto/Kyoto_Segmentado_Validacao.csv', index=False)
     df_teste.to_csv('CSV/Kyoto/Kyoto_Segmentado_Teste.csv', index=False)
 
-def dividir_em_batches(csv, n_batches=10):
+def dividir_em_batchs(csv):
     nome, estado = retorna_nome_base(csv)
 
     dataframe = pd.read_csv(csv)
 
-    if len(dataframe)/64 < n_batches or len(dataframe) > n_batches :
-        n_batches = int(len(dataframe)/64)
-        print("Quantidade de batches sendo alterada para: ", n_batches)
+    n_batchs = int(len(dataframe)/64)
+    print("O número de batchs é ", n_batchs)
 
-    for i in range(n_batches):
+    if os.path.isdir(f'CSV/{nome}/batch'):
+        shutil.rmtree(f'CSV/{nome}/batch')
+        os.makedirs(f'CSV/{nome}/batch')
+
+    for i in range(n_batchs):
         imgs = []
         
         for classe in [0, 1]:
             dataframe_classe = dataframe[dataframe['classe'] == classe]
             
-            if len(dataframe_classe) >= 32:
+            if len(dataframe_classe) >= 2:
                 sampled_data = dataframe_classe.sample(n=32, replace=False)
                 imgs.append(sampled_data)
                 dataframe = dataframe.drop(sampled_data.index)
@@ -630,9 +675,6 @@ def dividir_em_batches(csv, n_batches=10):
                 dataframe = dataframe.drop(dataframe_classe.index)
 
         df_final = pd.concat(imgs, ignore_index=True)
-
-        if not os.path.isdir(f'CSV/{nome}/batch'):
-            os.makedirs(f'CSV/{nome}/batch')
 
         df_final.to_csv(f'CSV/{nome}/batch/batch_{nome}_{estado}_{i}.csv', index=False)
 
