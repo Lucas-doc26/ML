@@ -278,26 +278,3 @@ def comparacao(resultados, caminho_para_salvar=None, nome_modelo=None):
         plt.savefig(save_path)
 
     plt.show()
-
-def plot_model_manual(model):
-    """
-    Plota manualmente a estrutura do modelo exibindo camadas e formatos.
-    """
-    fig, ax = plt.subplots(figsize=(12, len(model.layers) * 1.2))
-    ax.axis('off')
-
-    # Desenha a estrutura do modelo
-    for i, layer in enumerate(model.layers):
-        name = layer.name
-        class_name = layer.__class__.__name__
-        input_shape = layer.input_shape if hasattr(layer, 'input_shape') else 'N/A'
-        output_shape = layer.output_shape if hasattr(layer, 'output_shape') else 'N/A'
-        
-        text = f"{class_name}\n{name}\nInput: {input_shape}\nOutput: {output_shape}"
-        
-        # Adiciona uma caixa para cada camada
-        ax.text(0.5, len(model.layers) - i, text, 
-                fontsize=10, ha='center', va='center', 
-                bbox=dict(boxstyle="round", facecolor="lightblue", edgecolor="black"))
-
-    plt.show()

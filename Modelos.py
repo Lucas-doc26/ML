@@ -83,6 +83,19 @@ def criar_diretorio_novo(caminho):
 def mapear(classes):
     return np.array([1 if classe == '1' else 0 for classe in classes])
 
+def retorna_nome_df(df):
+    nome = df['caminho_imagem'].iloc[0].split('/')[2]
+    return nome
+
+def extrair_nome_modelo1(nome):
+    partes = nome.replace("-", "_").replace(":", "_").split("_")
+
+    nome_modelo = "_".join([partes[1], partes[2]])
+    nome_modelo = "-".join([nome_modelo, partes[3]])
+
+    return nome_modelo
+
+
 """------------------Gerador de Autoencoders----------------------"""
 
 class Gerador:
@@ -396,30 +409,32 @@ def fine_tuning_modelos(treino, validacao, teste, nome_modelo=None, nome_base=No
 """------------------Gerador de Classificador----------------------"""
 
 class GeradorClassificador:
-    def __init__(self, encoder, pesos, nome_modelo:str=None):
+    def __init__(self, encoder=None, pesos=None, nome_modelo:str=None):
         self.encoder = encoder
         self.nome_modelo = nome_modelo
         self.model = self.modelo(self.encoder)
         self.carrega_pesos(pesos)
-        self.compila()
+        if self.encoder != None:
+            self.compila()
         self.treino = None
         self.validacao = None
         self.teste = None
         cria_pasta_modelos()
 
     def modelo(self, encoder):
-        for layer in self.encoder.layers:
-            layer.trainable = False
+        if encoder != None:
+            for layer in self.encoder.layers:
+                layer.trainable = False
 
-        classificador = keras.models.Sequential([
-                self.encoder,  
-                keras.layers.Dropout(0.2),  
-                keras.layers.Dense(256, activation='relu'),
-                keras.layers.Dense(128,activation='relu'),  
-                keras.layers.Dense(2, activation='softmax')  
-            ], name=f'classificador{self.nome_modelo}')
-        
-        return classificador
+            classificador = keras.models.Sequential([
+                    self.encoder,  
+                    keras.layers.Dropout(0.2),  
+                    keras.layers.Dense(256, activation='relu'),
+                    keras.layers.Dense(128,activation='relu'),  
+                    keras.layers.Dense(2, activation='softmax')  
+                ], name=f'classificador{self.nome_modelo}')
+            
+            return classificador
     
     def setNome(self, nome):
         self.nome_modelo = nome
@@ -477,9 +492,12 @@ class GeradorClassificador:
     def setTreino(self, treino):
         self.treino = treino
 
+    def setTeste(self, teste):
+        self.teste = teste
+
     def predicao(self, teste_csv):
-        predicoes = self.model.predict(self.teste)
-        predicoes = np.argmax(predicoes, axis=1)
+        predicoes_np = self.model.predict(self.teste)
+        predicoes = np.argmax(predicoes_np, axis=1)
 
         print(predicoes)
 
@@ -489,23 +507,18 @@ class GeradorClassificador:
 
         accuracia = accuracy_score(y_verdadeiro, predicoes)
 
-        return predicoes, accuracia
+        return predicoes_np, accuracia
     
     def carrega_modelo(self, modelo:str, pesos:str):
-        self.model = tf.keras.models.load_model(modelo)
-        self.model.load_weights(pesos)
+        modelo_carregado = tf.keras.models.load_model(modelo)
+        self.model = modelo_carregado
+        self.carrega_pesos(pesos)
 
         return self.model
 
-    def predicao_diferente_dataset(self, teste, teste_csv):
-        predicoes = self.model.predict(teste)
-        predicoes = np.argmax(predicoes, axis=1)
-
-        return predicoes
-
 
 #Exemplo de uso:
-#classificador = GeradorClassificador(encoder=encoder, pesos="pesos.weights.h5") -> crio o classificador encima do encodere seus pesos
+#classificador = GeradorClassificador(encoder=encoder, pesos="pesos.weights.h5") -> crio o classificador encima do encoder e seus pesos
 #classificador.Dataset(treino, validacao, teste)
 #classificador.treinamento()
 #classificador.predicao(teste_df) -> cria a matriz de confusão
@@ -538,6 +551,7 @@ def treinamento_em_batch(nome_modelo, base_usada, treino_csv, validacao, teste, 
     classificador.setNome(f'{nome_modelo}')
     dividir_em_batchs(treino_csv)
     nome, _ = retorna_nome_base(treino_csv)
+    nome_base_teste = retorna_nome_df(teste_csv)
     batch_dir = f"CSV/{nome}/batch"
     batchs = sorted(os.listdir(batch_dir))
     antigo = None
@@ -550,18 +564,25 @@ def treinamento_em_batch(nome_modelo, base_usada, treino_csv, validacao, teste, 
     plot_model(encoder, show_shapes=True,show_layer_names=True,to_file=f'Modelos/{nome_modelo}/Classificador/encoder-{nome_modelo}.png')
     plot_model(modelo, show_shapes=True,show_layer_names=True,to_file=f'Modelos/{nome_modelo}/Classificador/classificador-{nome_modelo}.png')
 
+
+    if not os.path.isdir(f'Modelos/{nome_modelo}/Classificador/Resultados'):
+        criar_diretorio_novo(f'Modelos/{nome_modelo}/Classificador/Resultados')
+
     for i, batch in enumerate(batchs):
         treino, _ = preprocessamento_dataframe(os.path.join(batch_dir, batch), autoencoder=False)
         if antigo != None:
             treino = CombinarGeradores(treino, antigo)
         classificador.setTreino(treino)
         classificador.treinamento(epocas=n_epocas, salvar=salvar ,n_batchs=i+1)
-        _, acuracia = classificador.predicao(teste_csv)
+        predicoes_np, acuracia = classificador.predicao(teste_csv)
         antigo = treino 
 
         precisoes.append(acuracia)
         n_batchs.append(len(treino))
 
+        arquivo = f"Modelos/{nome_modelo}/Classificador/Resultados/{nome_modelo}-{nome_base_teste}-batchs:{i+1}.npy"
+        np.save(arquivo, predicoes_np)
+        
         limpa_memoria()
 
     grafico_batchs(n_batchs, precisoes, nome_modelo, f'Modelos/{nome_modelo}')
@@ -593,81 +614,46 @@ def treina_modelos_em_batch(nome_modelo, base_usada, treino_csv, validacao, test
 
     comparacao(lista, "Modelos/Plots", nome_modelo)
 
+def testa_modelos_em_batch(nome_modelo, teste, teste_df):
+    classificador = GeradorClassificador()
+    classificador.setNome(nome_modelo)
 
-"""_________________Primeiro Autoencoder/Gerador______________________"""
+    nome_base = retorna_nome_df(teste_df)
+    classificador.setTeste(teste)
 
-class Autoencoder:
-    def __init__(self, input_shape=(64, 64, 3)):
-        self.input_shape = input_shape
-        self.model = self.construir_modelo()
+    if not os.path.isdir(f'Modelos/{nome_modelo}/Classificador/Resultados'):
+        criar_diretorio_novo(f'Modelos/{nome_modelo}/Classificador/Resultados')
         
-    def encoder(self):
-        return keras.models.Sequential([
-            keras.layers.Input(shape=self.input_shape),
-            keras.layers.Conv2D(16, kernel_size=(3, 3), padding="same", activation="relu"),
-            keras.layers.MaxPool2D(pool_size=2),
-            keras.layers.Conv2D(32, kernel_size=(3, 3), padding="same", activation="relu"),
-            keras.layers.MaxPool2D(pool_size=2),
-            keras.layers.Conv2D(64, kernel_size=(3, 3), padding="same", activation="relu"),
-            keras.layers.MaxPool2D(pool_size=2),
-            keras.layers.Conv2D(128, kernel_size=(3, 3), padding="same", activation="relu"),
-            keras.layers.MaxPool2D(pool_size=2),  
-        ], name='encoder')
-        
-    def decoder(self):
-        return keras.models.Sequential([
-            keras.layers.Conv2DTranspose(128, kernel_size=(3, 3), strides=2, padding="same", activation="relu", input_shape=(4, 4, 128)),
-            keras.layers.Conv2DTranspose(64, kernel_size=(3, 3), strides=2, padding="same", activation="relu"),
-            keras.layers.Conv2DTranspose(32, kernel_size=(3, 3), strides=2, padding="same", activation="relu"),
-            keras.layers.Conv2DTranspose(16, kernel_size=(3, 3), strides=2, padding="same", activation="relu"),
-            keras.layers.Conv2DTranspose(3, kernel_size=(3, 3), padding="same", activation="sigmoid"),
-        ], name='decoder')
+    for i in range(16):
+        classificador.carrega_modelo(f'Modelos/{nome_modelo}/Classificador/Estrutura/Classificador_{nome_modelo}_batchs:{i+1}.keras',f'Modelos/{nome_modelo}/Classificador/Pesos/Classificador_{nome_modelo}_batchs:{i+1}.weights.h5' )
+        predicoes_np, acuracia = classificador.predicao(teste_df)
+        arquivo = f"Modelos/{nome_modelo}/Classificador/Resultados/{nome_modelo}-{nome_base}-batchs:{i+1}.npy"
+        np.save(arquivo, predicoes_np)
+        limpa_memoria()
 
-    def construir_modelo(self):
-        return keras.models.Sequential([self.encoder(), self.decoder()])
-
-#Exemplo de uso:    
-#autoencoder = Autoencoder()
-#modelo = autoencoder.model
-#encoder_model = autoencoder.encoder()
-#decoder_model = autoencoder.decoder()
-
-class Classificador:
-    def __init__(self, pesos):
-        self.model = self.modelo()
-        self.compile()
-        self.carrega_pesos(pesos)
-
-    def modelo(self):
-        encoder = Autoencoder().encoder()
-        
-        for layer in encoder.layers:
-            layer.trainable = False
-
-        classificador = keras.models.Sequential([
-                encoder, 
-                keras.layers.Flatten(),  
-                keras.layers.Dropout(0.3),  
-                keras.layers.Dense(128, activation='relu'),  
-                keras.layers.Dense(2, activation='softmax')  
-            ], name='Classificador1')
-        
-        return classificador
+def testa_modelos(nome_modelo, teste, teste_df):
+    classificador = GeradorClassificador()
     
-    def compile(self):
-        self.model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
+    modelos = os.listdir("Modelos")
+    modelos_usados = []
+    for modelo in modelos:
+        if os.path.exists(os.path.join('Modelos', modelo)):
+            if nome_modelo in modelo:
+                modelo_base = os.path.join('Modelos', modelo, 'Classificador')
+                estrutura = sorted(os.listdir(os.path.join(modelo_base, 'Estrutura')))[0]
+                print(estrutura)
+                modelos_usados.append(estrutura)
+            else:
+                pass
+        else:
+            print(f"O diretório {modelo} não existe.")
 
+    for modelo in modelos_usados:
+        nome = extrair_nome_modelo1(modelo)
+        print(nome)
+        testa_modelos_em_batch(nome, teste, teste_df)
+        limpa_memoria()
 
-    def carrega_pesos(self, peso):
-        try:
-            self.model.load_weights(peso, skip_mismatch=True)
-            print("Pesos carregados com sucesso")
-        except Exception as e:
-            print(f"Erro ao carregar os pesos: {e}")
-
-#Exemplo de uso:
-#classificador = Classificador(peso)
-#classificador = classificador.model
 
 class CombinarGeradores(Sequence):
     def __init__(self, gerador1, gerador2):

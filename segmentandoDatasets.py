@@ -263,7 +263,7 @@ def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_valida
                     while valor > 0:
                         imagens_disponiveis = df_classe.copy()
                         for dia in dias_selecionados:
-                            df_dia = imagens_disponiveis[imagens_disponiveis['caminho_imagem'].str.contains(dia)]
+                            df_dia = imagens_disponiveis[imagens_disponiveis['caminho_imagem'].str.contains(dia, na=False)]
                             
                             if not df_dia.empty:  
                                 imagem_selecionada = df_dia.sample(1)
