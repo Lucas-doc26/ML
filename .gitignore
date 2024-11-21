@@ -162,9 +162,6 @@ cython_debug/
 #Arquivos do projeto
 Resultados/Predicoes/predicoes.numpy/
 .npy
-
-
-
 .pyc
 
 #Bases 
