@@ -20,8 +20,6 @@ def preprocessamento_dataframe(caminho_csv: str, autoencoder: bool = False, data
         Gerador, dataframe
     """
 
-    
-
     dataframe = pd.read_csv(caminho_csv)
     batch_size = 64
 
@@ -45,6 +43,8 @@ def preprocessamento_dataframe(caminho_csv: str, autoencoder: bool = False, data
     )
 
     print("Imagens totais:", Gerador.samples)
+
+    dataframe.to_csv(caminho_csv, index=False)
 
     return Gerador, dataframe
 

@@ -240,13 +240,13 @@ def avaliar_modelo_em_datasets(modelo, datasets_info):
         plot_confusion_matrix(y_binario, y_predicao, labels, save_path_matriz, titulo_matriz)
         plot_imagens_incorretas(y_binario, y_predicao, caminhos_imagens, modelo.name, dataset_nome, 3)
 
-def grafico_batchs(x, y, nome_modelo, caminho_para_salvar=None):
+def grafico_batchs(n_batchs, precisoes, nome_modelo, caminho_para_salvar=None):
     plt.title(f"Comparação de acurácia conforme os batchs - {nome_modelo}")
     plt.xlabel('Número de Batchs')
     plt.ylabel('Acurácia')
-    plt.plot(x, y, marker='o', linestyle='-', color='b', label='Acurácia')
+    plt.plot(n_batchs, precisoes, marker='o', linestyle='-', color='b', label='Acurácia')
 
-    for xi, yi in zip(x, y):
+    for xi, yi in zip(n_batchs, precisoes):
             plt.text(xi, yi, f"{yi:.3f}", fontsize=6, ha='left', va='top') 
 
     plt.legend()
