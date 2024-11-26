@@ -88,13 +88,13 @@ def retorna_nome_df(df):
     return nome
 
 def extrair_nome_modelo1(nome):
-    partes = nome.replace("-", "_").replace(":", "_").split("_")
+    partes = nome.replace("-", "_").split("_")
+    numero = partes[3].split('.')
 
     nome_modelo = "_".join([partes[1], partes[2]])
-    nome_modelo = "-".join([nome_modelo, partes[3]])
+    nome_modelo = "-".join([nome_modelo, numero[0]])
 
     return nome_modelo
-
 
 """------------------Gerador de Autoencoders----------------------"""
 
@@ -254,7 +254,7 @@ class Gerador:
 
             criar_diretorio_novo(dir_pesos)
 
-            self.autoencoder.save_weights(f"{dir_pesos}/{self.nome_modelo}_Base:{nome_da_base}.weights.h5")
+            self.autoencoder.save_weights(f"{dir_pesos}/{self.nome_modelo}_Base-{nome_da_base}.weights.h5")
 
 
         x, y = next(self.treino)
@@ -473,16 +473,16 @@ class GeradorClassificador:
             if not os.path.isdir(dir_raiz):
                 criar_diretorio_novo(dir_raiz)
 
-            if os.path.isdir(dir_modelo) and os.path.isdir(dir_pesos):
-                if n_batchs != None:
-                    self.model.save(f"{dir_modelo}/Classificador_{self.nome_modelo}_batchs:{n_batchs}.keras")
-                    self.model.save_weights(f"{dir_pesos}/Classificador_{self.nome_modelo}_batchs:{n_batchs}.weights.h5")
-                else:
-                    self.model.save(f"{dir_modelo}/Classificador_{self.nome_modelo}.keras")
-                    self.model.save_weights(f"{dir_pesos}/Classificador_{self.nome_modelo}.weights.h5")
-            else:
+            if not os.path.isdir(dir_modelo) and not os.path.isdir(dir_pesos):
                 criar_diretorio_novo(dir_modelo)
-                criar_diretorio_novo(dir_pesos)        
+                criar_diretorio_novo(dir_pesos)
+            
+            if n_batchs != None:
+                self.model.save(f"{dir_modelo}/Classificador_{self.nome_modelo}.keras")
+                self.model.save_weights(f"{dir_pesos}/Classificador_{self.nome_modelo}_batchs-{n_batchs}.weights.h5")
+            else:
+                self.model.save(f"{dir_modelo}/Classificador_{self.nome_modelo}.keras")
+                self.model.save_weights(f"{dir_pesos}/Classificador_{self.nome_modelo}.weights.h5")                        
 
     def Dataset(self, treino, validacao, teste):
         self.treino = treino
@@ -533,7 +533,7 @@ def cria_classificadores(n_modelos=10, nome_modelo=None, base_usada=None, treino
         encoder = gerador.encoder
 
 
-        classificador = GeradorClassificador(encoder=encoder, pesos=f'Modelos/{nome_modelo}-{i}/Modelo-Base/Pesos/{nome_modelo}-{i}_Base:{base_usada}.weights.h5')
+        classificador = GeradorClassificador(encoder=encoder, pesos=f'Modelos/{nome_modelo}-{i}/Modelo-Base/Pesos/{nome_modelo}-{i}_Base-{base_usada}.weights.h5')
         classificador.Dataset(treino, validacao, teste)
         classificador.compila()
         classificador.setNome(f'{nome_modelo}-{i}')
@@ -546,7 +546,7 @@ def treinamento_em_batch(nome_modelo, base_usada, treino_csv, validacao, teste, 
     gerador = Gerador()
     gerador.carrega_modelo(f'Modelos/{nome_modelo}/Modelo-Base/Estrutura/{nome_modelo}.keras')
     encoder = gerador.encoder
-    classificador = GeradorClassificador(encoder=encoder, pesos=f'Modelos/{nome_modelo}/Modelo-Base/Pesos/{nome_modelo}_Base:{base_usada}.weights.h5')
+    classificador = GeradorClassificador(encoder=encoder, pesos=f'Modelos/{nome_modelo}/Modelo-Base/Pesos/{nome_modelo}_Base-{base_usada}.weights.h5')
     classificador.compila()
     classificador.setNome(f'{nome_modelo}')
     dividir_em_batchs(treino_csv)
@@ -560,9 +560,6 @@ def treinamento_em_batch(nome_modelo, base_usada, treino_csv, validacao, teste, 
     n_batchs = [] 
 
     modelo = classificador.model
-
-    plot_model(encoder, show_shapes=True,show_layer_names=True,to_file=f'Modelos/{nome_modelo}/Classificador/encoder-{nome_modelo}.png')
-    plot_model(modelo, show_shapes=True,show_layer_names=True,to_file=f'Modelos/{nome_modelo}/Classificador/classificador-{nome_modelo}.png')
 
 
     if not os.path.isdir(f'Modelos/{nome_modelo}/Classificador/Resultados'):
@@ -580,12 +577,17 @@ def treinamento_em_batch(nome_modelo, base_usada, treino_csv, validacao, teste, 
         precisoes.append(acuracia)
         n_batchs.append(len(treino))
 
-        arquivo = f"Modelos/{nome_modelo}/Classificador/Resultados/{nome_modelo}-{nome_base_teste}-batchs:{i+1}.npy"
+        arquivo = f"Modelos/{nome_modelo}/Classificador/Resultados/{nome_modelo}-{nome_base_teste}-batchs-{i+1}.npy"
         np.save(arquivo, predicoes_np)
         
-        limpa_memoria()
+        limpa_memoria() 
+        #garante que o próx batch será treinado do 0
 
     grafico_batchs(n_batchs, precisoes, nome_modelo, f'Modelos/{nome_modelo}')
+
+    plot_model(encoder, show_shapes=True,show_layer_names=True,to_file=f'Modelos/{nome_modelo}/Classificador/encoder-{nome_modelo}.png')
+    plot_model(modelo, show_shapes=True,show_layer_names=True,to_file=f'Modelos/{nome_modelo}/Classificador/classificador-{nome_modelo}.png')
+
     
     return (n_batchs, precisoes, nome_modelo)
 
@@ -625,9 +627,9 @@ def testa_modelos_em_batch(nome_modelo, teste, teste_df):
         criar_diretorio_novo(f'Modelos/{nome_modelo}/Classificador/Resultados')
         
     for i in range(16):
-        classificador.carrega_modelo(f'Modelos/{nome_modelo}/Classificador/Estrutura/Classificador_{nome_modelo}_batchs:{i+1}.keras',f'Modelos/{nome_modelo}/Classificador/Pesos/Classificador_{nome_modelo}_batchs:{i+1}.weights.h5' )
+        classificador.carrega_modelo(f'Modelos/{nome_modelo}/Classificador/Estrutura/Classificador_{nome_modelo}.keras',f'Modelos/{nome_modelo}/Classificador/Pesos/Classificador_{nome_modelo}_batchs-{i+1}.weights.h5' )
         predicoes_np, acuracia = classificador.predicao(teste_df)
-        arquivo = f"Modelos/{nome_modelo}/Classificador/Resultados/{nome_modelo}-{nome_base}-batchs:{i+1}.npy"
+        arquivo = f"Modelos/{nome_modelo}/Classificador/Resultados/{nome_modelo}-{nome_base}-batchs-{i+1}.npy"
         np.save(arquivo, predicoes_np)
         limpa_memoria()
 
@@ -640,8 +642,7 @@ def testa_modelos(nome_modelo, teste, teste_df):
         if os.path.exists(os.path.join('Modelos', modelo)):
             if nome_modelo in modelo:
                 modelo_base = os.path.join('Modelos', modelo, 'Classificador')
-                estrutura = sorted(os.listdir(os.path.join(modelo_base, 'Estrutura')))[0]
-                print(estrutura)
+                estrutura = os.listdir(os.path.join(modelo_base, 'Estrutura'))[0]
                 modelos_usados.append(estrutura)
             else:
                 pass
@@ -653,7 +654,6 @@ def testa_modelos(nome_modelo, teste, teste_df):
         print(nome)
         testa_modelos_em_batch(nome, teste, teste_df)
         limpa_memoria()
-
 
 class CombinarGeradores(Sequence):
     def __init__(self, gerador1, gerador2):
