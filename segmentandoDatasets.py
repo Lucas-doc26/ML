@@ -238,6 +238,7 @@ def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_valida
         df = pd.read_csv(f'CSV/{nome_faculdade}/{nome_faculdade}.csv')
         data = []
         df_final = pd.DataFrame()
+        dias_usados = []
 
         for faculdade in faculdades:
             df_facul = df[df['caminho_imagem'].str.contains(faculdade)]
@@ -274,6 +275,9 @@ def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_valida
                                 
                                 if valor <= 0:
                                     break
+                            
+                            if dia not in dias_usados:
+                                dias_usados.append(dia)
 
                         if valor <= 0:  # Saia do loop enquanto se atingir a meta
                             break
@@ -286,6 +290,8 @@ def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_valida
         df_final['classe'] = df_final['classe'].replace({'Empty': 1, 'Occupied': 0})
 
         df_final.to_csv(f'CSV/{nome_faculdade}/{nome_faculdade}_Segmentado_{nome}.csv', index=False)
+
+        return dias_usados
 
     if os.path.isdir(data_dir):
         print("Começando Segmentação do PKLot")
@@ -305,53 +311,49 @@ def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_valida
         os.remove('PKLot.tar.gz')
         cria_PKLot()
 
-    def imagens_para_teste():
-        nome = 'Teste'
+    def imagens_para_teste(treino, validacao):
+        dias_usados = treino + validacao
         df = pd.read_csv(f'CSV/{nome_faculdade}/{nome_faculdade}.csv')
         data = []
         df_final = pd.DataFrame()
-
         for faculdade in faculdades:
             df_facul = df[df['caminho_imagem'].str.contains(faculdade)]
             
             for tempo in tempos: 
                 df_tempo = df_facul[df_facul['caminho_imagem'].str.contains(tempo)]
-
-                dias_dir = sorted(os.listdir(os.path.join(path_base, faculdade, tempo)))
-                total_dias = len(dias_dir)
-
-                dias_usados = dias_treino + dias_validaco
-
-                dias_selecionados = dias_dir[-(total_dias-dias_usados):]
-
+                dias_selecionados = sorted(os.listdir(os.path.join(path_base, faculdade, tempo)))
+                
                 for classe in classes:
                     df_classe = df_tempo[df_tempo['classe'].str.contains(classe)]
+                    
                     imagens_disponiveis = df_classe.copy()
-
                     for dia in dias_selecionados:
-                        df_dia = imagens_disponiveis[imagens_disponiveis['caminho_imagem'].str.contains(dia)]
-                                
-                        if not df_dia.empty:  
-                            imagens = df_dia.sample(len(df_dia))
-                            data.append(imagens)
-                            imagens_disponiveis = imagens_disponiveis.drop(imagens.index)  
-
-                df.reset_index(drop=True, inplace=True)
+                        if dia in dias_usados:
+                            continue
+                        else:
+                            df_dia = imagens_disponiveis[imagens_disponiveis['caminho_imagem'].str.contains(dia, na=False)]
+                            
+                            if not df_dia.empty:  
+                                imagens = df_dia.sample(len(df_dia))
+                                data.append(imagens)
+                                imagens_disponiveis = imagens_disponiveis.drop(imagens.index)
+                    
+                    # Resetando o índice do DataFrame se necessário
+                    df.reset_index(drop=True, inplace=True)
 
         df_final = pd.concat(data, ignore_index=True)
 
         df_final['classe'] = df_final['classe'].replace({'Empty': 1, 'Occupied': 0})
 
-        df_final.to_csv(f'CSV/{nome_faculdade}/{nome_faculdade}_Segmentado_{nome}.csv', index=False)
-                  
+        df_final.to_csv(f'CSV/{nome_faculdade}/{nome_faculdade}_Segmentado_Teste.csv', index=False)
+            
     contagem_imagens()
-
-    
-    criar_csv(n_dias=dias_treino, valores=imagens_distribuidas(imagens_treino), nome='Treino')
-    criar_csv(n_dias=dias_validaco, valores=imagens_distribuidas(imagens_validacao), nome='Validacao')
+        
+    treino = criar_csv(n_dias=dias_treino, valores=imagens_distribuidas(imagens_treino), nome='Treino')
+    validacao = criar_csv(n_dias=dias_validaco, valores=imagens_distribuidas(imagens_validacao), nome='Validacao')
 
     if imagens_teste == None and dias_teste == None:
-        imagens_para_teste()
+        imagens_para_teste(treino, validacao)
     else:
         criar_csv(n_dias=dias_teste, valores=imagens_distribuidas(imagens_teste), nome ='Teste')
 
@@ -360,6 +362,8 @@ def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_valida
 #segmentacao_Pklot(imagens_treino=1000, dias_treino=5, imagens_validacao=300, dias_validaco=1, imagens_teste=1000, dias_teste=2, faculdades=["UFPR05"])
 #segmentacao_Pklot(imagens_treino=1000, dias_treino=5, imagens_validacao=300, dias_validaco=1, imagens_teste=1000, dias_teste=2, faculdades=["UFPR04"])
 #segmentacao_Pklot(imagens_treino=1000, dias_treino=5, imagens_validacao=300, dias_validaco=1, imagens_teste=1000, dias_teste=2)
+#segmentacao_PKLot(imagens_treino=1000, dias_treino=5, imagens_validacao=300, dias_validaco=1, imagens_teste=None, dias_teste=None, faculdades=['PUC'])
+
 
 def segmentacao_CNR(imagens_treino:int=1000, dias_treino:int=5, imagens_validacao:int=300, dias_validaco:int=2, imagens_teste:int=2000, dias_teste:int=3):
     path_labels = 'CNR-EXT-Patches-150x150/LABELS/all.txt'

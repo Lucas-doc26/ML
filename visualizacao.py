@@ -267,7 +267,7 @@ def comparacao(resultados, caminho_para_salvar=None, nome_modelo=None):
         for xi, yi in zip(x, y):
             plt.text(xi, yi, f"{yi:.3f}", fontsize=6, ha='left', va='top') 
             
-    plt.title(f'Comparação entre os diferentes {nome_modelo}')
+    plt.title(f'Comparação entre os(as) diferentes {nome_modelo}')
     plt.xlabel('Número de batchs')
     plt.ylabel('Acurácia')
 
