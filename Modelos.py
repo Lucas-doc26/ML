@@ -596,7 +596,7 @@ def treina_modelos_em_batch(nome_modelo, base_usada, treino_csv, validacao, test
     modelos_para_treinar = []
     for modelo in modelos:
         if os.path.exists(os.path.join('Modelos', modelo)):
-            if nome_modelo in modelo:
+            if nome_modelo in modelo and 'Fusao' not in modelo:
                 modelo_base = os.path.join('Modelos', modelo, 'Modelo-Base')
                 peso, estrutura = os.listdir(modelo_base)
                 m = os.listdir(os.path.join(modelo_base , estrutura))
@@ -677,3 +677,5 @@ class CombinarGeradores(Sequence):
     
     def get_total_images(self):
         return self.n_imagens
+
+comparacao
