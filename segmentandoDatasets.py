@@ -144,6 +144,7 @@ def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_valida
 
         df_final = pd.concat(dfs, axis=0, ignore_index=True)
 
+
         if not os.path.isdir("CSV"):
             os.makedirs("CSV")
             os.makedirs(f"CSV/{nome_faculdade}")
@@ -346,7 +347,7 @@ def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_valida
         df_final['classe'] = df_final['classe'].replace({'Empty': 1, 'Occupied': 0})
 
         df_final.to_csv(f'CSV/{nome_faculdade}/{nome_faculdade}_Segmentado_Teste.csv', index=False)
-            
+
     contagem_imagens()
         
     treino = criar_csv(n_dias=dias_treino, valores=imagens_distribuidas(imagens_treino), nome='Treino')
@@ -356,6 +357,13 @@ def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_valida
         imagens_para_teste(treino, validacao)
     else:
         criar_csv(n_dias=dias_teste, valores=imagens_distribuidas(imagens_teste), nome ='Teste')
+
+    df = pd.read_csv(f'CSV/{nome_faculdade}/{nome_faculdade}.csv')
+
+    df['classe'] = df['classe'].replace({'Empty': 1, 'Occupied': 0})
+    df.to_csv(f'CSV/{nome_faculdade}/{nome_faculdade}.csv')
+
+
 
 #Exemplo de uso:
 #segmentacao_Pklot(imagens_treino=1000, dias_treino=5, imagens_validacao=300, dias_validaco=1, imagens_teste=1000, dias_teste=2, faculdades=["PUC"])

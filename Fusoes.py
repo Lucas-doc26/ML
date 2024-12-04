@@ -27,8 +27,8 @@ def soma_previsoes(nome_modelo, nome_base, batch):
     resultado = np.argmax(resultado, axis=1)
     return resultado 
 
-def regra_soma(nome_modelo, nome_base):
-    df = pd.read_csv(f'CSV/{nome_base}/{nome_base}_Segmentado_Teste.csv')
+def regra_soma(nome_modelo, nome_base, caminho_csv):
+    df = pd.read_csv(caminho_csv)
     df = mapear(df['classe'])
     batchs = []
     resultados = []
@@ -54,8 +54,8 @@ def multiplicacao_previsoes(nome_modelo, nome_base, batch):
     
     return resultado
 
-def regra_multiplicacao(nome_modelo, nome_base):
-    df = pd.read_csv(f'CSV/{nome_base}/{nome_base}_Segmentado_Teste.csv')
+def regra_multiplicacao(nome_modelo, nome_base, caminho_csv):
+    df = pd.read_csv(caminho_csv)
     df = mapear(df['classe'])
     batchs = []
     resultados = []
@@ -90,8 +90,8 @@ def votacao_previsoes(nome_modelo, nome_base, batch):
 
     return resultado
     
-def regra_votacao(nome_modelo, nome_base):
-    df = pd.read_csv(f'CSV/{nome_base}/{nome_base}_Segmentado_Teste.csv')
+def regra_votacao(nome_modelo, nome_base, caminho_csv):
+    df = pd.read_csv(caminho_csv)
     df = mapear(df['classe'])
     batchs = []
     resultados = []
