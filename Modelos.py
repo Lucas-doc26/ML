@@ -626,12 +626,20 @@ def testa_modelos_em_batch(nome_modelo, teste, teste_df):
     if not os.path.isdir(f'Modelos/{nome_modelo}/Classificador/Resultados'):
         criar_diretorio_novo(f'Modelos/{nome_modelo}/Classificador/Resultados')
         
+    acuracias = []
+    batchs = []
     for i in range(16):
         classificador.carrega_modelo(f'Modelos/{nome_modelo}/Classificador/Estrutura/Classificador_{nome_modelo}.keras',f'Modelos/{nome_modelo}/Classificador/Pesos/Classificador_{nome_modelo}_batchs-{i+1}.weights.h5' )
         predicoes_np, acuracia = classificador.predicao(teste_df)
         arquivo = f"Modelos/{nome_modelo}/Classificador/Resultados/{nome_modelo}-{nome_base}-batchs-{i+1}.npy"
         np.save(arquivo, predicoes_np)
         limpa_memoria()
+        acuracias.append(acuracia)
+        batchs.append(i+1)
+    nome = nome_modelo + '-' + nome_base
+
+    grafico_batchs(batchs, acuracias, nome, f'Modelos/{nome_modelo}')
+
 
 def testa_modelos(nome_modelo, teste, teste_df):
     classificador = GeradorClassificador()
@@ -640,7 +648,7 @@ def testa_modelos(nome_modelo, teste, teste_df):
     modelos_usados = []
     for modelo in modelos:
         if os.path.exists(os.path.join('Modelos', modelo)):
-            if nome_modelo in modelo:
+            if nome_modelo in modelo and 'Fusao' not in modelo:
                 modelo_base = os.path.join('Modelos', modelo, 'Classificador')
                 estrutura = os.listdir(os.path.join(modelo_base, 'Estrutura'))[0]
                 modelos_usados.append(estrutura)
