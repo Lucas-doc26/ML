@@ -4,7 +4,7 @@ import keras
 import pandas as pd
 from keras.layers import Input, Flatten, Dense, Reshape, Conv2D, MaxPooling2D, UpSampling2D
 from keras.models import Sequential, Model
-from keras.callbacks import ModelCheckpoint
+from keras.callbacks import ModelCheckpoint, EarlyStopping
 from datetime import datetime
 from tensorflow.keras.optimizers import Adam
 from sklearn.base import BaseEstimator, ClassifierMixin
@@ -232,11 +232,16 @@ class Gerador:
         cp_callback = ModelCheckpoint(filepath=checkpoint_path, 
                                         save_weights_only=True, 
                                         monitor='val_loss', 
-                                        mode='max', 
+                                        mode='min', 
                                         save_best_only=True, 
                                         verbose=1)
 
-        history = self.autoencoder.fit(self.treino, epochs=epocas,callbacks=[cp_callback],batch_size=batch_size, validation_data=(self.validacao))
+        early_stopping = EarlyStopping(monitor='val_loss', 
+                               patience=100,  #interrompe se não melhorar
+                               restore_best_weights=True, 
+                               verbose=1)
+
+        history = self.autoencoder.fit(self.treino, epochs=epocas,callbacks=[cp_callback, early_stopping],batch_size=batch_size, validation_data=(self.validacao))
         pd.DataFrame(history.history).plot()
 
         #shutil.rmtree('mnt/data/lucas/Pesos/Pesos_parciais')
@@ -318,11 +323,11 @@ class Gerador:
 
     def predicao(self):
         x,y = next(self.teste)
-        #plot_autoencoder(x, self.autoencoder, self.input_shape[0],self.input_shape[1])
-        pred = self.autoencoder.predict(x.reshape((1,self.input_shape[0], self.input_shape[1],3)))
-        #pred_img = normalize(pred)
+        plot_autoencoder(x, self.autoencoder, self.input_shape[0],self.input_shape[1])
+        pred = self.autoencoder.predict(x[0].reshape((1,self.input_shape[0], self.input_shape[1],3)))
+        pred_img = normalize(pred[0])
 
-        return pred
+        return x[0], pred_img
 
 
 #Exemplo de uso:

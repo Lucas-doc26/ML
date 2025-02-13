@@ -20,7 +20,7 @@ def SSIMLoss(true, pred):
 def combined_loss(y_true, y_pred):
     return 0.5 * tf.keras.losses.mse(y_true, y_pred) + 0.5 * (1 - tf.reduce_mean(tf.image.ssim(y_true, y_pred, max_val=1.0)))
 
-#optimizer = tf.keras.optimizers.Adam(0.001)
+optimizer = tf.keras.optimizers.Adam(0.001)
 
 Modelo = Gerador(input_shape=(64, 64, 3))
 Modelo.setNome('Modelo_Teste')
@@ -30,26 +30,15 @@ Modelo.encoder.summary()
 Modelo.decoder.summary()
 
 Modelo.Dataset(treino, validacao, teste)
-Modelo.compilar_modelo(loss=combined_loss)
-Modelo.treinar_autoencoder(epocas=500, salvar=True, nome_da_base='Kyoto' ,batch_size=8)
+Modelo.compilar_modelo(optimizer=optimizer,loss=SSIMLoss)
+Modelo.treinar_autoencoder(epocas=10000, salvar=True, nome_da_base='Kyoto' ,batch_size=42)
 
 img1,img2 = Modelo.predicao()
 
 ssim_score, _ = ssim(img1, img2, full=True, channel_axis=-1, data_range=1.0)  
 print(f"SSIM Score: {ssim_score}")
 
-contador = 5
-"""while(ssim_score < 0.20):
-    Modelo.treinar_autoencoder(epocas=100, salvar=True, nome_da_base='Kyoto', batch_size=8)   
-    img1,img2 = Modelo.predicao()
-    ssim_score, _ = ssim(img1, img2, full=True, channel_axis=-1, data_range=1.0)
-    print(f"SSIM Score: {ssim_score}")
-    contador += 1
-"""
 
 shutil.rmtree('mnt/data/lucas/Pesos/Pesos_parciais')
-print(contador)
-
 matplotlib.use('TkAgg')
-
 img1,img2 = Modelo.predicao()
