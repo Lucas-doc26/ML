@@ -556,7 +556,7 @@ def segmentacao_CNR(imagens_treino:int=1000, dias_treino:int=5, imagens_validaca
 #segmentacao_CNR(imagens_treino=1000, dias_treino=5, imagens_validacao=300, dias_validaco=1, imagens_teste=1000, dias_teste=2)
 
 
-def segmentacao_Kyoto(treino=32, validacao=10, teste=20):
+def segmentacao_Kyoto(treino=44, validacao=10, teste=8):
     def download_Kyoto():
         kyoto_path.mkdir(exist_ok=True)
         print(f"Pasta Kyoto criada em: {kyoto_path.absolute()}")

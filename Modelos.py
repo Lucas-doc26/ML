@@ -69,8 +69,8 @@ def cria_pasta_modelos():
     if not os.path.isdir("Modelos"):
         os.makedirs("Modelos")
 
-    if not os.path.isdir("Pesos/Pesos_parciais"):
-        os.makedirs("Pesos/Pesos_parciais")
+    if not os.path.isdir("mnt/data/lucas/Pesos/Pesos_parciais"):
+        os.makedirs("mnt/data/lucas/Pesos/Pesos_parciais")
 
     if not os.path.isdir("Modelos/Plots"):
         os.makedirs("Modelos/Plots")
@@ -95,6 +95,10 @@ def extrair_nome_modelo1(nome):
     nome_modelo = "-".join([nome_modelo, numero[0]])
 
     return nome_modelo
+
+def normalize(image):
+        image = np.clip(image, 0, 1)  # Garante que a imagem esteja no intervalo [0, 1]
+        return (image - image.min()) / (image.max() - image.min()) if image.max() != image.min() else image
 
 """------------------Gerador de Autoencoders----------------------"""
 
@@ -153,7 +157,7 @@ class Gerador:
             else:
                 shape_atual = (shape_atual[0], shape_atual[1], filters) 
 
-        latent_dim = np.random.randint(128,2048)
+        latent_dim = np.random.randint(1024,2048)
         encoder_layers.append(Flatten())
         encoder_layers.append(Dense(latent_dim, activation='relu')) #transformo o meu shape_atual no meu latent_dim 
 
@@ -224,7 +228,7 @@ class Gerador:
 
     def treinar_autoencoder(self, salvar=False,nome_da_base='', epocas=10, batch_size=64):
         print("Treinando o modelo: ", self.nome_modelo)
-        checkpoint_path = 'Pesos/Pesos_parciais/weights-improvement-{epoch:02d}-{val_loss:.2f}.weights.h5'
+        checkpoint_path = '/mnt/data/lucas/Pesos/Pesos_parciais/weights-improvement-{epoch:02d}-{val_loss:.2f}.weights.h5'
         cp_callback = ModelCheckpoint(filepath=checkpoint_path, 
                                         save_weights_only=True, 
                                         monitor='val_loss', 
@@ -235,7 +239,7 @@ class Gerador:
         history = self.autoencoder.fit(self.treino, epochs=epocas,callbacks=[cp_callback],batch_size=batch_size, validation_data=(self.validacao))
         pd.DataFrame(history.history).plot()
 
-        shutil.rmtree('Pesos/Pesos_parciais')
+        #shutil.rmtree('mnt/data/lucas/Pesos/Pesos_parciais')
 
         caminho_img = None
         if salvar == True and self.nome_modelo != None:
@@ -311,6 +315,15 @@ class Gerador:
 
         x, y = next(treino)
         plot_autoencoder(x, self.autoencoder, self.input_shape[0], self.input_shape[1])
+
+    def predicao(self):
+        x,y = next(self.teste)
+        #plot_autoencoder(x, self.autoencoder, self.input_shape[0],self.input_shape[1])
+        pred = self.autoencoder.predict(x.reshape((1,self.input_shape[0], self.input_shape[1],3)))
+        #pred_img = normalize(pred)
+
+        return pred
+
 
 #Exemplo de uso:
 #gerador = Gerador(min_layers=2, max_layers=6) -> deve ser proporcional ao input_shape
@@ -516,7 +529,6 @@ class GeradorClassificador:
 
         return self.model
 
-
 #Exemplo de uso:
 #classificador = GeradorClassificador(encoder=encoder, pesos="pesos.weights.h5") -> crio o classificador encima do encoder e seus pesos
 #classificador.Dataset(treino, validacao, teste)
@@ -639,7 +651,6 @@ def testa_modelos_em_batch(nome_modelo, teste, teste_df):
     nome = nome_modelo + '-' + nome_base
 
     grafico_batchs(batchs, acuracias, nome, f'Modelos/{nome_modelo}')
-
 
 def testa_modelos(nome_modelo, teste, teste_df):
     classificador = GeradorClassificador()

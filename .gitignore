@@ -197,3 +197,5 @@ __pycache__/
 
 *.h5
 *.keras
+
+*.png
