@@ -2,7 +2,8 @@ import tensorflow as tf
 import numpy as np
 import keras
 import pandas as pd
-from keras.layers import Input, Flatten, Dense, Reshape, Conv2D, MaxPooling2D, UpSampling2D
+from keras.layers import Input, Flatten, Dense, Reshape, Conv2D, MaxPooling2D, UpSampling2D, Conv2DTranspose, BatchNormalization, Dropout
+from tensorflow.keras.layers import LeakyReLU
 from keras.models import Sequential, Model
 from keras.callbacks import ModelCheckpoint, EarlyStopping
 from datetime import datetime
@@ -18,12 +19,26 @@ from segmentandoDatasets import dividir_em_batchs, retorna_nome_base
 from Preprocessamento import preprocessamento_dataframe
 from sklearn.metrics import confusion_matrix, accuracy_score
 from tensorflow.keras.utils import plot_model
+from tensorflow.keras import regularizers
+import tensorflow as tf
 
+
+path = '/media/hd/mnt/data/Lucas$'
+
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+    try:
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)  # Evita alocação total de memória
+    except RuntimeError as e:
+        print(e)
 
 """----------------------Funções Auxiliares-----------------------"""
 def limpa_memoria():
     k.clear_session()  
     gc.collect() 
+    tf.config.experimental.reset_memory_stats('GPU:0') #limpa memória da gpu
+
 
 def encontrar_modelos_e_pesos(diretorio_base="Modelos", nome=None):
     dir_estruturas = os.path.join(diretorio_base, "Estruturas")
@@ -66,14 +81,14 @@ def retorna_nome(caminho):
     return nome
 
 def cria_pasta_modelos():
-    if not os.path.isdir("Modelos"):
-        os.makedirs("Modelos")
+    if not os.path.isdir(os.path.join(path, "Modelos")):
+        os.makedirs(os.path.join(path, "Modelos"))
 
-    if not os.path.isdir("mnt/data/lucas/Pesos/Pesos_parciais"):
-        os.makedirs("mnt/data/lucas/Pesos/Pesos_parciais")
+    if not os.path.isdir(os.path.join(path, "Pesos/Pesos_parciais")):
+        os.makedirs(os.path.join(path, "Pesos/Pesos_parciais"))
 
-    if not os.path.isdir("Modelos/Plots"):
-        os.makedirs("Modelos/Plots")
+    if not os.path.isdir(os.path.join(path, "Modelos/Plots")):
+        os.makedirs(os.path.join(path, "Modelos/Plots"))
 
 def criar_diretorio_novo(caminho):
     if os.path.exists(caminho):
@@ -98,6 +113,8 @@ def extrair_nome_modelo1(nome):
 
 def normalize(image):
         image = np.clip(image, 0, 1)  # Garante que a imagem esteja no intervalo [0, 1]
+        if isinstance(image, tf.Tensor): #Caso seja um tensor, ele transforma em np para evitar uso de vram
+            image = image.numpy()
         return (image - image.min()) / (image.max() - image.min()) if image.max() != image.min() else image
 
 """------------------Gerador de Autoencoders----------------------"""
@@ -105,10 +122,9 @@ def normalize(image):
 class Gerador:
     """
     Dados de entrada: input_shape=(64, 64, 3), min_layers=2, max_layers=6\n
-    Caso queira aumentar as camadas, deve aumentar o tamanho do input
     """
 
-    def __init__(self, input_shape=(64, 64, 3), min_layers=2, max_layers=6, nome_modelo:str=None):
+    def __init__(self, input_shape=(64, 64, 3), min_layers=5, max_layers=8, nome_modelo:str=None):
         self.input_shape = input_shape
         self.min_layers = min_layers
         self.max_layers = max_layers
@@ -137,7 +153,10 @@ class Gerador:
         encoder_layers = []
         decoder_layers = []
         maxpoll_layers = []
-        
+        batch = False
+        leaky = False
+
+
         shape_atual = self.input_shape
         filter_sizes = [] 
 
@@ -148,17 +167,29 @@ class Gerador:
             filters = np.random.choice(filters_list)
             filter_sizes.append(filters)
             encoder_layers.append(Conv2D(filters, (3, 3), activation='relu', padding='same'))
-            
-            maxpoll_layers.append(np.random.choice([0, 1, 1, 1]))
+            maxpoll_layers.append(np.random.choice([0, 0, 0, 1, 1, 1]))
 
-            if maxpoll_layers[i] == 1:
+            if len(maxpoll_layers) > 4:
+                maxpoll_layers[i] = 0
+            elif maxpoll_layers[i] == 1: #limitando o valor para 4, por conta de ser 64x64 
                 encoder_layers.append(MaxPooling2D((2, 2), padding='same'))
                 shape_atual = (shape_atual[0] // 2, shape_atual[1] // 2, filters) #att por conta da divisão do maxpool
             else:
                 shape_atual = (shape_atual[0], shape_atual[1], filters) 
 
-        latent_dim = np.random.randint(1024,2048)
+        latent_dim = np.random.randint(256,512)
+
+        if np.random.choice(([0,0,1])):
+            encoder_layers.append(BatchNormalization()) 
+            batch = True
+        if np.random.choice(([0,0,1])):
+            encoder_layers.append(LeakyReLU(alpha=0.5)) #Função de ativação 
+            leaky = True
+        if np.random.choice(([0,0,1])):
+            encoder_layers.append(Dropout(np.random.choice(([0.4 , 0.3 , 0.2])))) 
+
         encoder_layers.append(Flatten())
+
         encoder_layers.append(Dense(latent_dim, activation='relu')) #transformo o meu shape_atual no meu latent_dim 
 
         # Decoder
@@ -169,10 +200,16 @@ class Gerador:
         
         for i in range(num_layers):
             filters = filter_sizes[-(i+1)]
-            decoder_layers.append(Conv2D(filters, (3, 3), activation='relu', padding='same'))
             if maxpoll_layers[-(i+1)] == 1:
-                decoder_layers.append(UpSampling2D((2, 2))) #maxpool ao contrário, aumenta a resolução 
-            
+                decoder_layers.append(Conv2DTranspose(filters, (3, 3), strides=(2, 2), padding='same', activation='relu'))
+            else:
+                decoder_layers.append(Conv2DTranspose(filters, (3, 3), strides=(1, 1), padding='same', activation='relu'))
+
+        if batch:
+            decoder_layers.append(BatchNormalization())  
+        if leaky:
+            decoder_layers.append(LeakyReLU(alpha=0.5))
+    
         decoder_layers.append(Conv2D(self.input_shape[2], (3, 3), activation='sigmoid', padding='same'))
 
         gc.collect()
@@ -181,6 +218,12 @@ class Gerador:
         return encoder_layers, decoder_layers, latent_dim
 
     def construir_modelo(self, salvar=False, filters_list=[8,16,32,64,128]):
+        # Limpar antigas referências 
+        self.encoder = None
+        self.decoder = None
+        self.autoencoder = None
+
+
         encoder_layers, decoder_layers, latent_dim = self.calcular_camadas(filters_list)
         
         # Construir encoder
@@ -204,8 +247,8 @@ class Gerador:
         self.autoencoder = Model(inputs, decoded, name=f'autoencoder')
 
         if salvar == True and self.nome_modelo !=None:
-            save_dir = os.path.join("Modelos", self.nome_modelo)
-            dir_raiz = os.path.join(save_dir, "Modelo-Base")
+            save_dir = os.path.join(path, "Modelos", self.nome_modelo)
+            dir_raiz = os.path.join( save_dir, "Modelo-Base")
             dir_modelo = os.path.join(dir_raiz, "Estrutura")
             dir_pesos = os.path.join(dir_raiz, "Pesos")
 
@@ -228,7 +271,7 @@ class Gerador:
 
     def treinar_autoencoder(self, salvar=False,nome_da_base='', epocas=10, batch_size=64):
         print("Treinando o modelo: ", self.nome_modelo)
-        checkpoint_path = '/mnt/data/lucas/Pesos/Pesos_parciais/weights-improvement-{epoch:02d}-{val_loss:.2f}.weights.h5'
+        checkpoint_path = os.path.join(path, 'Pesos/Pesos_parciais/weights-improvement-{epoch:02d}-{val_loss:.2f}.weights.h5')
         cp_callback = ModelCheckpoint(filepath=checkpoint_path, 
                                         save_weights_only=True, 
                                         monitor='val_loss', 
@@ -237,25 +280,22 @@ class Gerador:
                                         verbose=1)
 
         early_stopping = EarlyStopping(monitor='val_loss', 
-                               patience=100,  #interrompe se não melhorar
+                               patience=150,  #interrompe se não melhorar
                                restore_best_weights=True, 
                                verbose=1)
 
-        history = self.autoencoder.fit(self.treino, epochs=epocas,callbacks=[cp_callback, early_stopping],batch_size=batch_size, validation_data=(self.validacao))
-        pd.DataFrame(history.history).plot()
+        # Para caso querer acompanhar o treinamento
+        self.autoencoder.fit(self.treino, epochs=epocas,callbacks=[cp_callback, early_stopping],batch_size=batch_size, validation_data=(self.validacao))
+        #pd.DataFrame(history.history).plot()
 
-        #shutil.rmtree('mnt/data/lucas/Pesos/Pesos_parciais')
+        shutil.rmtree(os.path.join(path, 'Pesos/Pesos_parciais'))
 
-        caminho_img = None
         if salvar == True and self.nome_modelo != None:
-            save_dir = os.path.join("Modelos", self.nome_modelo)
+            save_dir = os.path.join(path, "Modelos", self.nome_modelo)
             dir_raiz = os.path.join(save_dir, "Modelo-Base")
             dir_modelo = os.path.join(dir_raiz, "Estrutura")
             dir_pesos = os.path.join(dir_raiz, "Pesos")
             dir_imagens = os.path.join(dir_raiz, "Plots")
-
-            
-
 
             if os.listdir(dir_modelo) == []:
                 criar_diretorio_novo(dir_modelo)
@@ -264,9 +304,9 @@ class Gerador:
             criar_diretorio_novo(dir_pesos)
 
             self.autoencoder.save_weights(f"{dir_pesos}/{self.nome_modelo}_Base-{nome_da_base}.weights.h5")
+            caminho_img = os.path.join(path, f'Modelos/{self.nome_modelo}')
 
-
-        x, y = next(self.treino)
+        x, y = next(self.teste)
         plot_autoencoder(x, self.autoencoder, self.input_shape[0], self.input_shape[1],caminho_para_salvar=caminho_img)
 
     def carrega_modelo(self, modelo:str, pesos:str=None):
@@ -294,7 +334,7 @@ class Gerador:
 
         self.autoencoder.compile(optimizer=Adam(learning_rate=1e-5), loss='mse')  
 
-        checkpoint_path = 'Pesos/Pesos_parciais/weights-improvement-{epoch:02d}-{val_loss:.2f}.weights.h5'
+        checkpoint_path = os.path,join(path, 'Pesos/Pesos_parciais/weights-improvement-{epoch:02d}-{val_loss:.2f}.weights.h5')
         cp_callback = ModelCheckpoint(filepath=checkpoint_path, 
                                         save_weights_only=True, 
                                         monitor='val_loss', 
@@ -302,11 +342,11 @@ class Gerador:
                                         save_best_only=True, 
                                         verbose=1)
 
-        history = self.autoencoder.fit(treino, epochs=epocas,callbacks=[cp_callback],batch_size=batch_size, validation_data=(validacao))
-        pd.DataFrame(history.history).plot()
+        self.autoencoder.fit(treino, epochs=epocas,callbacks=[cp_callback],batch_size=batch_size, validation_data=(validacao))
+        #pd.DataFrame(history.history).plot()
 
         if salvar == True and nome != None:
-            save_dir = os.path.join("Modelos", self.nome_modelo)
+            save_dir = os.path.join(path, "Modelos", self.nome_modelo)
             dir_raiz = os.path.join(save_dir, "Modelo-FineTuning")
             dir_modelo = os.path.join(dir_raiz, "Estrutura")
             dir_pesos = os.path.join(dir_raiz, "Pesos")
@@ -337,16 +377,16 @@ class Gerador:
 #decoder = gerador.decoder
 #gerador.Dataset(treino, validacao, teste)
 #gerador.treinar_autoencoder(epocas=30, salvar=True) -> treina o autoencoder, plota já a reconstrução 
-
+#preci
 
 """------------------Funções para usar diversos autoencoders----------------------"""
-def cria_modelos(n_modelos=10, nome_modelo=None):
+def cria_modelos(n_modelos=10, nome_modelo=None, filters_list=[8,16,32,64,128]):
     for i in range(n_modelos):  
         limpa_memoria()
 
         Modelo = Gerador(input_shape=(64, 64, 3))
         Modelo.setNome(f'{nome_modelo}-{i}')
-        modelo = Modelo.construir_modelo(salvar=True)
+        modelo = Modelo.construir_modelo(salvar=True, filters_list=filters_list)
 
         modelo.summary()
 
@@ -357,51 +397,45 @@ def cria_modelos(n_modelos=10, nome_modelo=None):
         decoder.summary()
 
         del Modelo, modelo, encoder, decoder
+        limpa_memoria()
     
-def treina_modelos(treino, validacao, teste, nome_modelo=None, nome_base=None, n_epocas=10, batch_size=8):
-
-    modelos = os.listdir("Modelos")
+def treina_modelos(treino, validacao, teste, nome_modelo=None, nome_base=None, n_epocas=10, batch_size=4):
+    modelos = os.listdir(os.path.join(path,"Modelos"))
     modelos_para_treinar = []
+    
     for modelo in modelos:
-        if os.path.exists(os.path.join('Modelos', modelo)):
-            if nome_modelo in modelo:
-                modelo_base = os.path.join('Modelos', modelo, 'Modelo-Base')
-                estrutura, peso = os.listdir(modelo_base) # no computador da puc ele retorna (p,e) / no meu pc ele retorna (e,p) -> ver uma maneira de arrumar isso
-                m = os.listdir(os.path.join(modelo_base , estrutura))
-                dir_modelo = os.path.join(modelo_base, estrutura, m[0])
-                modelos_para_treinar.append(dir_modelo)
-            else:
-                pass
-        else:
-            print(f"O diretório {modelo} não existe.")
+        if os.path.exists(os.path.join(path, 'Modelos', modelo)) and nome_modelo in modelo and "Fusao" not in modelo:
+            modelo_base = os.path.join(path, 'Modelos', modelo, 'Modelo-Base')
+            estrutura, peso  = sorted(os.listdir(modelo_base)) # no computador da puc ele retorna (p,e) / no meu pc ele retorna (e,p) -> ver uma maneira de arrumar isso
+            print(peso)
+            m = os.listdir(os.path.join(modelo_base, estrutura))
+            print(m)
+            dir_modelo = os.path.join(modelo_base, estrutura, m[0])
+            modelos_para_treinar.append(dir_modelo)
 
     for i, m in enumerate(sorted(modelos_para_treinar)):
         limpa_memoria()
 
         Modelo = Gerador()
-
-        AutoencoderModelo = Modelo.carrega_modelo(m)
-
+        Modelo.carrega_modelo(m)
         Modelo.Dataset(treino, validacao, teste)
-
         Modelo.compilar_modelo()
-
         Modelo.setNome(f"{nome_modelo}-{i}")
-
         limpa_memoria()
 
-        Modelo.treinar_autoencoder(epocas=n_epocas, salvar=True, nome_da_base=nome_base ,batch_size=batch_size)
-    
-        del AutoencoderModelo, Modelo
+        Modelo.treinar_autoencoder(epocas=n_epocas, salvar=True, nome_da_base=nome_base, batch_size=batch_size)
+
+        del Modelo
+        gc.collect()  
+        tf.keras.backend.clear_session() 
  
 def fine_tuning_modelos(treino, validacao, teste, nome_modelo=None, nome_base=None, n_epocas=10, camadas=3, salvar=False, batch_size=32):
-
-    modelos = os.listdir("Modelos")
+    modelos = os.listdir(os.path.join(path,"Modelos"))
 
     pares_modelo_peso = []
 
     for modelo in sorted(modelos):
-        modelo_base = os.path.join("Modelos", modelo, "Modelo-Base")
+        modelo_base = os.path.join(modelos, modelo, "Modelo-Base")
         peso, estrutura = os.listdir(modelo_base)
         p = os.listdir(os.path.join(modelo_base, peso))
         e = os.listdir(os.path.join(modelo_base, estrutura))
@@ -444,6 +478,7 @@ class GeradorClassificador:
             for layer in self.encoder.layers:
                 layer.trainable = False
 
+            encoder.trainable = False
             classificador = keras.models.Sequential([
                     self.encoder,  
                     keras.layers.Dropout(0.2),  
@@ -452,7 +487,16 @@ class GeradorClassificador:
                     keras.layers.Dense(2, activation='softmax')  
                 ], name=f'classificador{self.nome_modelo}')
             
-            return classificador
+        else:
+            classificador = keras.models.Sequential([ 
+                    keras.layers.Dropout(0.2),  
+                    keras.layers.Dense(256, activation='relu'),
+                    keras.layers.Dense(128,activation='relu'),  
+                    keras.layers.Dense(2, activation='softmax')  
+                ], name=f'classificador{self.nome_modelo}')
+            
+        #classificador.summary(show_trainable=True)
+        return classificador
     
     def setNome(self, nome):
         self.nome_modelo = nome
@@ -461,14 +505,18 @@ class GeradorClassificador:
         self.model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
 
     def carrega_pesos(self, peso):
-        try:
-            self.model.load_weights(peso, skip_mismatch=True)
-            print("Pesos carregados com sucesso")
-        except Exception as e:
-            print(f"Erro ao carregar os pesos: {e}")
+        if peso == None:
+            print("Criação do modelo de classificação sem pesos")
+        else:
+            try:
+                self.model.load_weights(peso, skip_mismatch=True)
+                print("Pesos carregados com sucesso")
+            except Exception as e:
+                print(f"Erro ao carregar os pesos: {e}")
+        limpa_memoria()
 
     def treinamento(self, salvar=False, epocas=10, batch_size=64, n_batchs=None):
-        checkpoint_path = 'Pesos/Pesos_parciais/weights-improvement-{epoch:02d}-{val_loss:.2f}.weights.h5'
+        checkpoint_path = os.path.join(path, 'Pesos/Pesos_parciais/weights-improvement-{epoch:02d}-{val_loss:.2f}.weights.h5')
         cp_callback = ModelCheckpoint(filepath=checkpoint_path, 
                                         save_weights_only=True, 
                                         monitor='val_loss', 
@@ -476,14 +524,14 @@ class GeradorClassificador:
                                         save_best_only=True, 
                                         verbose=1)
 
+        #Se quiser acompanhar
+        self.model.fit(self.treino, epochs=epocas, callbacks=[cp_callback], batch_size=batch_size ,validation_data=self.validacao)
+        #pd.DataFrame(history.history).plot()
 
-        history = self.model.fit(self.treino, epochs=epocas, callbacks=[cp_callback], batch_size=batch_size ,validation_data=self.validacao)
-        pd.DataFrame(history.history).plot()
-
-        shutil.rmtree("Pesos/Pesos_parciais")
+        shutil.rmtree(os.path.join(path,"Pesos/Pesos_parciais"))
 
         if salvar == True:
-            save_dir = os.path.join("Modelos", self.nome_modelo)
+            save_dir = os.path.join(path, "Modelos", self.nome_modelo)
             dir_raiz = os.path.join(save_dir, "Classificador")
             dir_modelo = os.path.join(dir_raiz, "Estrutura")
             dir_pesos = os.path.join(dir_raiz, "Pesos")
@@ -521,7 +569,7 @@ class GeradorClassificador:
 
         y_verdadeiro = mapear(teste_csv['classe'])
 
-        plot_confusion_matrix(y_verdadeiro, predicoes, ['Empty', 'Occupied'], title=f'{self.nome_modelo}')
+        #plot_confusion_matrix(y_verdadeiro, predicoes, ['Empty', 'Occupied'], title=f'{self.nome_modelo}')
 
         accuracia = accuracy_score(y_verdadeiro, predicoes)
 
@@ -531,6 +579,8 @@ class GeradorClassificador:
         modelo_carregado = tf.keras.models.load_model(modelo)
         self.model = modelo_carregado
         self.carrega_pesos(pesos)
+
+        self.model.summary(show_trainable=True)
 
         return self.model
 
@@ -546,24 +596,24 @@ def cria_classificadores(n_modelos=10, nome_modelo=None, base_usada=None, treino
     for i in range(n_modelos):  
         limpa_memoria()
 
-        gerador.carrega_modelo(f'Modelos/{nome_modelo}-{i}/Modelo-Base/Estrutura/{nome_modelo}-{i}.keras')
+        gerador.carrega_modelo(os.path.join(path,f'Modelos/{nome_modelo}-{i}/Modelo-Base/Estrutura/{nome_modelo}-{i}.keras'))
         encoder = gerador.encoder
 
 
-        classificador = GeradorClassificador(encoder=encoder, pesos=f'Modelos/{nome_modelo}-{i}/Modelo-Base/Pesos/{nome_modelo}-{i}_Base-{base_usada}.weights.h5')
+        classificador = GeradorClassificador(encoder=encoder, pesos=os.path.join(path,f'Modelos/{nome_modelo}-{i}/Modelo-Base/Pesos/{nome_modelo}-{i}_Base-{base_usada}.weights.h5'))
         classificador.Dataset(treino, validacao, teste)
-        classificador.compila()
+        #classificador.compila()
         classificador.setNome(f'{nome_modelo}-{i}')
-        classificador.treinamento(epocas=10)
-        classificador.predicao(teste_csv)
+        #classificador.treinamento(epocas=10)
+        #classificador.predicao(teste_csv)
 
         limpa_memoria()
 
 def treinamento_em_batch(nome_modelo, base_usada, treino_csv, validacao, teste, teste_csv, salvar=True, n_epocas=10):
     gerador = Gerador()
-    gerador.carrega_modelo(f'Modelos/{nome_modelo}/Modelo-Base/Estrutura/{nome_modelo}.keras')
+    gerador.carrega_modelo(os.path.join(path,f'Modelos/{nome_modelo}/Modelo-Base/Estrutura/{nome_modelo}.keras'))
     encoder = gerador.encoder
-    classificador = GeradorClassificador(encoder=encoder, pesos=f'Modelos/{nome_modelo}/Modelo-Base/Pesos/{nome_modelo}_Base-{base_usada}.weights.h5')
+    classificador = GeradorClassificador(encoder=encoder, pesos=os.path.join(path,f'Modelos/{nome_modelo}/Modelo-Base/Pesos/{nome_modelo}_Base-{base_usada}.weights.h5'))
     classificador.compila()
     classificador.setNome(f'{nome_modelo}')
     dividir_em_batchs(treino_csv)
@@ -578,9 +628,9 @@ def treinamento_em_batch(nome_modelo, base_usada, treino_csv, validacao, teste, 
 
     modelo = classificador.model
 
-
-    if not os.path.isdir(f'Modelos/{nome_modelo}/Classificador/Resultados'):
-        criar_diretorio_novo(f'Modelos/{nome_modelo}/Classificador/Resultados')
+    if not os.path.isdir(os.path.join(path,f'Modelos/{nome_modelo}/Classificador/Resultados')):
+        print(path,f'Modelos/{nome_modelo}/Classificador/Resultados')
+        criar_diretorio_novo(os.path.join(path,f'Modelos/{nome_modelo}/Classificador/Resultados'))
 
     for i, batch in enumerate(batchs):
         treino, _ = preprocessamento_dataframe(os.path.join(batch_dir, batch), autoencoder=False)
@@ -594,27 +644,36 @@ def treinamento_em_batch(nome_modelo, base_usada, treino_csv, validacao, teste, 
         precisoes.append(acuracia)
         n_batchs.append(len(treino))
 
-        arquivo = f"Modelos/{nome_modelo}/Classificador/Resultados/{nome_modelo}-{nome_base_teste}-batchs-{i+1}.npy"
+        arquivo = os.path.join(path, f"Modelos/{nome_modelo}/Classificador/Resultados/{nome_modelo}-{nome_base_teste}-batchs-{i+1}.npy")
         np.save(arquivo, predicoes_np)
+
+        dir_prec = os.path.join(path, f"Modelos/{nome_modelo}/Classificador/Precisao")
+        criar_diretorio_novo(dir_prec)
+
+        caminho_arquivo = os.path.join(dir_prec, f'precisao-{nome_base_teste}.txt')
+        with open(caminho_arquivo, 'w') as f:
+            for prec in precisoes:
+                f.write(f"{prec}\n")
         
         limpa_memoria() 
         #garante que o próx batch será treinado do 0
 
-    grafico_batchs(n_batchs, precisoes, nome_modelo, f'Modelos/{nome_modelo}')
+    grafico_batchs(n_batchs, precisoes, nome_modelo, os.path.join(path,f'Modelos/{nome_modelo}'))
 
-    plot_model(encoder, show_shapes=True,show_layer_names=True,to_file=f'Modelos/{nome_modelo}/Classificador/encoder-{nome_modelo}.png')
-    plot_model(modelo, show_shapes=True,show_layer_names=True,to_file=f'Modelos/{nome_modelo}/Classificador/classificador-{nome_modelo}.png')
-
+    plot_model(encoder, show_shapes=True,show_layer_names=True,to_file=os.path.join(path,f'Modelos/{nome_modelo}/Classificador/encoder-{nome_modelo}.png'))
+    plot_model(modelo, show_shapes=True,show_layer_names=True,to_file=os.path.join(path,f'Modelos/{nome_modelo}/Classificador/classificador-{nome_modelo}.png'))
     
-    return (n_batchs, precisoes, nome_modelo)
+    print(precisoes)
+    #return (n_batchs, precisoes, nome_modelo)
 
 def treina_modelos_em_batch(nome_modelo, base_usada, treino_csv, validacao, teste, teste_csv, salvar=True, n_epocas=10):
-    modelos = os.listdir("Modelos")
+    path_modelos = os.path.join(path, "Modelos")
+    modelos = os.listdir(path_modelos)
     modelos_para_treinar = []
     for modelo in modelos:
-        if os.path.exists(os.path.join('Modelos', modelo)):
+        if os.path.exists(os.path.join(path_modelos, modelo)):
             if nome_modelo in modelo and 'Fusao' not in modelo:
-                modelo_base = os.path.join('Modelos', modelo, 'Modelo-Base')
+                modelo_base = os.path.join(path_modelos, modelo, 'Modelo-Base')
                 peso, estrutura = os.listdir(modelo_base)
                 m = os.listdir(os.path.join(modelo_base , estrutura))
                 dir_modelo = os.path.join(modelo_base, estrutura, m[0])
@@ -628,10 +687,9 @@ def treina_modelos_em_batch(nome_modelo, base_usada, treino_csv, validacao, test
 
     for i, m in enumerate(sorted(modelos_para_treinar)):
         nome = nome_modelo + f"-{i}"
-        resultado = treinamento_em_batch(nome, base_usada, treino_csv, validacao, teste, teste_csv, salvar, n_epocas)
-        lista.append(resultado)
+        treinamento_em_batch(nome, base_usada, treino_csv, validacao, teste, teste_csv, salvar, n_epocas)
 
-    comparacao(lista, "Modelos/Plots", nome_modelo)
+    comparacao(os.path.join(path_modelos, "Plots"), nome_modelo, base_usada)
 
 def testa_modelos_em_batch(nome_modelo, teste, teste_df):
     classificador = GeradorClassificador()
@@ -640,32 +698,33 @@ def testa_modelos_em_batch(nome_modelo, teste, teste_df):
     nome_base = retorna_nome_df(teste_df)
     classificador.setTeste(teste)
 
-    if not os.path.isdir(f'Modelos/{nome_modelo}/Classificador/Resultados'):
-        criar_diretorio_novo(f'Modelos/{nome_modelo}/Classificador/Resultados')
+    if not os.path.isdir(os.path.join(path,f'Modelos/{nome_modelo}/Classificador/Resultados')):
+        criar_diretorio_novo(os.path.join(path,f'Modelos/{nome_modelo}/Classificador/Resultados'))
         
     acuracias = []
     batchs = []
     for i in range(16):
-        classificador.carrega_modelo(f'Modelos/{nome_modelo}/Classificador/Estrutura/Classificador_{nome_modelo}.keras',f'Modelos/{nome_modelo}/Classificador/Pesos/Classificador_{nome_modelo}_batchs-{i+1}.weights.h5' )
+        classificador.carrega_modelo(os.path.join(path,f'Modelos/{nome_modelo}/Classificador/Estrutura/Classificador_{nome_modelo}.keras'),os.path.join(path,f'Modelos/{nome_modelo}/Classificador/Pesos/Classificador_{nome_modelo}_batchs-{i+1}.weights.h5'))
         predicoes_np, acuracia = classificador.predicao(teste_df)
-        arquivo = f"Modelos/{nome_modelo}/Classificador/Resultados/{nome_modelo}-{nome_base}-batchs-{i+1}.npy"
+        arquivo = os.path.join(path, f"Modelos/{nome_modelo}/Classificador/Resultados/{nome_modelo}-{nome_base}-batchs-{i+1}.npy")
         np.save(arquivo, predicoes_np)
         limpa_memoria()
         acuracias.append(acuracia)
         batchs.append(i+1)
     nome = nome_modelo + '-' + nome_base
 
-    grafico_batchs(batchs, acuracias, nome, f'Modelos/{nome_modelo}')
+    print(acuracias)
+    grafico_batchs(batchs, acuracias, nome, os.path.join(path,f'Modelos/{nome_modelo}'))
 
 def testa_modelos(nome_modelo, teste, teste_df):
     classificador = GeradorClassificador()
-    
-    modelos = os.listdir("Modelos")
+    caminho_modelos = os.path.join(path, "Modelos")
+    modelos = os.listdir(caminho_modelos)
     modelos_usados = []
     for modelo in modelos:
-        if os.path.exists(os.path.join('Modelos', modelo)):
+        if os.path.exists(os.path.join(caminho_modelos, modelo)):
             if nome_modelo in modelo and 'Fusao' not in modelo:
-                modelo_base = os.path.join('Modelos', modelo, 'Classificador')
+                modelo_base = os.path.join(caminho_modelos, modelo, 'Classificador')
                 estrutura = os.listdir(os.path.join(modelo_base, 'Estrutura'))[0]
                 modelos_usados.append(estrutura)
             else:
@@ -701,5 +760,3 @@ class CombinarGeradores(Sequence):
     
     def get_total_images(self):
         return self.n_imagens
-
-comparacao

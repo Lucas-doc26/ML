@@ -10,6 +10,8 @@ import requests
 import zipfile
 import shutil
 
+
+
 #Função antiga - Sem balanceamento
 def segmentando_datasets(quantidade_PUC: Optional[int] = None, quantidade_UFPR04: Optional[int] = None, quantidade_UFPR05: Optional[int] = None) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
@@ -235,10 +237,9 @@ def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_valida
 
         return valores
     
-    def criar_csv(n_dias, valores, nome:str=''):
+    def criar_csv(n_dias, valores, nome: str = ''):
         df = pd.read_csv(f'CSV/{nome_faculdade}/{nome_faculdade}.csv')
         data = []
-        df_final = pd.DataFrame()
         dias_usados = []
 
         for faculdade in faculdades:
@@ -246,7 +247,6 @@ def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_valida
             
             for tempo in tempos: 
                 df_tempo = df_facul[df_facul['caminho_imagem'].str.contains(tempo)]
-
                 dias_dir = sorted(os.listdir(os.path.join(path_base, faculdade, tempo)))
                 total_dias = len(dias_dir)
 
@@ -260,36 +260,34 @@ def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_valida
                 
                 for classe in classes:
                     df_classe = df_tempo[df_tempo['classe'].str.contains(classe)]
+                    # 'valor' é a quantidade de imgs que eu quero pegar
                     valor = valores[faculdade][tempo][classe]
+                    # cria uma cópia única do dataframe disponível para a classe
+                    imagens_disponiveis = df_classe.copy()
                     
-                    while valor > 0:
-                        imagens_disponiveis = df_classe.copy()
+                    while valor > 0 and not imagens_disponiveis.empty:
+                        progresso = False 
+                        
                         for dia in dias_selecionados:
                             df_dia = imagens_disponiveis[imagens_disponiveis['caminho_imagem'].str.contains(dia, na=False)]
-                            
-                            if not df_dia.empty:  
-                                imagem_selecionada = df_dia.sample(1)
+                            if not df_dia.empty:
+                                imagem_selecionada = df_dia.sample(1)#pega uma img aleat. 
                                 data.append(imagem_selecionada)
-                                valor -= 1
-                                
-                                imagens_disponiveis = imagens_disponiveis.drop(imagem_selecionada.index)  
-                                
+                                valor -= 1  
+                                imagens_disponiveis = imagens_disponiveis.drop(imagem_selecionada.index)#drop do dataset a img selecionada
+                                progresso = True
                                 if valor <= 0:
                                     break
-                            
                             if dia not in dias_usados:
                                 dias_usados.append(dia)
-
-                        if valor <= 0:  # Saia do loop enquanto se atingir a meta
+                        
+                        #se não conseguir pegar uma img, ele sia do loop, para evitar de ficar infinito
+                        if not progresso:
+                            print(f"Aviso: Não há imagens suficientes para {faculdade} - {tempo} - {classe}")
                             break
-                    
-                    # Resetando o índice do DataFrame se necessário
-                    df.reset_index(drop=True, inplace=True)
 
         df_final = pd.concat(data, ignore_index=True)
-
         df_final['classe'] = df_final['classe'].replace({'Empty': 1, 'Occupied': 0})
-
         df_final.to_csv(f'CSV/{nome_faculdade}/{nome_faculdade}_Segmentado_{nome}.csv', index=False)
 
         return dias_usados
@@ -362,8 +360,6 @@ def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_valida
 
     df['classe'] = df['classe'].replace({'Empty': 1, 'Occupied': 0})
     df.to_csv(f'CSV/{nome_faculdade}/{nome_faculdade}.csv')
-
-
 
 #Exemplo de uso:
 #segmentacao_Pklot(imagens_treino=1000, dias_treino=5, imagens_validacao=300, dias_validaco=1, imagens_teste=1000, dias_teste=2, faculdades=["PUC"])
@@ -556,7 +552,7 @@ def segmentacao_CNR(imagens_treino:int=1000, dias_treino:int=5, imagens_validaca
 #segmentacao_CNR(imagens_treino=1000, dias_treino=5, imagens_validacao=300, dias_validaco=1, imagens_teste=1000, dias_teste=2)
 
 
-def segmentacao_Kyoto(treino=44, validacao=10, teste=8):
+def segmentacao_Kyoto(treino=32, validacao=20, teste=8):
     def download_Kyoto():
         kyoto_path.mkdir(exist_ok=True)
         print(f"Pasta Kyoto criada em: {kyoto_path.absolute()}")
@@ -636,8 +632,9 @@ def segmentacao_Kyoto(treino=44, validacao=10, teste=8):
     imagens = os.listdir(kyoto_path)
 
     for img in imagens:
-        full_path = os.path.join(kyoto_path, img)
-        caminho_imagens.append(full_path)
+        if not img == 'dataAug':
+            full_path = os.path.join(kyoto_path, img)
+            caminho_imagens.append(full_path)
 
     df = pd.DataFrame({
             'caminho_imagem': sorted(caminho_imagens)
@@ -656,17 +653,36 @@ def segmentacao_Kyoto(treino=44, validacao=10, teste=8):
     if not os.path.isdir("CSV/Kyoto"):
         os.makedirs("CSV/Kyoto")
 
+    caminho_imagens_dataAug = []    
+
+    imagens_dataAug = os.listdir(os.path.join(kyoto_path, 'dataAug'))
+
+    for img_data in imagens_dataAug:
+        full_path_data = os.path.join(kyoto_path, 'dataAug', img_data)
+        caminho_imagens_dataAug.append(full_path_data)    
+
+    df_dataAug = pd.DataFrame({
+        'caminho_imagem':sorted(caminho_imagens_dataAug)
+    })
+
+    df_treino = pd.concat([df_treino, df_dataAug], ignore_index=False)
+
     df_treino.to_csv('CSV/Kyoto/Kyoto_Segmentado_Treino.csv', index=False)
     df_validacao.to_csv('CSV/Kyoto/Kyoto_Segmentado_Validacao.csv', index=False)
     df_teste.to_csv('CSV/Kyoto/Kyoto_Segmentado_Teste.csv', index=False)
 
 def dividir_em_batchs(csv):
+    print("aqui")
     nome, estado = retorna_nome_base(csv)
 
     dataframe = pd.read_csv(csv)
-
+    print(dataframe)
+    dataframe.head()
     n_batchs = int(len(dataframe)/64)
     print("O número de batchs é ", n_batchs)
+
+    if n_batchs > 16:
+        n_batchs = 16
 
     if os.path.isdir(f'CSV/{nome}/batch'):
         shutil.rmtree(f'CSV/{nome}/batch')
@@ -695,3 +711,128 @@ def retorna_nome_base(caminho):
     nome = nome.rsplit('.csv', 1)[0]
     nome = nome.split('_')
     return (nome[0], nome[2])
+
+def download_datasets():
+    if not os.path.isdir("Kyoto"):
+        download_Kyoto
+            
+def download_Kyoto():
+        kyoto_path = Path("Kyoto")
+
+        if not os.path.isdir(kyoto_path):
+            kyoto_path.mkdir(exist_ok=True)
+            print(f"Pasta Kyoto criada em: {kyoto_path.absolute()}")
+            
+            # Baixar o arquivo ZIP
+            url = "https://github.com/eizaburo-doi/kyoto_natim/archive/refs/heads/master.zip"
+            print("Baixando arquivo ZIP...")
+            response = requests.get(url)
+            
+            if response.status_code != 200:
+                raise Exception(f"Erro ao baixar o arquivo. Status code: {response.status_code}")
+            
+            # Salvar o arquivo ZIP temporariamente
+            zip_path = "kyoto_temp.zip"
+            with open(zip_path, 'wb') as f:
+                f.write(response.content)
+            print(f"Arquivo ZIP salvo em: {zip_path}")
+            
+            # Extrair o arquivo ZIP
+            print("Extraindo arquivo ZIP...")
+            with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                zip_ref.extractall("temp_extract")
+            
+            # Listar todos os arquivos extraídos para debug
+            print("\nConteúdo extraído:")
+            for root, dirs, files in os.walk("temp_extract"):
+                print(f"\nDiretório: {root}")
+                for name in files:
+                    print(f"- {name}")
+            
+            # Tentar diferentes possíveis caminhos para a pasta thumb
+            possible_paths = [
+                Path("temp_extract/kyoto_natim-master/kyoto_natim-master/thumb"),
+                Path("temp_extract/kyoto_natim-master/thumb"),
+                Path("temp_extract/thumb")
+            ]
+            
+            thumb_path = None
+            for path in possible_paths:
+                if path.exists():
+                    thumb_path = path
+                    print(f"\nPasta thumb encontrada em: {thumb_path}")
+                    break
+            
+            if not thumb_path:
+                raise Exception("Pasta thumb não encontrada nos caminhos esperados")
+            
+            # Copiar todas as imagens para a pasta Kyoto
+            print("\nCopiando imagens...")
+            image_extensions = ('.jpg', '.jpeg', '.png', '.gif')
+            images_copied = 0
+            
+            for file in thumb_path.glob("*"):
+                print(f"Encontrado arquivo: {file.name}")
+                if file.suffix.lower() in image_extensions:
+                    shutil.copy2(file, kyoto_path)
+                    print(f"Copiado: {file.name}")
+                    images_copied += 1
+            
+            # Limpar arquivos temporários
+            print("\nLimpando arquivos temporários...")
+            os.remove(zip_path)
+            shutil.rmtree("temp_extract")
+            
+            if images_copied == 0:
+                print("\nNenhuma imagem foi encontrada para copiar!")
+            else:
+                print(f"\nProcesso concluído! {images_copied} imagens foram copiadas para a pasta Kyoto")
+
+
+def PKLOT():
+    dfs = []
+    for local in faculdades:
+        caminhos_empty = []
+        caminhos_occupied = []
+        
+        for tempo in tempos:
+            sample_dir = os.path.join(path_base, local, tempo)
+            if not os.path.exists(sample_dir):
+                print(f'Diretório não encontrado: {sample_dir}')
+                continue
+
+            for pasta in os.listdir(sample_dir):
+                for class_dir in ['Empty', 'Occupied']:
+                    full_class_dir = os.path.join(sample_dir, pasta, class_dir)
+                    if os.path.exists(full_class_dir):
+                        for file in os.listdir(full_class_dir):
+                            if file.endswith('.jpg'):
+                                caminho = PurePath(os.path.join(full_class_dir, file))
+                                if class_dir == 'Empty':
+                                    caminhos_empty.append(str(caminho))
+                                else:
+                                    caminhos_occupied.append(str(caminho))
+
+        df = pd.DataFrame({
+            'caminho_imagem': caminhos_empty + caminhos_occupied,
+            'classe': ['Empty'] * len(caminhos_empty) + ['Occupied'] * len(caminhos_occupied)
+        })
+        dfs.append(df)
+
+    df_final = pd.concat(dfs, axis=0, ignore_index=True)
+
+
+    if not os.path.isdir("CSV"):
+        os.makedirs("CSV")
+        os.makedirs(f"CSV/PKLot")
+    
+    if not os.path.isdir(f"CSV/PKLot"):
+        os.makedirs(f"CSV/PKLot")
+
+    df_final.to_csv(f"CSV/PKLot/PKLot.csv", index=False)
+
+
+# Testes:
+#from Preprocessamento import *
+#segmentacao_Kyoto() 
+#treino_autoencoder, _ = preprocessamento_dataframe(caminho_csv='CSV/Kyoto/Kyoto_Segmentado_Treino.csv', autoencoder=True, data_algumentantation=False)

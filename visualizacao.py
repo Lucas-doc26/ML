@@ -9,6 +9,8 @@ import math
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from Preprocessamento import mapear_rotulos_binarios, carregar_e_preprocessar_imagens
 
+path = '/media/hd/mnt/data/Lucas$'
+
 def plot_imagens_com_csv(caminho_csv, img_por_coluna):
     """
     Função para plotar imagens de um arquivo .csv contendo os caminhos de imagens.
@@ -35,6 +37,7 @@ def plot_imagens_com_csv(caminho_csv, img_por_coluna):
 
     plt.tight_layout()
     plt.show()
+    plt.close()
      
 def plot_imagens_dataframe_gerador(dataframe_gerador, img_por_coluna=3):
     """
@@ -66,10 +69,8 @@ def plot_imagens_dataframe_gerador(dataframe_gerador, img_por_coluna=3):
 
     plt.tight_layout()
     plt.show()
+    plt.close()
         
-    plt.tight_layout()
-    plt.show()
-
 def plot_confusion_matrix(y_true, y_pred, labels=['Empty', 'Occupied'], title=None, save_path=None):
     """
     Plota uma matriz de confusão.
@@ -100,6 +101,7 @@ def plot_confusion_matrix(y_true, y_pred, labels=['Empty', 'Occupied'], title=No
         plt.close()
     else:
         plt.show()
+        plt.close()
 
 def exibir_primeiras_imagens(dataframe):
     # Pegar os caminhos das 9 primeiras imagens
@@ -115,6 +117,7 @@ def exibir_primeiras_imagens(dataframe):
         plt.title(f'Imagem {i + 1}')
     plt.tight_layout()
     plt.show()
+    plt.close()
 
 def plot_imagens_incorretas(y_binario, y_predicao, caminhos_imagens, modelo_nome:str, dataset_nome:str, n_imagens_por_grade:3):
     """
@@ -181,13 +184,17 @@ def plot_autoencoder(x_test, Autoencoder, width=64, height=64, caminho_para_salv
 
         plt.subplot(2, 8, i + 8 + 1)
         plt.imshow(pred_img)
+        del pred_img
         plt.title("Reconstruída")
         plt.axis("off")
 
     plt.show()
     if caminho_para_salvar != None:
         save_path = os.path.join(caminho_para_salvar, 'Autoencoder.png')
-        plt.savefig(save_path_imgs)
+        plt.savefig(save_path)
+    
+    plt.close("all") # para evitar que fica imagens presas em memória
+
 
 def plot_batch(batch, batch_size):
 
@@ -216,6 +223,7 @@ def plot_batch(batch, batch_size):
 
     plt.tight_layout()
     plt.show()
+    plt.close()
 
 def avaliar_modelo_em_datasets(modelo, datasets_info):
     """
@@ -241,6 +249,7 @@ def avaliar_modelo_em_datasets(modelo, datasets_info):
         plot_imagens_incorretas(y_binario, y_predicao, caminhos_imagens, modelo.name, dataset_nome, 3)
 
 def grafico_batchs(n_batchs, precisoes, nome_modelo, caminho_para_salvar=None):
+    plt.figure()
     plt.title(f"Comparação de acurácia conforme os batchs - {nome_modelo}")
     plt.xlabel('Número de Batchs')
     plt.ylabel('Acurácia')
@@ -256,16 +265,30 @@ def grafico_batchs(n_batchs, precisoes, nome_modelo, caminho_para_salvar=None):
         plt.savefig(save_path)
 
     plt.show()
+    plt.close()
 
-def comparacao(resultados, caminho_para_salvar=None, nome_modelo=None):
-    plt.figure(figsize=(10, 6))
+#Compara os n modelos criados 
+def comparacao(caminho_para_salvar=None, nome_modelo=None, base_usada=None):
+    dir_base = os.path.join(path, "Modelos")
+    modelos = [modelo for modelo in os.listdir(dir_base) if (f'{nome_modelo}' in modelo and "Fusao" not in modelo)]
     
-    for resultado in resultados:
-        x, y, nome = resultado
-        plt.plot(x, y, label=f"{nome}", marker='o') 
+    x = list(range(1, 16 + 1)) 
+    plt.figure(figsize=(10, 6))
 
-        for xi, yi in zip(x, y):
-            plt.text(xi, yi, f"{yi:.3f}", fontsize=6, ha='left', va='top') 
+    for modelo in modelos:
+        dir_resultados = os.path.join(dir_base, modelo, 'Classificador/Precisao')
+        precisao = [r for r in os.listdir(dir_resultados) if f'{base_usada}' in r]
+        with open(precisao, 'r') as f:
+            lista_lida = f.readlines()
+
+        lista_lida = [item.strip() for item in lista_lida]
+        lista = list(map(int, lista_lida))
+
+        for prec in lista:
+            plt.plot(x, lista[prec], label=f"{nome_modelo}", marker='o') 
+
+            for xi, yi in zip(x, y):
+                plt.text(xi, yi, f"{yi:.3f}", fontsize=6, ha='left', va='top') 
             
     plt.title(f'Comparação entre os(as) diferentes {nome_modelo}')
     plt.xlabel('Número de batchs')
@@ -274,7 +297,13 @@ def comparacao(resultados, caminho_para_salvar=None, nome_modelo=None):
     plt.legend()
 
     if caminho_para_salvar != None:
-        save_path = os.path.join(caminho_para_salvar, f'Grafico-Comparacao-{nome_modelo}.png')
+        save_path = os.path.join(path, caminho_para_salvar, f'Grafico-Comparacao-{nome_modelo}.png')
         plt.savefig(save_path)
 
     plt.show()
+    plt.close()
+
+#comparacao(None, 'Modelo_exp', 'PUC')
+#precisoes = [0.9192328403960068, 0.9368046062714883, 0.938345553208235, 0.9414605857255292, 0.9707220082018143, 0.9742098504618698, 0.9705480303218591, 0.9743921130027754, 0.9770432045068556, 0.9806304626983141, 0.9779296632285324, 0.9713682117559339, 0.9753034257073029, 0.9730665672507353, 0.9758833519738205, 0.9751377324882979]
+#n_batchs = list(range(1, len(precisoes) + 1)) 
+#grafico_batchs(n_batchs, precisoes, "Teste", None)
