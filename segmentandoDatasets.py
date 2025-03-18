@@ -9,9 +9,16 @@ from typing import Tuple, Optional
 import requests
 import zipfile
 import shutil
+import shutil
+from sklearn.model_selection import train_test_split
 
-
-
+def cria_dirs():
+    dirs = ['PKLot','PUC', 'UFPR04', 'UFPR05', 'CNR', 'Kyoto']
+    if not os.path.isdir('CSV'):
+        os.makedirs('CSV')
+        for dr in dirs:
+            os.makedirs(f'CSV/{dr}')
+    
 #Função antiga - Sem balanceamento
 def segmentando_datasets(quantidade_PUC: Optional[int] = None, quantidade_UFPR04: Optional[int] = None, quantidade_UFPR05: Optional[int] = None) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
     """
@@ -98,7 +105,7 @@ def segmentando_datasets(quantidade_PUC: Optional[int] = None, quantidade_UFPR04
 
     return tuple(dataframes)  # Retornar a tupla dos DataFrames
 
-#Função de segmentar o PKLot Balanceado
+#Função de segmentar o PKLot Balanceado - rever ela, está desatualizada 
 def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_validacao:int=300, dias_validaco:int=2, imagens_teste:int=2000, dias_teste=3, faculdades = ['PUC', 'UFPR04', 'UFPR05']):
     """
     A soma máxima do número de dias, deve ser igual a 8 caso queira dias distintos entre treino/validacao/teste
@@ -361,14 +368,6 @@ def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_valida
     df['classe'] = df['classe'].replace({'Empty': 1, 'Occupied': 0})
     df.to_csv(f'CSV/{nome_faculdade}/{nome_faculdade}.csv')
 
-#Exemplo de uso:
-#segmentacao_Pklot(imagens_treino=1000, dias_treino=5, imagens_validacao=300, dias_validaco=1, imagens_teste=1000, dias_teste=2, faculdades=["PUC"])
-#segmentacao_Pklot(imagens_treino=1000, dias_treino=5, imagens_validacao=300, dias_validaco=1, imagens_teste=1000, dias_teste=2, faculdades=["UFPR05"])
-#segmentacao_Pklot(imagens_treino=1000, dias_treino=5, imagens_validacao=300, dias_validaco=1, imagens_teste=1000, dias_teste=2, faculdades=["UFPR04"])
-#segmentacao_Pklot(imagens_treino=1000, dias_treino=5, imagens_validacao=300, dias_validaco=1, imagens_teste=1000, dias_teste=2)
-#segmentacao_PKLot(imagens_treino=1000, dias_treino=5, imagens_validacao=300, dias_validaco=1, imagens_teste=None, dias_teste=None, faculdades=['PUC'])
-
-
 def segmentacao_CNR(imagens_treino:int=1000, dias_treino:int=5, imagens_validacao:int=300, dias_validaco:int=2, imagens_teste:int=2000, dias_teste:int=3):
     path_labels = 'CNR-EXT-Patches-150x150/LABELS/all.txt'
     path_imgs = 'CNR-EXT-Patches-150x150/PATCHES'
@@ -544,13 +543,9 @@ def segmentacao_CNR(imagens_treino:int=1000, dias_treino:int=5, imagens_validaca
 
     cria_CNR()
 
-    criar_csv_cnr(n_dias=dias_treino, valores=imagens_distribuidas_cnr(imagens_treino), nome='Treino')
-    criar_csv_cnr(n_dias=dias_validaco, valores=imagens_distribuidas_cnr(imagens_validacao), nome='Validacao')
-    criar_csv_cnr(n_dias=dias_teste, valores=imagens_distribuidas_cnr(imagens_teste), nome ='Teste')
-    
-#Exemplo de uso:
-#segmentacao_CNR(imagens_treino=1000, dias_treino=5, imagens_validacao=300, dias_validaco=1, imagens_teste=1000, dias_teste=2)
-
+    #criar_csv_cnr(n_dias=dias_treino, valores=imagens_distribuidas_cnr(imagens_treino), nome='Treino')
+    #criar_csv_cnr(n_dias=dias_validaco, valores=imagens_distribuidas_cnr(imagens_validacao), nome='Validacao')
+    #criar_csv_cnr(n_dias=dias_teste, valores=imagens_distribuidas_cnr(imagens_teste), nome ='Teste')
 
 def segmentacao_Kyoto(treino=32, validacao=20, teste=8):
     def download_Kyoto():
@@ -671,41 +666,6 @@ def segmentacao_Kyoto(treino=32, validacao=20, teste=8):
     df_validacao.to_csv('CSV/Kyoto/Kyoto_Segmentado_Validacao.csv', index=False)
     df_teste.to_csv('CSV/Kyoto/Kyoto_Segmentado_Teste.csv', index=False)
 
-def dividir_em_batchs(csv):
-    print("aqui")
-    nome, estado = retorna_nome_base(csv)
-
-    dataframe = pd.read_csv(csv)
-    print(dataframe)
-    dataframe.head()
-    n_batchs = int(len(dataframe)/64)
-    print("O número de batchs é ", n_batchs)
-
-    if n_batchs > 16:
-        n_batchs = 16
-
-    if os.path.isdir(f'CSV/{nome}/batch'):
-        shutil.rmtree(f'CSV/{nome}/batch')
-        os.makedirs(f'CSV/{nome}/batch')
-
-    for i in range(n_batchs):
-        imgs = []
-        
-        for classe in [0, 1]:
-            dataframe_classe = dataframe[dataframe['classe'] == classe]
-            
-            if len(dataframe_classe) >= 2:
-                sampled_data = dataframe_classe.sample(n=32, replace=False)
-                imgs.append(sampled_data)
-                dataframe = dataframe.drop(sampled_data.index)
-            else:
-                imgs.append(dataframe_classe)
-                dataframe = dataframe.drop(dataframe_classe.index)
-
-        df_final = pd.concat(imgs, ignore_index=True)
-
-        df_final.to_csv(f'CSV/{nome}/batch/batch_{nome}_{estado}_{i}.csv', index=False)
-
 def retorna_nome_base(caminho):
     nome = caminho.split('/')[-1]
     nome = nome.rsplit('.csv', 1)[0]
@@ -788,51 +748,230 @@ def download_Kyoto():
             else:
                 print(f"\nProcesso concluído! {images_copied} imagens foram copiadas para a pasta Kyoto")
 
+def PKLot():
+    cria_dirs()
 
-def PKLOT():
+    def cria_pklot():
+        df_final = pd.DataFrame()  
+        n_imgs = [102, 102, 102, 103, 103]
+        faculdades = ['PUC', 'UFPR04', 'UFPR05']
+        tempos = ['Cloudy', 'Rainy', 'Sunny']
+        classes = ['Empty', 'Occupied']
+
+        dados = []
+        path_pklot = "PKLot/PKLotSegmented"
+        for faculdade in faculdades:
+            for tempo in tempos:
+                path_facul_tempo = os.path.join(path_pklot, faculdade, tempo) #"PKLot/PKLotSegmented/PUC/Sunny"
+                dias = os.listdir(path_facul_tempo)
+                for dia in dias:
+                    for classe in classes:
+                        path_imgs = os.path.join(path_facul_tempo, dia, classe) #"PKLot/PKLotSegmented/PUC/Sunny/2012-09-12/Empty"
+                        
+                        if not os.path.isdir(path_imgs):
+                            continue
+
+                        imagens = os.listdir(path_imgs)
+                        for img in imagens:
+                            caminho_img = os.path.join(path_imgs, img)
+                            dados.append([faculdade, tempo, dia, caminho_img, classe])
+
+        df = pd.DataFrame(data=dados, columns=['Faculdade', 'Tempo', 'Dia', 'caminho_imagem' ,'classe'])
+        df['classe'] = df['classe'].replace({'Empty': 1, 'Occupied': 0})
+        df.to_csv("CSV/PKLot/PKLot.csv")
+
+    cria_pklot()
+
+    #Variveis de controle
+    df_final = pd.DataFrame()  
+    n_imgs = [102, 102, 102, 103, 103]
+    faculdades = ['PUC', 'UFPR04', 'UFPR05']
+    tempos = ['Cloudy', 'Rainy', 'Sunny']
+    classes = ['Empty', 'Occupied']
+    df = pd.read_csv('CSV/PKLot/PKLot.csv')
+
+    dias_cada_facul = []
+    for faculdade in faculdades:
+        dias = df[df["Faculdade"] == f'{faculdade}']["Dia"].unique()
+        dias_cada_facul.append(dias)
+
+    # Df de cada uma das faculdades:
+    #Treino  
+    for i, faculdade in enumerate(faculdades):
+        df_facul = df[(df['Faculdade'] == f'{faculdade}')] 
+
+        file_treino = f"CSV/{faculdade}/{faculdade}.csv"
+        df_facul_final = df_facul[['caminho_imagem', 'classe']]
+        df_facul_final.to_csv(file_treino, index=False)
+
+        primeiros_dias = dias_cada_facul[i][:5]  
+        print("Os respectivos dias foram selecionados para treino: ", primeiros_dias)
+        dias_cada_facul[i] = dias_cada_facul[i][5:] #Removendo os dias selecionadas
+
+        while df_final.shape[0] < 1024:
+            for j, dia in enumerate(primeiros_dias):
+                for classe in [0, 1]:
+                    df_dias = df_facul[(df_facul['classe'] == classe)]  
+                    df_imgs = df_dias.sample(n=n_imgs[j], random_state=42)
+                    df_final = pd.concat([df_final, df_imgs], axis=0, ignore_index=True) 
+
+                    if df_final.shape[0] >= 1024:
+                        break
+                if df_final.shape[0] >= 1024:
+                    break
+
+        file_treino = f"CSV/{faculdade}/{faculdade}_Segmentado_Treino.csv"
+        df_final = df_final[['caminho_imagem', 'classe']]
+        df_final.to_csv(file_treino, index=False)
+        print(f"DataFrame da faculdade {faculdade} salvo em {file_treino}")
+
+        # Resetando o df_final para a próxima faculdade
+        df_final = pd.DataFrame()
+
+    #Validação
+    for i, faculdade in enumerate(faculdades):
+        df_facul = df[(df['Faculdade'] == f'{faculdade}')] 
+
+        primeiros_dias = dias_cada_facul[i][:1]  
+        print("O(s) respectivo(s) dia(s) foram selecionado(s) para validação: ", primeiros_dias)
+        dias_cada_facul[i] = dias_cada_facul[i][1:] #Removendo os dias selecionadas
+
+        while df_final.shape[0] < 64:
+            for dia in primeiros_dias:
+                for classe in [0, 1]:
+                    df_dias = df_facul[(df_facul['classe'] == classe)]  
+                    df_imgs = df_dias.sample(n=32, random_state=42)
+                    df_final = pd.concat([df_final, df_imgs], axis=0, ignore_index=True) 
+
+                    if df_final.shape[0] >= 64:
+                        break
+                if df_final.shape[0] >= 64:
+                    break
+
+        file_val = f"CSV/{faculdade}/{faculdade}_Segmentado_Validacao.csv"
+        df_final = df_final[['caminho_imagem', 'classe']]
+        df_final.to_csv(file_val, index=False)
+        print(f"DataFrame da faculdade {faculdade} salvo em {file_val}")
+
+        # Resetando o df_final para a próxima faculdade
+        df_final = pd.DataFrame()
+
+    #Teste
+    for i, faculdade in enumerate(faculdades):
+        df_facul = df[(df['Faculdade'] == f'{faculdade}')] 
+
+        print("O(s) respectivo(s) dia(s) foram selecionado(s) para validação: ", dias_cada_facul[i])
+
+        df_final  = df_facul[(df_facul['Dia'].isin(dias_cada_facul[i]))]
+
+        file_teste = f"CSV/{faculdade}/{faculdade}_Segmentado_Teste.csv"
+        df_final = df_final[['caminho_imagem', 'classe']]
+
+        df_final.to_csv(file_teste, index=False)
+        print(f"DataFrame da faculdade {faculdade} salvo em {file_teste}")
+
+        # Resetando o df_final para a próxima faculdade
+        df_final = pd.DataFrame()
+
+def split_balanced(df, size, class_column='classe'):
+    #dividimos o df em dois: classe 0 e classe 1
+    df_class_0 = df[df[class_column] == 0]
+    df_class_1 = df[df[class_column] == 1]
+    
+    #quantas amostras de cada classe 
+    n_class_0 = size // 2
+    n_class_1 = size // 2
+    
+    #verifica se é impar
+    if size % 2 != 0:
+        n_class_0 += 1
+    
+    #pega as amostras de forma balanceada
+    df_class_0_sampled = df_class_0.sample(n=n_class_0, random_state=42)
+    df_class_1_sampled = df_class_1.sample(n=n_class_1, random_state=42)
+    
+    #concatenamos 
+    balanced_df = pd.concat([df_class_0_sampled, df_class_1_sampled])
+    
+    return balanced_df
+
+def dividir_em_batchs(csv, nome):
+    df = pd.read_csv(csv)
+
+    print(df['classe'].value_counts())
+
+    sizes = [64, 128, 256, 512, 1024]
     dfs = []
-    for local in faculdades:
-        caminhos_empty = []
-        caminhos_occupied = []
+    df_64 = split_balanced(df, sizes[0])
+    dfs.append(df_64)
+
+    for i in range(1, len(sizes)):
+        previous_size = sizes[i-1]
+        current_size = sizes[i]
         
-        for tempo in tempos:
-            sample_dir = os.path.join(path_base, local, tempo)
-            if not os.path.exists(sample_dir):
-                print(f'Diretório não encontrado: {sample_dir}')
-                continue
+        additional_size = current_size - previous_size
+        
+        remaining_df = df.drop(dfs[i-1].index)
+        
+        df_additional = split_balanced(remaining_df, additional_size)
+        
+        df_current = pd.concat([dfs[i-1], df_additional])
+        dfs.append(df_current)
 
-            for pasta in os.listdir(sample_dir):
-                for class_dir in ['Empty', 'Occupied']:
-                    full_class_dir = os.path.join(sample_dir, pasta, class_dir)
-                    if os.path.exists(full_class_dir):
-                        for file in os.listdir(full_class_dir):
-                            if file.endswith('.jpg'):
-                                caminho = PurePath(os.path.join(full_class_dir, file))
-                                if class_dir == 'Empty':
-                                    caminhos_empty.append(str(caminho))
-                                else:
-                                    caminhos_occupied.append(str(caminho))
+    for i, size in enumerate(sizes):
+        if not os.path.isdir(f'CSV/{nome}/batches'):
+            os.makedirs(f'CSV/{nome}/batches')
+        dfs[i].to_csv(f'CSV/{nome}/batches/batch-{size}.csv', index=False)
 
-        df = pd.DataFrame({
-            'caminho_imagem': caminhos_empty + caminhos_occupied,
-            'classe': ['Empty'] * len(caminhos_empty) + ['Occupied'] * len(caminhos_occupied)
-        })
-        dfs.append(df)
+    print("Arquivos CSV criados com sucesso!")
 
-    df_final = pd.concat(dfs, axis=0, ignore_index=True)
+def cria_CNR():
+    path_labels = 'CNR-EXT-Patches-150x150/LABELS/all.txt'
+    dados = []
+    caminhos_imagens = []
+    classes = []
 
+    with open(path_labels, 'r') as file:
+        for linha in file:
+            partes = linha.strip().split(' ')
+
+            if len(partes) == 2:
+                caminho_imagem = partes[0]
+                caminho_imagem_completo = 'CNR-EXT-Patches-150x150/PATCHES/' + caminho_imagem
+                tempo, data, camera, _ = caminho_imagem.strip().split('/')
+                caminhos_imagens.append(caminho_imagem_completo)
+                classe = partes[1]
+                if classe == '0':
+                    classe = 'Empty'
+                else:
+                    classe = 'Occupied'
+                classes.append(classe)
+                dados.append([tempo, data, camera, caminho_imagem_completo, classe])
+
+    df = pd.DataFrame(data=dados, columns=['Tempo', 'Data', 'Camera', 'caminho_imagem', 'classe'])
 
     if not os.path.isdir("CSV"):
         os.makedirs("CSV")
-        os.makedirs(f"CSV/PKLot")
+        os.makedirs("CSV/CNR")
+    if not os.path.isdir("CSV/CNR"):
+        os.makedirs("CSV/CNR")
+
+    df.to_csv("CSV/CNR/CNR.csv", index=False)
+
+def cria_csvs():
+    PKLot()
+    cria_CNR()
+    segmentacao_Kyoto()
+    nomes = ['PUC', 'UFPR04', 'UFPR05']
+    for nome in nomes:
+        dividir_em_batchs(f'CSV/{nome}/{nome}_Segmentado_Treino.csv', nome)
     
-    if not os.path.isdir(f"CSV/PKLot"):
-        os.makedirs(f"CSV/PKLot")
+    cameras = ['camera1', 'camera2', 'camera3', 'camera4', 'camera5', 'camera6', 'camera7', 'camera8', 'camera9']
+    df_cnr = pd.read_csv('CSV/CNR/CNR.csv')
+    for camera in cameras:
+        df_camera = df_cnr[(df_cnr['Camera'] == camera)]
+        df_camera_final = df_camera[['caminho_imagem', 'classe']]
+        df_camera_final['classe'] = df_camera_final['classe'].replace({'Empty': 1, 'Occupied': 0})
+        df_camera_final.to_csv(f'CSV/CNR/CNR_{camera}.csv', index=False)
 
-    df_final.to_csv(f"CSV/PKLot/PKLot.csv", index=False)
-
-
-# Testes:
-#from Preprocessamento import *
-#segmentacao_Kyoto() 
-#treino_autoencoder, _ = preprocessamento_dataframe(caminho_csv='CSV/Kyoto/Kyoto_Segmentado_Treino.csv', autoencoder=True, data_algumentantation=False)
+#cria_csvs()

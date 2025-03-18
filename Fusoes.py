@@ -2,7 +2,7 @@ import numpy as np
 from visualizacao import *
 from Preprocessamento import *
 from sklearn.metrics import accuracy_score
-from Modelos import criar_diretorio_novo
+from Modelos import recria_diretorio
 import sys
 
 path = '/media/hd/mnt/data/Lucas$'

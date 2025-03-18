@@ -9,7 +9,7 @@ import math
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from Preprocessamento import mapear_rotulos_binarios, carregar_e_preprocessar_imagens
 
-path = '/media/hd/mnt/data/Lucas$'
+path = r'/media/hd/mnt/data/Lucas$'
 
 def plot_imagens_com_csv(caminho_csv, img_por_coluna):
     """
@@ -195,7 +195,6 @@ def plot_autoencoder(x_test, Autoencoder, width=64, height=64, caminho_para_salv
     
     plt.close("all") # para evitar que fica imagens presas em memória
 
-
 def plot_batch(batch, batch_size):
 
     img_por_coluna = int(math.sqrt(batch_size))
@@ -248,62 +247,81 @@ def avaliar_modelo_em_datasets(modelo, datasets_info):
         plot_confusion_matrix(y_binario, y_predicao, labels, save_path_matriz, titulo_matriz)
         plot_imagens_incorretas(y_binario, y_predicao, caminhos_imagens, modelo.name, dataset_nome, 3)
 
-def grafico_batchs(n_batchs, precisoes, nome_modelo, caminho_para_salvar=None):
-    plt.figure()
-    plt.title(f"Comparação de acurácia conforme os batchs - {nome_modelo}")
-    plt.xlabel('Número de Batchs')
+def grafico_batchs(n_batchs, precisoes, nome_modelo, nome_base_treino, base_usada_teste, caminho_para_salvar=None):
+    plt.title(f"Comparação de acurácia - {nome_modelo} - {base_usada_teste}")
+    plt.xlabel('Número de imagens')
     plt.ylabel('Acurácia')
     plt.plot(n_batchs, precisoes, marker='o', linestyle='-', color='b', label='Acurácia')
-
+    plt.xticks(n_batchs)  
     for xi, yi in zip(n_batchs, precisoes):
             plt.text(xi, yi, f"{yi:.3f}", fontsize=6, ha='left', va='top') 
 
     plt.legend()
 
     if caminho_para_salvar != None:
-        save_path = os.path.join(caminho_para_salvar, f'Grafico-{nome_modelo}.png')
+        print("Salvando gráfico!")
+        save_path = os.path.join(caminho_para_salvar, f'Grafico-{nome_modelo}-{nome_base_treino}-{base_usada_teste}.png')
         plt.savefig(save_path)
 
     plt.show()
     plt.close()
 
 #Compara os n modelos criados 
-def comparacao(caminho_para_salvar=None, nome_modelo=None, base_usada=None):
+def comparacao(caminho_para_salvar=None, nome_modelo=None, base_usada=None, base_de_teste=None):
+
+    if base_de_teste == None:
+        base_de_teste = base_usada
+
+    dados = []
+    tabela = pd.DataFrame(columns=['Nome Modelo', 'Batch'])
+
     dir_base = os.path.join(path, "Modelos")
     modelos = [modelo for modelo in os.listdir(dir_base) if (f'{nome_modelo}' in modelo and "Fusao" not in modelo)]
-    
-    x = list(range(1, 16 + 1)) 
+    print(modelos)
+    x = [64,128,256,512,1024]
     plt.figure(figsize=(10, 6))
+    plt.xticks(x)  
 
-    for modelo in modelos:
-        dir_resultados = os.path.join(dir_base, modelo, 'Classificador/Precisao')
+    for modelo in sorted(modelos):
+        dir_resultados = os.path.join(dir_base, modelo, f'Classificador/Precisao/Treinado_em_{base_usada}')
         precisao = [r for r in os.listdir(dir_resultados) if f'{base_usada}' in r]
-        with open(precisao, 'r') as f:
+        print(dir_resultados)
+        dir_precisao = os.path.join(dir_resultados, precisao[0])
+
+        with open(dir_precisao, 'r') as f:
             lista_lida = f.readlines()
 
         lista_lida = [item.strip() for item in lista_lida]
-        lista = list(map(int, lista_lida))
 
-        for prec in lista:
-            plt.plot(x, lista[prec], label=f"{nome_modelo}", marker='o') 
+        lista = [round(float(item), 4) for item in lista_lida]
 
-            for xi, yi in zip(x, y):
-                plt.text(xi, yi, f"{yi:.3f}", fontsize=6, ha='left', va='top') 
+        plt.plot(x, lista, label=f"{modelo}", marker='o')
+
+        #x é o batch
+        #y a precisão
+        for xi, yi in zip(x, lista):
+            plt.text(xi, yi, f"{yi:.3f}", fontsize=6, ha='left', va='top') 
+
+        dados.append([modelo] + lista)
             
-    plt.title(f'Comparação entre os(as) diferentes {nome_modelo}')
-    plt.xlabel('Número de batchs')
+    plt.title(f'Comparação entre os(as) diferentes {nome_modelo} - Treinado na base: {base_usada}')
+    plt.xlabel('Número de imagens')
     plt.ylabel('Acurácia')
 
     plt.legend()
 
+    colunas = ['Modelo'] + [f'Batch {batch}' for batch in x]
+    df = pd.DataFrame(dados, columns=colunas)
+
     if caminho_para_salvar != None:
-        save_path = os.path.join(path, caminho_para_salvar, f'Grafico-Comparacao-{nome_modelo}.png')
+        save_path = os.path.join(path, caminho_para_salvar, f'Grafico-Comparacao-{nome_modelo}-{base_usada}-{base_de_teste}.png')
         plt.savefig(save_path)
+
+        csv_path = os.path.join(path, caminho_para_salvar, f'Tabela-Comparacao-{nome_modelo}-{base_usada}-{base_de_teste}.csv')
+        df.to_csv(csv_path, index=False)
 
     plt.show()
     plt.close()
 
-#comparacao(None, 'Modelo_exp', 'PUC')
-#precisoes = [0.9192328403960068, 0.9368046062714883, 0.938345553208235, 0.9414605857255292, 0.9707220082018143, 0.9742098504618698, 0.9705480303218591, 0.9743921130027754, 0.9770432045068556, 0.9806304626983141, 0.9779296632285324, 0.9713682117559339, 0.9753034257073029, 0.9730665672507353, 0.9758833519738205, 0.9751377324882979]
-#n_batchs = list(range(1, len(precisoes) + 1)) 
-#grafico_batchs(n_batchs, precisoes, "Teste", None)
+#Testes:
+#comparacao('/media/lucas/mnt/data/Lucas$/Modelos/Plots', 'Modelo_Kyoto', 'PUC')
