@@ -26,12 +26,6 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-
-#Csv
-.csv 
-.Csv
-CSV
-
 #Json
 .json
 
