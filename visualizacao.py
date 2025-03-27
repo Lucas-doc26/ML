@@ -8,6 +8,7 @@ import numpy as np
 import math
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from Preprocessamento import mapear_rotulos_binarios, carregar_e_preprocessar_imagens
+from avaliacoes import *
 
 path = r'/media/hd/mnt/data/Lucas$'
 
@@ -171,6 +172,7 @@ def plot_autoencoder(x_test, Autoencoder, width=64, height=64, caminho_para_salv
 
     plt.figure(figsize=(16, 8))
 
+    avaliacoes = []
     for i in range(8):
         # Imagem original
         plt.subplot(2, 8, i + 1)
@@ -184,16 +186,28 @@ def plot_autoencoder(x_test, Autoencoder, width=64, height=64, caminho_para_salv
 
         plt.subplot(2, 8, i + 8 + 1)
         plt.imshow(pred_img)
-        del pred_img
-        plt.title("Reconstruída")
+
+        ssim = float(calcular_ssim(pred, pred_img))
+        avaliacoes.append(ssim)
+
+        del pred_img, pred
+        plt.title(f"SSIM: {ssim:.2f}")
         plt.axis("off")
 
     plt.show()
+    media_ssim = np.mean(avaliacoes)
+    
     if caminho_para_salvar != None:
         save_path = os.path.join(caminho_para_salvar, 'Autoencoder.png')
         plt.savefig(save_path)
+
+        arquivo = os.path.join(caminho_para_salvar,'media_ssim.txt')
+        with open(arquivo, 'w') as f:
+            for av in avaliacoes:
+                f.write(f'{av}\n')
+            f.write(f'Media geral: {media_ssim}')
     
-    plt.close("all") # para evitar que fica imagens presas em memória
+    plt.close("all") 
 
 def plot_batch(batch, batch_size):
 
@@ -248,6 +262,10 @@ def avaliar_modelo_em_datasets(modelo, datasets_info):
         plot_imagens_incorretas(y_binario, y_predicao, caminhos_imagens, modelo.name, dataset_nome, 3)
 
 def grafico_batchs(n_batchs, precisoes, nome_modelo, nome_base_treino, base_usada_teste, caminho_para_salvar=None):
+    plt.clf()
+    plt.close('all')
+    plt.figure() 
+    plt.close
     plt.title(f"Comparação de acurácia - {nome_modelo} - {base_usada_teste}")
     plt.xlabel('Número de imagens')
     plt.ylabel('Acurácia')
@@ -268,7 +286,7 @@ def grafico_batchs(n_batchs, precisoes, nome_modelo, nome_base_treino, base_usad
 
 #Compara os n modelos criados 
 def comparacao(caminho_para_salvar=None, nome_modelo=None, base_usada=None, base_de_teste=None):
-
+    
     if base_de_teste == None:
         base_de_teste = base_usada
 
@@ -276,7 +294,7 @@ def comparacao(caminho_para_salvar=None, nome_modelo=None, base_usada=None, base
     tabela = pd.DataFrame(columns=['Nome Modelo', 'Batch'])
 
     dir_base = os.path.join(path, "Modelos")
-    modelos = [modelo for modelo in os.listdir(dir_base) if (f'{nome_modelo}' in modelo and "Fusao" not in modelo)]
+    modelos = [modelo for modelo in os.listdir(dir_base) if (f'{nome_modelo}' in modelo and "Fusoes" not in modelo)]
     print(modelos)
     x = [64,128,256,512,1024]
     plt.figure(figsize=(10, 6))
@@ -284,8 +302,13 @@ def comparacao(caminho_para_salvar=None, nome_modelo=None, base_usada=None, base
 
     for modelo in sorted(modelos):
         dir_resultados = os.path.join(dir_base, modelo, f'Classificador/Precisao/Treinado_em_{base_usada}')
-        precisao = [r for r in os.listdir(dir_resultados) if f'{base_usada}' in r]
-        print(dir_resultados)
+        #..Precisao/
+        if base_de_teste != base_usada:
+            precisao = [r for r in os.listdir(dir_resultados) if f'{base_de_teste}' in r]
+        else:
+            precisao = [r for r in os.listdir(dir_resultados) if f'{base_usada}' in r]
+
+        print(precisao)
         dir_precisao = os.path.join(dir_resultados, precisao[0])
 
         with open(dir_precisao, 'r') as f:
@@ -324,4 +347,54 @@ def comparacao(caminho_para_salvar=None, nome_modelo=None, base_usada=None, base
     plt.close()
 
 #Testes:
-#comparacao('/media/lucas/mnt/data/Lucas$/Modelos/Plots', 'Modelo_Kyoto', 'PUC')
+#comparacao('/media/lucas/mnt/data/Lucas$/Modelos/Plots', 'Modelo_Kyoto', 'PUC', 'UFPR05')
+
+def plot_history(df, save_dir, modelo, base_treinamento):
+    plt.figure(figsize=(8, 6))
+    df.plot()
+    plt.title("Treinamento do Autoencoder")
+    plt.xlabel("Épocas")
+    plt.ylabel("Métricas")
+    plt.grid()
+    plt.savefig(os.path.join(save_dir, f"History-{modelo}-{base_treinamento}.png")) 
+
+    plt.clf()
+    plt.close('all')  
+
+def plot_history_batch(history, save_dir, nome_modelo, nome_base_treino, batch):
+    accuracy = history.history['accuracy']
+    val_accuracy = history.history['val_accuracy']
+    loss = history.history['loss']
+    val_loss = history.history['val_loss']
+
+    # Criando o gráfico
+    plt.figure(figsize=(12, 6))
+
+    # Subplot para Acurácia
+    plt.subplot(1, 2, 1)
+    plt.plot(accuracy, label='Acurácia (Treinamento)')
+    plt.plot(val_accuracy, label='Acurácia (Validação)')
+    plt.title('Acurácia')
+    plt.xlabel('Épocas')
+    plt.ylabel('Acurácia')
+    plt.legend()
+
+    # Subplot para Loss
+    plt.subplot(1, 2, 2)
+    plt.plot(loss, label='Loss (Treinamento)')
+    plt.plot(val_loss, label='Loss (Validação)')
+    plt.title('Loss')
+    plt.xlabel('Épocas')
+    plt.ylabel('Loss')
+    plt.legend()
+
+    # Exibir o gráfico
+    plt.tight_layout()
+    plt.savefig(os.path.join(save_dir, f"History-{nome_modelo}-{nome_base_treino}-{batch}.png")) 
+
+
+#base_de_teste = ['PUC', 'UFPR04', 'UFPR05', 'camera1', 'camera2', 'camera3', 'camera4', 'camera5', 'camera6', 'camera7', 'camera8','camera9']
+
+"""for faculdade in ['PUC', 'UFPR04', 'UFPR05']:
+    for base in base_de_teste:
+        comparacao('/media/lucas/mnt/data/Lucas$/Modelos/Plots', 'Modelo_Kyoto', faculdade, base)"""

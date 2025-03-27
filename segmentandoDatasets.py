@@ -12,6 +12,11 @@ import shutil
 import shutil
 from sklearn.model_selection import train_test_split
 
+
+SEED = 42
+random.seed(SEED)
+np.random.seed(SEED)
+
 def cria_dirs():
     dirs = ['PKLot','PUC', 'UFPR04', 'UFPR05', 'CNR', 'Kyoto']
     if not os.path.isdir('CSV'):
@@ -154,14 +159,14 @@ def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_valida
         df_final = pd.concat(dfs, axis=0, ignore_index=True)
 
 
-        if not os.path.isdir("CSV"):
-            os.makedirs("CSV")
-            os.makedirs(f"CSV/{nome_faculdade}")
+        if not os.path.isdir("CSV2"):
+            os.makedirs("CSV2")
+            os.makedirs(f"CSV2/{nome_faculdade}")
         
-        if not os.path.isdir(f"CSV/{nome_faculdade}"):
-            os.makedirs(f"CSV/{nome_faculdade}")
+        if not os.path.isdir(f"CSV2/{nome_faculdade}"):
+            os.makedirs(f"CSV2/{nome_faculdade}")
 
-        df_final.to_csv(f"CSV/{nome_faculdade}/{nome_faculdade}.csv", index=False)
+        df_final.to_csv(f"CSV2/{nome_faculdade}/{nome_faculdade}.csv", index=False)
 
     def contagem_imagens():
         dic = {}
@@ -245,7 +250,7 @@ def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_valida
         return valores
     
     def criar_csv(n_dias, valores, nome: str = ''):
-        df = pd.read_csv(f'CSV/{nome_faculdade}/{nome_faculdade}.csv')
+        df = pd.read_csv(f'CSV2/{nome_faculdade}/{nome_faculdade}.csv')
         data = []
         dias_usados = []
 
@@ -295,7 +300,7 @@ def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_valida
 
         df_final = pd.concat(data, ignore_index=True)
         df_final['classe'] = df_final['classe'].replace({'Empty': 1, 'Occupied': 0})
-        df_final.to_csv(f'CSV/{nome_faculdade}/{nome_faculdade}_Segmentado_{nome}.csv', index=False)
+        df_final.to_csv(f'CSV2/{nome_faculdade}/{nome_faculdade}_Segmentado_{nome}.csv', index=False)
 
         return dias_usados
 
@@ -319,7 +324,7 @@ def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_valida
 
     def imagens_para_teste(treino, validacao):
         dias_usados = treino + validacao
-        df = pd.read_csv(f'CSV/{nome_faculdade}/{nome_faculdade}.csv')
+        df = pd.read_csv(f'CSV2/{nome_faculdade}/{nome_faculdade}.csv')
         data = []
         df_final = pd.DataFrame()
         for faculdade in faculdades:
@@ -351,7 +356,7 @@ def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_valida
 
         df_final['classe'] = df_final['classe'].replace({'Empty': 1, 'Occupied': 0})
 
-        df_final.to_csv(f'CSV/{nome_faculdade}/{nome_faculdade}_Segmentado_Teste.csv', index=False)
+        df_final.to_csv(f'CSV2/{nome_faculdade}/{nome_faculdade}_Segmentado_Teste.csv', index=False)
 
     contagem_imagens()
         
@@ -363,10 +368,13 @@ def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_valida
     else:
         criar_csv(n_dias=dias_teste, valores=imagens_distribuidas(imagens_teste), nome ='Teste')
 
-    df = pd.read_csv(f'CSV/{nome_faculdade}/{nome_faculdade}.csv')
+    df = pd.read_csv(f'CSV2/{nome_faculdade}/{nome_faculdade}.csv')
 
     df['classe'] = df['classe'].replace({'Empty': 1, 'Occupied': 0})
-    df.to_csv(f'CSV/{nome_faculdade}/{nome_faculdade}.csv')
+    df.to_csv(f'CSV2/{nome_faculdade}/{nome_faculdade}.csv')
+
+
+#segmentacao_PKLot(4000, 5, 1000, 2, 5000, 3, faculdades=['PUC'])
 
 def segmentacao_CNR(imagens_treino:int=1000, dias_treino:int=5, imagens_validacao:int=300, dias_validaco:int=2, imagens_teste:int=2000, dias_teste:int=3):
     path_labels = 'CNR-EXT-Patches-150x150/LABELS/all.txt'
@@ -748,7 +756,7 @@ def download_Kyoto():
             else:
                 print(f"\nProcesso concluído! {images_copied} imagens foram copiadas para a pasta Kyoto")
 
-def PKLot():
+def PKLot(random_state=42):
     cria_dirs()
 
     def cria_pklot():
@@ -812,7 +820,7 @@ def PKLot():
             for j, dia in enumerate(primeiros_dias):
                 for classe in [0, 1]:
                     df_dias = df_facul[(df_facul['classe'] == classe)]  
-                    df_imgs = df_dias.sample(n=n_imgs[j], random_state=42)
+                    df_imgs = df_dias.sample(n=n_imgs[j], random_state=SEED)
                     df_final = pd.concat([df_final, df_imgs], axis=0, ignore_index=True) 
 
                     if df_final.shape[0] >= 1024:
@@ -840,7 +848,7 @@ def PKLot():
             for dia in primeiros_dias:
                 for classe in [0, 1]:
                     df_dias = df_facul[(df_facul['classe'] == classe)]  
-                    df_imgs = df_dias.sample(n=32, random_state=42)
+                    df_imgs = df_dias.sample(n=32, random_state=SEED)
                     df_final = pd.concat([df_final, df_imgs], axis=0, ignore_index=True) 
 
                     if df_final.shape[0] >= 64:
@@ -887,8 +895,8 @@ def split_balanced(df, size, class_column='classe'):
         n_class_0 += 1
     
     #pega as amostras de forma balanceada
-    df_class_0_sampled = df_class_0.sample(n=n_class_0, random_state=42)
-    df_class_1_sampled = df_class_1.sample(n=n_class_1, random_state=42)
+    df_class_0_sampled = df_class_0.sample(n=n_class_0, random_state=SEED)
+    df_class_1_sampled = df_class_1.sample(n=n_class_1, random_state=SEED)
     
     #concatenamos 
     balanced_df = pd.concat([df_class_0_sampled, df_class_1_sampled])

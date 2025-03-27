@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../../../media/hd/mnt/data/Lucas$"
+		}
+	],
+	"settings": {
+		"git.ignoreLimitWarning": true
+	}
+}

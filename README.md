@@ -10,7 +10,7 @@
 
 [PYTHON_BADGE]:https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54
 
-<h1 align="center" style="font-weight: bold;">Machine Learning💻</h1>
+<h1 align="center" style="font-weight: bold;">Iniciação Científica💻</h1>
 
 ![Python][PYTHON_BADGE]
 ![Keras][KERAS_BADGE]
@@ -27,10 +27,10 @@
 </p>
 
 <p align="center">
-  <b>Atualmente trabalhando com um projeto de iniciação científica</b>
+  <b></b>
 </p>
 
-<h2 id="Projeto">📫Projeto atual</h2>
+<h2 id="Projeto">📫Projeto</h2>
 
 Programa Institucional de Bolsas de Iniciação Científica (PIBIC), desenvolvendo uma pesquisa intitulada: **"Adaptação de Domínio em Modelos Profundos de Classificação Aplicados à Detecção de Vagas de Estacionamento"**, com apoio da CNPq (Conselho Nacional de Desenvolvimento Científico e Tecnológico).
 
@@ -39,23 +39,16 @@ Programa Institucional de Bolsas de Iniciação Científica (PIBIC), desenvolven
 
 <h2 id="Objetivos">🚀Objetivos do Projeto</h2>
 
-Busca análisar soluções que melhorem a escalabilidade
-dos modelos aplicados ao problema de classificação de vagas de
-estacionamento. Os macro objetivos deste projeto são listados abaixo:
+Implementar técnicas de aprendizado não supervisionado e adaptação de domínio para a classificação de vagas de estacionamento, visando reduzir o esforço de anotação, otimizar o desempenho do modelo em cenários variados e manter um baixo custo computacional, buscando um equilíbrio entre tempo de processamento e precisão. <br>
+Para atingir o objetivo geral, foram definidos os seguintes objetivos específicos:
 
 <ul>
-    <li>Revisão dos métodos no estado da arte no contexto de Domain
-Adaptation
-    <li>Construção de Benchmark das técnicas mais promissoras
-    <li>Avaliação nas Bases PKLot, CNR e PLDs. 
-    <li>Propor um framework para detecção de vagas de estacionamento
-reduzindo a anotação de dados a partir de técnicas de Domain
-Adaptation
-    <li>Análise de erros e relatório crítico sobre os resultados alcançados
-    <li>Divulgação da pesquisa (artigo) para a comunidade científica
+    <li>Criação de autoencoders</li>
+    <li>Aplicar a técnica de Fine-Tunning</li>
+    <li>Testar técnicas de fusão</li>
 </ul>
 
-<h2 id="Datasets">📍 Bases</h2>
+<h2 id="Datasets">📍 Bases usadas</h2>
 
 <h3>PKLot</h3>
 A base de dados contém imagens capturadas de três estacionamentos diferentes (PUC, UFPR04, UFPR05) em dias ensolarados, nublados e chuvosos, onde cada estacionamento tem sua camêra posicionada em ângulos diferentes. 
@@ -70,11 +63,12 @@ Composto por imagens coletadas de novembro de 2015 a fevereiro de 2016 sob diver
 
 <h2 id="usar">Como usar:</h2>
 
+![Estado do projeto!](https://img.shields.io/badge/Estado:-Em%20produção-FFFF00.svg)
+
 ```sh
 $ git clone https://github.com/Lucas-doc26/ML 
 $ git pull origin master
-pip install -r requirements.txt
-python main 
+pip install -r requirements.txt 
 ```
 
 <h2 id="Autor">🤝Autor</h2>

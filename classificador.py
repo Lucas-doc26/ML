@@ -15,7 +15,8 @@ import time
 import sys
 import argparse
 import pdb
-
+from multiprocessing import Pool
+from functools import partial
 
 parser = argparse.ArgumentParser()
 
@@ -54,7 +55,7 @@ if gpus:
 matplotlib.use('Agg')
 
 #Segemnta pklot
-PKLot()
+#PKLot()
 
 # Preprocessamento imagens dos classificadores
 treino, _ = preprocessamento_dataframe(caminho_csv=f'CSV/{args.classificador}/{args.classificador}_Segmentado_Teste.csv', autoencoder=True)
@@ -80,7 +81,7 @@ base2, df_base2 = preprocessamento_dataframe(caminho_csv=f'CSV/{args.base_teste2
 testa_modelos(args.nome, base2, df_base2, args.classificador)
 
 #Teste na cnr
-cameras = ['camera1', 'camera2', 'camera3', 'camera4', 'camera5', 'camera6', 'camera7', 'camera8', 'camera9']
+cameras = ['camera1', 'camera2', 'camera3', 'camera4', 'camera5', 'camera6', 'camera7', 'camera8','camera9']
 for camera in cameras:
     cnr, df_cnr = preprocessamento_dataframe(caminho_csv=f'CSV/CNR/CNR_{camera}.csv', autoencoder=False, data_algumentantation=False)
     testa_modelos(args.nome, cnr, df_cnr, args.classificador)

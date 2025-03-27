@@ -8,26 +8,64 @@ import sys
 path = '/media/hd/mnt/data/Lucas$'
 
 def verifica_dir(nome_modelo, nome_base):
-    if not os.path.isdir(os.path.join(path, f'Modelos/Fusao-{nome_modelo}')):
-        os.mkdir(os.path.join(path,f'Modelos/Fusao-{nome_modelo}'))
-    if not os.path.isdir(os.path.join(path,f'Modelos/Fusao-{nome_modelo}/{nome_base}')):
-        os.mkdir(os.path.join(path,f'Modelos/Fusao-{nome_modelo}/{nome_base}'))
-    if not os.path.isdir(os.path.join(path,f'Modelos/Fusao-{nome_modelo}/{nome_base}/Matriz_confusao')):
-        os.mkdir(os.path.join(path,f'Modelos/Fusao-{nome_modelo}/{nome_base}/Matriz_confusao'))
-    if not os.path.isdir(os.path.join(path,f'Modelos/Fusao-{nome_modelo}/{nome_base}/Grafico_batchs')):
-        os.mkdir(os.path.join(path, f'Modelos/Fusao-{nome_modelo}/{nome_base}/Grafico_batchs'))
+    if not os.path.isdir(os.path.join(path, f'Modelos/Fusoes-{nome_modelo}')):
+        os.mkdir(os.path.join(path,f'Modelos/Fusoes-{nome_modelo}'))
+    if not os.path.isdir(os.path.join(path,f'Modelos/Fusoes-{nome_modelo}/{nome_base}')):
+        os.mkdir(os.path.join(path,f'Modelos/Fusoes-{nome_modelo}/{nome_base}'))
+    if not os.path.isdir(os.path.join(path,f'Modelos/Fusoes-{nome_modelo}/{nome_base}/Matriz_confusao')):
+        os.mkdir(os.path.join(path,f'Modelos/Fusoes-{nome_modelo}/{nome_base}/Matriz_confusao'))
+    if not os.path.isdir(os.path.join(path,f'Modelos/Fusoes-{nome_modelo}/{nome_base}/Grafico_batchs')):
+        os.mkdir(os.path.join(path, f'Modelos/Fusoes-{nome_modelo}/{nome_base}/Grafico_batchs'))
 
 def mapear(classes):
     return np.array([1 if classe == 1 else 0 for classe in classes])
 
-def soma_previsoes(nome_modelo, nome_base, batch, n_modelos):
-    base = np.load(os.path.join(path, f'Modelos/{nome_modelo}-0/Classificador/Resultados/{nome_modelo}-0-{nome_base}-batchs-{batch}.npy'))
+
+bases_teste = ['PUC', 'UFPR04', 'UFPR05', 'camera1', 'camera2', 'camera3', 'camera4', 'camera5', 'camera6', 'camera7', 'camera8', 'camera9']
+
+
+def previsao(nome_modelo, base_de_treino, base_de_teste, batch_size, n_modelos):
+    for i in range(n_modelos):
+        npy = f'Modelos/{nome_modelo}-{i}/Classificador/Resultados/Treinados_em_{base_de_treino}/{base_de_teste}/batchs-{batch_size}.npy' 
+        array = np.load(os.path.join(path,npy))
+
+def soma_previsoes(nome_modelo, batch_size, n_modelos, base_de_treino, base_de_teste):
+    """
+    Retorna um array com todos os resultados de todas as classes conforme o batch passado
+    """
+    base = np.load(os.path.join(path, 
+        f'Modelos/{nome_modelo}-0/Classificador/Resultados/Treinados_em_{base_de_treino}/{base_de_teste}/batchs-{batch_size}')
+    )
+
     resultado = np.zeros_like(base)
     for i in range(n_modelos):
-        array = np.load(os.path.join(path, f'Modelos/{nome_modelo}-{i}/Classificador/Resultados/{nome_modelo}-{i}-{nome_base}-batchs-{batch}.npy'))
-        resultado = resultado + array 
+        npy = f'Modelos/{nome_modelo}-{i}/Classificador/Resultados/Treinados_em_{base_de_treino}/{base_de_teste}/batchs-{batch_size}.npy' 
+        array = np.load(os.path.join(path,npy))
+        resultado = resultado + array
     resultado = np.argmax(resultado, axis=1)
     return resultado 
+
+
+def soma(nome_modelo, bases_de_treino, n_modelos):
+    batches = [64,128,256,512,1024]
+    for base_treino in bases_de_treino:
+        for base_teste in bases_teste:
+            for batch_size in batches:  
+                resultados = []
+                resultado = soma_previsoes(nome_modelo, batch_size, n_modelos, base_treino, base_teste)
+
+                df = pd.read_csv(f'CSV/{base_teste}/{base_teste}.csv')
+                df = mapear(df['classe'])
+
+                plot_confusion_matrix(df, resultado, title=f'Fusão {nome_modelo} - Batch: {batch_size}')
+                acc = accuracy_score(df, resultado)
+                resultados.append(acc)
+
+        grafico_batchs(batchs, resultados, nome_modelo=f'Soma-{nome_modelo}-{base_treino}',
+            caminho_para_salvar=os.path.join(path, f'Modelos/Fusao-{nome_modelo}/Treinados_em_{base_treino}/'), 
+            nome_base_treino={base_treino}, base_usada_teste={base_teste})
+            
+
 
 def regra_soma(nome_modelo, nome_base, caminho_csv, n_modelos):
     df = pd.read_csv(caminho_csv)
@@ -35,6 +73,7 @@ def regra_soma(nome_modelo, nome_base, caminho_csv, n_modelos):
     batchs = []
     resultados = []
     verifica_dir(nome_modelo, nome_base)
+
     for i in range(16):
         resultado = soma_previsoes(f'{nome_modelo}', f'{nome_base}', i+1, n_modelos)
         plot_confusion_matrix(df, resultado, title=f'Fusão dos diferentes {nome_modelo} - Batchs: {i+1}', 
