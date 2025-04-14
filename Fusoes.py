@@ -208,47 +208,6 @@ def voto(nome_modelo, bases_de_treino, nome_autoencoder=None, n_modelos=10):
             grafico_batchs(batches, resultados, nome_modelo=f'Voto-{nome_modelo}',
                 caminho_para_salvar=os.path.join(path, f'Modelos/Fusoes-{nome_modelo}/Autoencoder-{nome_autoencoder}/Treinados_em_{base_treino}/Grafico_batchs'), 
                 nome_base_treino=base_treino, base_usada_teste=base_teste)
-        
-"""
-def max_previsoes(nome_modelo, nome_base, batch, n_modelos):
-    caminho_base = os.path.join(path, f'Modelos/{nome_modelo}-0/{classificador}/Resultados/{nome_modelo}-0-{nome_base}-batchs-{batch}.npy')
-    base = np.load(caminho_base)
-    
-    resultado = base.copy()
-
-    for i in range(n_modelos):
-        caminho = os.path.join(path, f'Modelos/{nome_modelo}-{i}/{classificador}/Resultados/{nome_modelo}-{i}-{nome_base}-batchs-{batch}.npy')
-        array = np.load(caminho)
-        resultado = np.maximum(resultado, array) 
-    
-    return np.argmax(resultado, axis=1) 
-
-def maximo(nome_modelo, nome_base, caminho_csv, n_modelos):
-    df = pd.read_csv(caminho_csv)
-    df = mapear(df['classe'])  
-    
-    batchs = []
-    resultados = []
-    
-    verifica_dir(nome_modelo, nome_base)  
-    
-    for i in range(16):
-        resultado = max_previsoes(nome_modelo, nome_base, i+1, n_modelos)
-        
-        plot_confusion_matrix(df, resultado, title=f'Fusão dos diferentes {nome_modelo} - Batchs: {i+1}', 
-            save_path=os.path.join(path, f'Modelos/Fusao-{nome_modelo}/{nome_base}/Matriz_confusao/Maximo_{nome_base}_batchs-{i+1}'))
-        
-        batchs.append(i+1)
-        acuracia = accuracy_score(df, resultado)
-        resultados.append(acuracia)
-
-    grafico_batchs(batchs, resultados, nome_modelo=f'Maximo_-{nome_modelo}', 
-        caminho_para_salvar=os.path.join(path, f'Modelos/Fusao-{nome_modelo}/{nome_base}/Grafico_batchs/'))
-    
-    return (batchs, resultados, 'Máximo')
-
-"""
-
 
 soma("Modelo_Kyoto", base_treino, n_modelos=10)
 mult("Modelo_Kyoto", base_treino, n_modelos=10)

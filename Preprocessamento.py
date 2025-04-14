@@ -29,7 +29,7 @@ def preprocessamento_dataframe(caminho_csv: str, autoencoder: bool = False, data
         dataframe['classe'] = dataframe['classe'].astype(str)
 
     #Embaralho o dataframe aqui e não no shuffle, para garantir o mesmo csv sempre 
-    dataframe = dataframe.sample(frac=1).reset_index(drop=True)
+    #dataframe = dataframe.sample(frac=1).reset_index(drop=True)
     class_mode = 'input' if autoencoder else 'sparse'
 
     Gerador = datagen.flow_from_dataframe(

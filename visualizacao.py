@@ -10,7 +10,7 @@ from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from Preprocessamento import mapear_rotulos_binarios, carregar_e_preprocessar_imagens
 from avaliacoes import *
 
-path = r'/media/hd/mnt/data/Lucas$'
+path = r'/home/lucas/PIBIC'
 
 def plot_imagens_com_csv(caminho_csv, img_por_coluna):
     """
@@ -262,6 +262,9 @@ def avaliar_modelo_em_datasets(modelo, datasets_info):
         plot_imagens_incorretas(y_binario, y_predicao, caminhos_imagens, modelo.name, dataset_nome, 3)
 
 def grafico_batchs(n_batchs, precisoes, nome_modelo, nome_base_treino, base_usada_teste, caminho_para_salvar=None):
+    #print(f"Base_treino: {nome_base_treino}")
+    #print(f"Base_teste: {base_usada_teste}")
+
     plt.clf()
     plt.close('all')
     plt.figure() 
@@ -277,15 +280,16 @@ def grafico_batchs(n_batchs, precisoes, nome_modelo, nome_base_treino, base_usad
     plt.legend()
 
     if caminho_para_salvar != None:
-        print("Salvando gráfico!")
-        save_path = os.path.join(caminho_para_salvar, f'Grafico-{nome_modelo}-{nome_base_treino}-{base_usada_teste}.png')
+        save_path = os.path.join(caminho_para_salvar, f'Grafico-{nome_modelo}-{nome_base_treino}-{base_usada_teste}')
         plt.savefig(save_path)
+        print(f"Salvando gráfico no caminho: {save_path}.png")
+
 
     plt.show()
     plt.close()
 
 #Compara os n modelos criados 
-def comparacao(caminho_para_salvar=None, nome_modelo=None, base_usada=None, base_de_teste=None):
+def comparacao(caminho_para_salvar=None, nome_modelo=None, base_usada=None, base_de_teste=None, base_autoencoder=None):
     
     if base_de_teste == None:
         base_de_teste = base_usada
@@ -337,10 +341,10 @@ def comparacao(caminho_para_salvar=None, nome_modelo=None, base_usada=None, base
     df = pd.DataFrame(dados, columns=colunas)
 
     if caminho_para_salvar != None:
-        save_path = os.path.join(path, caminho_para_salvar, f'Grafico-Comparacao-{nome_modelo}-{base_usada}-{base_de_teste}.png')
+        save_path = os.path.join(path, caminho_para_salvar, f'Grafico-Comparacao-{nome_modelo}-{base_autoencoder}-{base_usada}-{base_de_teste}.png')
         plt.savefig(save_path)
 
-        csv_path = os.path.join(path, caminho_para_salvar, f'Tabela-Comparacao-{nome_modelo}-{base_usada}-{base_de_teste}.csv')
+        csv_path = os.path.join(path, caminho_para_salvar, f'Tabela-Comparacao-{nome_modelo}-{base_autoencoder}-{base_usada}-{base_de_teste}.csv')
         df.to_csv(csv_path, index=False)
 
     plt.show()

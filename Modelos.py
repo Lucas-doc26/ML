@@ -6,21 +6,15 @@ from tensorflow.keras.layers import (Input, Flatten, Dense, Reshape, Conv2D, Max
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.utils import Sequence, plot_model
-
 import keras
 import keras.backend as k  
-
-import tensorboard
-
 import datetime
-
 import pandas as pd
 from sklearn.metrics import confusion_matrix, accuracy_score
 import random
 import gc
 import re
 import shutil
-
 from visualizacao import *
 #from segmentandoDatasets import retorna_nome_base
 

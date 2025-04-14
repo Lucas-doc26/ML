@@ -10,8 +10,12 @@ import requests
 import zipfile
 import shutil
 import shutil
-from sklearn.model_selection import train_test_split
+import argparse
 
+parser = argparse.ArgumentParser()
+
+# Argumentos
+parser.add_argument("CSV", type=bool, help="O nome do modelo")
 
 SEED = 42
 random.seed(SEED)
@@ -372,7 +376,6 @@ def segmentacao_PKLot(imagens_treino:int=1000, dias_treino:int=5, imagens_valida
 
     df['classe'] = df['classe'].replace({'Empty': 1, 'Occupied': 0})
     df.to_csv(f'CSV2/{nome_faculdade}/{nome_faculdade}.csv')
-
 
 #segmentacao_PKLot(4000, 5, 1000, 2, 5000, 3, faculdades=['PUC'])
 
@@ -767,7 +770,7 @@ def PKLot(random_state=42):
         classes = ['Empty', 'Occupied']
 
         dados = []
-        path_pklot = "PKLot/PKLotSegmented"
+        path_pklot = "/datasets/PKLot/PKLotSegmented"
         for faculdade in faculdades:
             for tempo in tempos:
                 path_facul_tempo = os.path.join(path_pklot, faculdade, tempo) #"PKLot/PKLotSegmented/PUC/Sunny"
@@ -934,7 +937,7 @@ def dividir_em_batchs(csv, nome):
     print("Arquivos CSV criados com sucesso!")
 
 def cria_CNR():
-    path_labels = 'CNR-EXT-Patches-150x150/LABELS/all.txt'
+    path_labels = '/datasets/CNR-EXT-Patches-150x150/LABELS/all.txt'
     dados = []
     caminhos_imagens = []
     classes = []
@@ -945,7 +948,7 @@ def cria_CNR():
 
             if len(partes) == 2:
                 caminho_imagem = partes[0]
-                caminho_imagem_completo = 'CNR-EXT-Patches-150x150/PATCHES/' + caminho_imagem
+                caminho_imagem_completo = '/datasets/CNR-EXT-Patches-150x150/PATCHES/' + caminho_imagem
                 tempo, data, camera, _ = caminho_imagem.strip().split('/')
                 caminhos_imagens.append(caminho_imagem_completo)
                 classe = partes[1]
@@ -982,4 +985,8 @@ def cria_csvs():
         df_camera_final['classe'] = df_camera_final['classe'].replace({'Empty': 1, 'Occupied': 0})
         df_camera_final.to_csv(f'CSV/CNR/CNR_{camera}.csv', index=False)
 
-#cria_csvs()
+args = parser.parse_args()
+
+if args.CSV == True:
+    print("Criando CSV")
+    cria_csvs()
