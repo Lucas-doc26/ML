@@ -1,27 +1,36 @@
 import tensorflow as tf
-import numpy as np
-import keras
-import pandas as pd
-from keras.layers import Input, Flatten, Dense, Reshape, Conv2D, MaxPooling2D, UpSampling2D, Conv2DTranspose, BatchNormalization, Dropout
-from tensorflow.keras.layers import LeakyReLU
-from keras.models import Sequential, Model
-from keras.callbacks import ModelCheckpoint, EarlyStopping
-from datetime import datetime
+from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.layers import (Input, Flatten, Dense, Reshape, Conv2D, MaxPooling2D, 
+                                     UpSampling2D, Conv2DTranspose, BatchNormalization, Dropout, 
+                                     LeakyReLU)
+from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 from tensorflow.keras.optimizers import Adam
-from sklearn.base import BaseEstimator, ClassifierMixin
-from visualizacao import *
+from tensorflow.keras.utils import Sequence, plot_model
+
+import keras
 import keras.backend as k  
+
+import tensorboard
+
+import datetime
+
+import pandas as pd
+from sklearn.metrics import confusion_matrix, accuracy_score
+import random
 import gc
 import re
 import shutil
-from tensorflow.keras.utils import Sequence
-from segmentandoDatasets import retorna_nome_base
+
+from visualizacao import *
+#from segmentandoDatasets import retorna_nome_base
+
+def retorna_nome_base(caminho):
+    nome = caminho.split('/')[-1]
+    nome = nome.rsplit('.csv', 1)[0]
+    nome = nome.split('_')
+    return (nome[0], nome[2])
+
 from Preprocessamento import preprocessamento_dataframe
-from sklearn.metrics import confusion_matrix, accuracy_score
-from tensorflow.keras.utils import plot_model
-from tensorflow.keras import regularizers
-import tensorflow as tf
-import random
 
 #Definindo reprotudibilidade 
 SEED = 42
@@ -37,16 +46,16 @@ random.seed(SEED)
 os.environ['PYTHONHASHSEED'] = str(SEED)
 
 #Usando ele como path para usar o espaço sobrando no segundo hd
-path = r'/media/hd/mnt/data/Lucas$'
+path = r'/home/lucas/PIBIC'
 
 #Configurações da GPU
 gpus = tf.config.experimental.list_physical_devices('GPU')
-if gpus:
+"""if gpus:
     try:
         for gpu in gpus:
             tf.config.experimental.set_memory_growth(gpu, True)  # Evita alocação total de memória
     except RuntimeError as e:
-        print(e)
+        print(e)"""
 
 """----------------------Funções Auxiliares-----------------------"""
 def limpa_memoria():
@@ -115,17 +124,19 @@ def mapear(classes):
 def retorna_nome_df(df):
     faculdades = ['PUC', 'UFPR04', 'UFPR05']
     mask = df['caminho_imagem'].str.contains('|'.join(faculdades), regex=True)
-    
+    #/datasets/PKLot/PKLotSegmented/PUC/Cloudy/2012-10-16/Empty/2012-10-16_05_56_42#081.jpg,1
     if mask.any():  
-        nome = df.loc[mask, 'caminho_imagem'].iloc[0].split('/')[2]  # Pega a faculdade
+        nome = df.loc[mask, 'caminho_imagem'].iloc[0].split('/')[4]  # Pega a faculdade
     else:
-        nome = df['caminho_imagem'].iloc[0].split('/')[4]  
+        nome = df['caminho_imagem'].iloc[0].split('/')[6]  
+        #/datasets/CNR-EXT-Patches-150x150/PATCHES/SUNNY/2016-01-15/camera9/S_2016-01-15_11.40_C09_326.jpg,0
+
     return nome
 
-#caminho = "CNR-EXT-Patches-150x150/PATCHES/SUNNY/2015-12CNR-EXT-Patches-150x150/PATCHES/SUNNY/2015-11-12/camera8/S_2015-11-12_16.06_C08_214.jpg,0"
-#df = pd.read_csv(caminho)
-#nome_base_teste = retorna_nome_df(df)
-#print(nome_base_teste)
+"""caminho = "CSV/PUC/PUC_Segmentado_Teste.csv"
+df = pd.read_csv(caminho)
+nome_base_teste = retorna_nome_df(df)
+print(nome_base_teste)"""
 
 
 def extrair_nome_modelo1(nome):
@@ -331,7 +342,8 @@ class Gerador:
                 recria_diretorio(dir_modelo)
                 self.autoencoder.save(f"{dir_modelo}/{self.nome_modelo}.keras")
 
-            recria_diretorio(dir_pesos)
+            if not os.path.isdir(dir_pesos):
+                os.makedirs(dir_pesos)
 
             self.autoencoder.save_weights(f"{dir_pesos}/{self.nome_modelo}_Base-{nome_da_base}.weights.h5")
 
@@ -371,7 +383,7 @@ class Gerador:
 
         self.autoencoder.compile(optimizer=Adam(learning_rate=1e-5), loss='mse')  
 
-        checkpoint_path = os.path,join(path, 'Pesos/Pesos_parciais/weights-improvement-{epoch:02d}-{val_loss:.2f}.weights.h5')
+        checkpoint_path = os.path.join(path, 'Pesos/Pesos_parciais/weights-improvement-{epoch:02d}-{val_loss:.2f}.weights.h5')
         cp_callback = ModelCheckpoint(filepath=checkpoint_path, 
                                         save_weights_only=True, 
                                         monitor='val_loss', 
@@ -498,7 +510,7 @@ def fine_tuning_modelos(treino, validacao, teste, nome_modelo=None, nome_base=No
 """------------------Gerador de Classificador----------------------"""
 
 class GeradorClassificador:
-    def __init__(self, encoder=None, pesos=None, nome_modelo:str=None):
+    def __init__(self, encoder=None, pesos=None, nome_modelo:str=None, nome_autoencoder:str='Sem-Peso'):
         self.encoder = encoder
         self.nome_modelo = nome_modelo
         self.model = self.modelo(self.encoder)
@@ -508,7 +520,9 @@ class GeradorClassificador:
         self.treino = None
         self.validacao = None
         self.teste = None
+        self.nome_autoencoder = nome_autoencoder
         cria_pasta_modelos()
+        self.verifica_dirs()
 
     def modelo(self, encoder):
         if encoder != None:
@@ -536,7 +550,7 @@ class GeradorClassificador:
     
     def verifica_dirs(self):
         save_dir = os.path.join(path, "Modelos", self.nome_modelo)
-        dir_raiz = os.path.join(save_dir, "Classificador")
+        dir_raiz = os.path.join(save_dir, f"Classificador-{self.nome_autoencoder}")
         dir_modelo = os.path.join(dir_raiz, "Estrutura")
         dir_pesos = os.path.join(dir_raiz, "Pesos")
 
@@ -550,16 +564,14 @@ class GeradorClassificador:
             os.mkdir(dir_pesos)
 
     def salva_modelo(self, save_dir=''):
-        self.verifica_dirs()
         if save_dir == '':
-            path_save_modelo = os.path.join(path, f'Modelos/{self.nome_modelo}/Classificador/Estrutura/Classificador_{self.nome_modelo}.keras')
+            path_save_modelo = os.path.join(path, f'Modelos/{self.nome_modelo}/Classificador-{self.nome_autoencoder}/Estrutura/Classificador_{self.nome_modelo}.keras')
         else:
-            path_save_modelo = os.path.join(path, save_dir, f'Modelos/{self.nome_modelo}/Classificador/Estrutura/Classificador_{self.nome_modelo}.keras' )
+            path_save_modelo = os.path.join(path, save_dir, f'Modelos/{self.nome_modelo}/Classificador-{self.nome_autoencoder}/Estrutura/Classificador_{self.nome_modelo}.keras' )
         self.model.save(path_save_modelo)
     
     def setNome(self, nome):
         self.nome_modelo = nome
-        self.verifica_dirs()
     
     def compila(self):
         self.model.compile(optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy'])
@@ -591,8 +603,15 @@ class GeradorClassificador:
                                         save_best_only=True, 
                                         verbose=1)
 
+        log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        log_dir = os.path.join(path_slv, f'Modelos/{self.nome_modelo}/Classificador-{self.nome_autoencoder}', log_dir)
+        if not os.path.isdir(log_dir):
+            os.makedirs(log_dir)
+
+        tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+
         #Se quiser acompanhar
-        history = self.model.fit(self.treino, epochs=epocas, callbacks=[cp_callback], batch_size=batch_size ,validation_data=self.validacao)
+        history = self.model.fit(self.treino, epochs=epocas, callbacks=[cp_callback, tensorboard_callback], batch_size=batch_size ,validation_data=self.validacao)
         
         if os.path.isdir(os.path.join(path_slv,"Pesos/Pesos_parciais")):
             shutil.rmtree(os.path.join(path_slv,"Pesos/Pesos_parciais"), ignore_errors=True)
@@ -600,7 +619,7 @@ class GeradorClassificador:
 
         if salvar == True:
             save_dir = os.path.join(path_slv, "Modelos", self.nome_modelo)
-            dir_raiz = os.path.join(save_dir, "Classificador")
+            dir_raiz = os.path.join(save_dir, f"Classificador-{self.nome_autoencoder}")
             dir_modelo = os.path.join(dir_raiz, "Estrutura")
             dir_pesos = os.path.join(dir_raiz, "Pesos")
             dir_pesos_base = os.path.join(dir_pesos, f'Treinado_em_{nome_base}')
@@ -672,6 +691,7 @@ class GeradorClassificador:
 
         return self.model
 
+
 #Exemplo de uso:
 #classificador = GeradorClassificador(encoder=encoder, pesos="pesos.weights.h5") -> crio o classificador encima do encoder e seus pesos
 #classificador.Dataset(treino, validacao, teste)
@@ -679,7 +699,7 @@ class GeradorClassificador:
 #classificador.predicao(teste_df) -> cria a matriz de confusão
 
 """------------------Funções para usar diversos classificadores----------------------"""
-def cria_classificadores(n_modelos=10, nome_modelo=None, base_usada=None, treino=None, validacao=None, teste=None, teste_csv=None):
+def cria_classificadores(n_modelos=10, nome_modelo=None, base_autoencoder='Sem-Peso', treino=None, validacao=None, teste=None):
     gerador = Gerador()
     for i in range(n_modelos):  
         limpa_memoria()
@@ -687,26 +707,25 @@ def cria_classificadores(n_modelos=10, nome_modelo=None, base_usada=None, treino
         gerador.carrega_modelo(os.path.join(path,f'Modelos/{nome_modelo}-{i}/Modelo-Base/Estrutura/{nome_modelo}-{i}.keras'))
         encoder = gerador.encoder
 
-        pesos= os.path.join(path,f'Modelos/{nome_modelo}-{i}/Modelo-Base/Pesos/{nome_modelo}-{i}_Base-{base_usada}.weights.h5')
-        classificador = GeradorClassificador(encoder=encoder, pesos=pesos )
+        pesos= os.path.join(path,f'Modelos/{nome_modelo}-{i}/Modelo-Base/Pesos/{nome_modelo}-{i}_Base-{base_autoencoder}.weights.h5')
+        classificador = GeradorClassificador(encoder=encoder, pesos=pesos, nome_autoencoder=base_autoencoder, nome_modelo=f'{nome_modelo}-{i}')
         classificador.Dataset(treino, validacao, teste)
         #classificador.compila()
-        classificador.setNome(f'{nome_modelo}-{i}')
         classificador.salva_modelo()
         #classificador.treinamento(epocas=10)
         #classificador.predicao(teste_csv)
 
         limpa_memoria()
 
-def treinamento_em_batch(nome_modelo, base_usada, treino_csv, validacao, teste, teste_csv ,salvar=True, n_epocas=10, pesos=True):
+def treinamento_em_batch(nome_modelo, base_usada,base_autoencoder, treino_csv, validacao, teste, teste_csv ,salvar=True, n_epocas=10, pesos=True):
     gerador = Gerador()
     gerador.carrega_modelo(os.path.join(path,f'Modelos/{nome_modelo}/Modelo-Base/Estrutura/{nome_modelo}.keras'), pesos=False)
     encoder = gerador.encoder
     if pesos:
-        classificador = GeradorClassificador(encoder=encoder, pesos=os.path.join(path,f'Modelos/{nome_modelo}/Modelo-Base/Pesos/{nome_modelo}_Base-{base_usada}.weights.h5'))
+        classificador = GeradorClassificador(encoder=encoder, pesos=os.path.join(path,f'Modelos/{nome_modelo}/Modelo-Base/Pesos/{nome_modelo}_Base-{base_autoencoder}.weights.h5'), nome_modelo=nome_modelo, nome_autoencoder=base_autoencoder)
         path_slv = path
     else:
-        classificador = GeradorClassificador(encoder=encoder, pesos=False)
+        classificador = GeradorClassificador(encoder=encoder, pesos=False, nome_modelo=nome_modelo, nome_autoencoder=base_autoencoder)
         path_slv = os.path.join(path, "Sem-Peso")
     classificador.compila()
     classificador.setNome(f'{nome_modelo}')
@@ -723,11 +742,11 @@ def treinamento_em_batch(nome_modelo, base_usada, treino_csv, validacao, teste, 
     modelo = classificador.model
 
     # crio o Modelo/Classificador/Resultados
-    if not os.path.isdir(os.path.join(path_slv,f'Modelos/{nome_modelo}/Classificador/Resultados')):
-        os.makedirs(os.path.join(path_slv,f'Modelos/{nome_modelo}/Classificador/Resultados'))
+    if not os.path.isdir(os.path.join(path_slv,f'Modelos/{nome_modelo}/Classificador-{base_autoencoder}/Resultados')):
+        os.makedirs(os.path.join(path_slv,f'Modelos/{nome_modelo}/Classificador-{base_autoencoder}/Resultados'))
 
     # crio o Modelo/Classificador/Resultados/Treinados_em_PUC
-    dir_resultados_base = os.path.join(path_slv, f'Modelos/{nome_modelo}/Classificador/Resultados/Treinados_em_{base_usada}')
+    dir_resultados_base = os.path.join(path_slv, f'Modelos/{nome_modelo}/Classificador-{base_autoencoder}/Resultados/Treinados_em_{base_usada}')
     if not os.path.isdir(dir_resultados_base):
         os.makedirs(dir_resultados_base)
 
@@ -748,7 +767,7 @@ def treinamento_em_batch(nome_modelo, base_usada, treino_csv, validacao, teste, 
         np.save(arquivo, predicoes_np)
 
         #Salvar a precisão 
-        dir_prec = os.path.join(path_slv, f"Modelos/{nome_modelo}/Classificador/Precisao")
+        dir_prec = os.path.join(path_slv, f"Modelos/{nome_modelo}/Classificador-{base_autoencoder}/Precisao")
         if not os.path.isdir(dir_prec):
             os.makedirs(dir_prec)
 
@@ -775,13 +794,13 @@ def treinamento_em_batch(nome_modelo, base_usada, treino_csv, validacao, teste, 
 
     grafico_batchs(n_batchs, precisoes, nome_modelo, base_usada, base_usada, dir_graf_facul)
 
-    plot_model(encoder, show_shapes=True,show_layer_names=True,to_file=os.path.join(path_slv,f'Modelos/{nome_modelo}/Classificador/encoder-{nome_modelo}.png'))
-    plot_model(modelo, show_shapes=True,show_layer_names=True,to_file=os.path.join(path_slv,f'Modelos/{nome_modelo}/Classificador/classificador-{nome_modelo}.png'))
+    plot_model(encoder, show_shapes=True,show_layer_names=True,to_file=os.path.join(path_slv,f'Modelos/{nome_modelo}/Classificador-{base_autoencoder}/encoder-{nome_modelo}.png'))
+    plot_model(modelo, show_shapes=True,show_layer_names=True,to_file=os.path.join(path_slv,f'Modelos/{nome_modelo}/Classificador-{base_autoencoder}/classificador-{nome_modelo}.png'))
     
     print(precisoes)
     #return (n_batchs, precisoes, nome_modelo)
 
-def treina_modelos_em_batch(nome_modelo, base_usada, treino_csv, validacao, teste, teste_csv, salvar=True, n_epocas=10):
+def treina_modelos_em_batch(nome_modelo, base_usada, base_autoencoder, treino_csv, validacao, teste, teste_csv, salvar=True, n_epocas=10):
     path_modelos = os.path.join(path, "Modelos")
     modelos = os.listdir(path_modelos)
     modelos_para_treinar = []
@@ -802,11 +821,11 @@ def treina_modelos_em_batch(nome_modelo, base_usada, treino_csv, validacao, test
 
     for i, m in enumerate(sorted(modelos_para_treinar)):
         nome = nome_modelo + f"-{i}"
-        treinamento_em_batch(nome, base_usada, treino_csv, validacao, teste, teste_csv, salvar, n_epocas)
+        treinamento_em_batch(nome, base_usada, base_autoencoder, treino_csv, validacao, teste, teste_csv, salvar, n_epocas, True)
 
-    comparacao(os.path.join(path_modelos, "Plots"), nome_modelo, base_usada)
+    comparacao(os.path.join(path_modelos, "Plots"), nome_modelo, base_usada, base_autoencoder)
 
-def testa_modelos_em_batch(nome_modelo, teste, teste_df, base_do_classificador, pesos=True):
+def testa_modelos_em_batch(nome_modelo, teste, teste_df, base_do_classificador, pesos=True, nome_autoencder='Kyoto'):
 
     if pesos:
         path_slv = path
@@ -820,22 +839,22 @@ def testa_modelos_em_batch(nome_modelo, teste, teste_df, base_do_classificador, 
     #print(teste_df)
     classificador.setTeste(teste)
 
-    if not os.path.isdir(os.path.join(path_slv,f'Modelos/{nome_modelo}/Classificador/Resultados')):
-        recria_diretorio(os.path.join(path_slv,f'Modelos/{nome_modelo}/Classificador/Resultados'))
+    if not os.path.isdir(os.path.join(path_slv,f'Modelos/{nome_modelo}/Classificador-{nome_autoencder}/Resultados')):
+        recria_diretorio(os.path.join(path_slv,f'Modelos/{nome_modelo}/Classificador-{nome_autoencder}/Resultados'))
         
     acuracias = []
     batchs = [64,128,256,512,1024]
 
-    estrutura = os.path.join(path_slv,f'Modelos/{nome_modelo}/Classificador/Estrutura/Classificador_{nome_modelo}.keras')
+    estrutura = os.path.join(path_slv,f'Modelos/{nome_modelo}/Classificador-{nome_autoencder}/Estrutura/Classificador_{nome_modelo}.keras')
     for batch_size in [64,128,256,512,1024]:
         classificador.setNome(nome_modelo)
-        dir_peso = f'Modelos/{nome_modelo}/Classificador/Pesos/Treinado_em_{base_do_classificador}/Classificador_{nome_modelo}_batchs-{batch_size}.weights.h5'
+        dir_peso = f'Modelos/{nome_modelo}/Classificador-{nome_autoencder}/Pesos/Treinado_em_{base_do_classificador}/Classificador_{nome_modelo}_batchs-{batch_size}.weights.h5'
         peso = os.path.join(path_slv,dir_peso)
         classificador.carrega_modelo(estrutura, peso)
         predicoes_np, acuracia = classificador.predicao(teste_df)
 
-        #Modelo-Kyoto-1/Classificador/Resultados/Treinados_em_PUC/UFPR04/batchs-64-npy
-        dir_base = os.path.join(path_slv, f"Modelos/{nome_modelo}/Classificador/Resultados/Treinados_em_{base_do_classificador}/{nome_base}")
+        #Modelo-Kyoto-1/Classificador-{nome_autoencder}/Resultados/Treinados_em_PUC/UFPR04/batchs-64-npy
+        dir_base = os.path.join(path_slv, f"Modelos/{nome_modelo}/Classificador-{nome_autoencder}/Resultados/Treinados_em_{base_do_classificador}/{nome_base}")
         if not os.path.isdir(dir_base):
             os.makedirs(dir_base)
         arquivo = os.path.join(dir_base, f'batchs-{batch_size}.npy')
@@ -848,7 +867,7 @@ def testa_modelos_em_batch(nome_modelo, teste, teste_df, base_do_classificador, 
     #Salvar as precisões no arquivo
     #print(nome_base_teste)
     print(nome_base)
-    caminho_arquivo = os.path.join(path_slv, f'Modelos/{nome_modelo}/Classificador/Precisao/Treinado_em_{base_do_classificador}', f'precisao-{nome_base}.txt')
+    caminho_arquivo = os.path.join(path_slv, f'Modelos/{nome_modelo}/Classificador-{nome_autoencder}/Precisao/Treinado_em_{base_do_classificador}', f'precisao-{nome_base}.txt')
     with open(caminho_arquivo, 'w') as f:
         for prec in acuracias:
             f.write(f"{prec}\n")
