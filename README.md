@@ -61,6 +61,57 @@ Composto por imagens coletadas de novembro de 2015 a fevereiro de 2016 sob diver
 <br>
 <img src="https://lh3.googleusercontent.com/proxy/p-9dUexhRfdxfbh58L61VNsaFatf8KH-Bh7mVzWT8d35bqPE4GXaKuT_BNE5z-RLwJR6">
 
+<h2>Estrutura de pastas:</h2>
+
+```
+Modelos/
+├── Fusao-Modelo-Nome                                          # Plots das fusões entre os diferentes modelos  
+├── Modelo_Kyoto-1/
+│   ├── classificador/                                         # Classificador sem carregar os pesos do encoder
+│   │   ├── estrutura/                                         # arquitetura do modelo .keras
+│   │   ├── pesos/                                             # .weights.h5
+│   │   │    ├── Modelo_Kyoto-1_Base-autoencoder1.weights.h5
+│   │   │    ├── Modelo_Kyoto-1_Base-autoencoder2.weights.h5
+│   │   │ 
+│   │   ├── resultados/                                        # Resultados numpy.
+│   │   │    ├── Treinado_em_Base1/
+│   │   │    ├── Treinado_em_Base2/
+|   |   |         ├── Base1/                                   # Testado contra a base 1
+|   |   |         ├── Base2/                                   # Testado contra a base 2
+|   |   |             ├── batches-64.npy 
+|   |   |             ├── batches-128.npy 
+|   |   |             ├── batches-256.npy 
+|   |   |             ├── batches-512.npy 
+|   |   |             ├── batches-1024.npy 
+│   │   ├── logs/                                              # Arquivos de log do treinamento (TensorBoard, .txt etc.)
+│   │   ├── precisao/                                          # Precisões contra as bases de teste 
+|   |   |    ├── Treinado_em_Base1/  
+|   |   |    ├── Treinado_em_Base2/
+|   |   |         ├── precisao-base1.txt                       # Precisões em txt 
+|   |   |         ├── precisao-base2.txt                                                    
+│   │   |
+│   ├── classificador_x/                                       # Classificador carregando os pesos do encoder com a base x 
+│   ├── classificador_y/                                       
+│   ├── classificador_z/                                       
+│   ├── modelo_base/                                           # Estrutura e peso do Autoencoder treinado nas diferentes bases
+|   └── Plots/
+|       ├── Gráficos/
+│       │    ├── Treinado_em_Base1/
+│       │    ├── Treinado_em_Base2/
+|       |         ├── Grafico-Modelo-Nome-1-BaseClassificador-BaseTeste.png                            
+|       ├── History/
+|       ├── Autoencoder-Base1.png
+|       ├── History-Autoencoder-Base1.png
+|       ├── Autoencoder-Base2.png
+|       ├── History-Autoencoder-Base2.png
+│
+├── Modelo_Kyoto-2/
+│   ├── classificador/
+│   ├── ...
+│
+└── README.md
+```
+
 <h2 id="usar">Como usar:</h2>
 
 ![Estado do projeto!](https://img.shields.io/badge/Estado:-Em%20produção-FFFF00.svg)

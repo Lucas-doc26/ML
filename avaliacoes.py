@@ -21,3 +21,4 @@ def calcular_ncc(image1, image2):
     return numerator / denominator
 
 
+

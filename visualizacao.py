@@ -6,9 +6,11 @@ import pandas as pd
 import os
 import numpy as np
 import math
+from tensorflow.keras.models import Model
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
 from Preprocessamento import mapear_rotulos_binarios, carregar_e_preprocessar_imagens
 from avaliacoes import *
+import keras
 
 path = r'/home/lucas/PIBIC'
 
@@ -261,7 +263,7 @@ def avaliar_modelo_em_datasets(modelo, datasets_info):
         plot_confusion_matrix(y_binario, y_predicao, labels, save_path_matriz, titulo_matriz)
         plot_imagens_incorretas(y_binario, y_predicao, caminhos_imagens, modelo.name, dataset_nome, 3)
 
-def grafico_batchs(n_batchs, precisoes, nome_modelo, nome_base_treino, base_usada_teste, caminho_para_salvar=None):
+def grafico_batchs(n_batchs, precisoes, nome_modelo, nome_base_treino, base_usada_teste, nome_autoencoder, caminho_para_salvar=None):
     #print(f"Base_treino: {nome_base_treino}")
     #print(f"Base_teste: {base_usada_teste}")
 
@@ -280,7 +282,7 @@ def grafico_batchs(n_batchs, precisoes, nome_modelo, nome_base_treino, base_usad
     plt.legend()
 
     if caminho_para_salvar != None:
-        save_path = os.path.join(caminho_para_salvar, f'Grafico-{nome_modelo}-{nome_base_treino}-{base_usada_teste}')
+        save_path = os.path.join(caminho_para_salvar, f'Grafico-{nome_modelo}-{nome_autoencoder}-{nome_base_treino}-{base_usada_teste}')
         plt.savefig(save_path)
         print(f"Salvando gráfico no caminho: {save_path}.png")
 
@@ -353,14 +355,17 @@ def comparacao(caminho_para_salvar=None, nome_modelo=None, base_usada=None, base
 #Testes:
 #comparacao('/media/lucas/mnt/data/Lucas$/Modelos/Plots', 'Modelo_Kyoto', 'PUC', 'UFPR05')
 
-def plot_history(df, save_dir, modelo, base_treinamento):
+def plot_history(df, save_dir, modelo, base_do_autoencoder):
     plt.figure(figsize=(8, 6))
     df.plot()
     plt.title("Treinamento do Autoencoder")
     plt.xlabel("Épocas")
     plt.ylabel("Métricas")
     plt.grid()
-    plt.savefig(os.path.join(save_dir, f"History-{modelo}-{base_treinamento}.png")) 
+
+    nome_img = f"History-Autoencoder-{modelo}-{base_do_autoencoder}.png"
+
+    plt.savefig(os.path.join(save_dir, nome_img)) 
 
     plt.clf()
     plt.close('all')  
@@ -395,6 +400,125 @@ def plot_history_batch(history, save_dir, nome_modelo, nome_base_treino, batch):
     # Exibir o gráfico
     plt.tight_layout()
     plt.savefig(os.path.join(save_dir, f"History-{nome_modelo}-{nome_base_treino}-{batch}.png")) 
+
+def plot_heat_map(teste, encoder, decoder):
+    # Pegue a camada de interesse (a última Conv2D do encoder)
+    layer_name = [layer.name for layer in encoder.layers if isinstance(layer, keras.layers.Conv2D)][-1]
+    print("Usando camada:", layer_name)
+
+    # Cria um modelo auxiliar que vai até essa camada
+    activation_model = Model(inputs=encoder.input,
+                             outputs=encoder.get_layer(layer_name).output)
+
+    # Função para processar uma imagem
+    def process_image(input_img):
+        # Redimensionar a imagem para garantir a forma correta
+        if input_img.shape != (256, 256, 3):
+            input_img = tf.image.resize(input_img, (256, 256))
+
+        # Expandir a imagem para o formato batch
+        input_img_batch = np.expand_dims(input_img, axis=0)  # shape: (1, 256, 256, 3)
+
+        # Obter as ativações da última camada Conv2D
+        activations = activation_model.predict(input_img_batch)  # shape: (1, H, W, filters)
+        activation_map = np.mean(activations[0], axis=-1)  # média entre todos os filtros
+
+        # Obter a codificação latente z e reconstrução da imagem
+        _, _, z_occ = encoder.predict(input_img_batch)  # shape: (1, latent_dim)
+        occ_reconstructed_img = decoder.predict(z_occ)  # reconstrução da imagem
+
+        return input_img, occ_reconstructed_img[0], activation_map
+
+    # Imagem 1
+    input_img_1, occ_reconstructed_img_1, activation_map_1 = process_image(teste[0])
+
+    # Imagem 2
+    input_img_2, empty_reconstructed_img_2, activation_map_2 = process_image(teste[33])
+
+    # Exibir gráfico
+    plt.figure(figsize=(12, 8))
+
+    # Exibir para a primeira imagem
+    plt.subplot(2, 3, 1)
+    plt.imshow(input_img_1)
+    plt.title("Imagem Original 1")
+    plt.axis('off')
+
+    plt.subplot(2, 3, 2)
+    plt.imshow(occ_reconstructed_img_1)
+    plt.title("Imagem Reconstruída 1")
+    plt.axis('off')
+
+    plt.subplot(2, 3, 3)
+    plt.imshow(activation_map_1, cmap='viridis')
+    plt.title("Mapa de Ativação 1")
+    plt.axis('off')
+
+    # Exibir para a segunda imagem
+    plt.subplot(2, 3, 4)
+    plt.imshow(input_img_2)
+    plt.title("Imagem Original 2")
+    plt.axis('off')
+
+    plt.subplot(2, 3, 5)
+    plt.imshow(empty_reconstructed_img_2)
+    plt.title("Imagem Reconstruída 2")
+    plt.axis('off')
+
+    plt.subplot(2, 3, 6)
+    plt.imshow(activation_map_2, cmap='viridis')
+    plt.title("Mapa de Ativação 2")
+    plt.axis('off')
+
+    # Ajuste o layout e exiba
+    plt.tight_layout()
+    plt.savefig("img.png")
+    plt.show()
+
+def plot_autoencoder_2(x_test, Autoencoder, width=256, height=256, caminho_para_salvar=None):
+    def normalize(image):
+        image = np.clip(image, 0, 1)  # Garante que a imagem esteja no intervalo [0, 1]
+        return (image - image.min()) / (image.max() - image.min()) if image.max() != image.min() else image
+
+    plt.figure(figsize=(16, 8))
+
+    avaliacoes = []
+    for i in range(8):
+        # Imagem original
+        plt.subplot(2, 8, i + 1)
+        plt.imshow(x_test[i])
+        plt.title("Original")
+        plt.axis("off")
+
+        # Predição e normalização
+        z_mean, z_log_var, z = Autoencoder.encoder(x_test[i].reshape((1, width, height, 3)))
+        pred = Autoencoder.decoder(z)
+        pred_img = normalize(pred[0])
+
+        plt.subplot(2, 8, i + 8 + 1)
+        plt.imshow(pred_img)
+
+        ssim = float(calcular_ssim(pred, pred_img))
+        avaliacoes.append(ssim)
+
+        del pred_img, pred
+        plt.title(f"SSIM: {ssim:.2f}")
+        plt.axis("off")
+
+    plt.show()
+    media_ssim = np.mean(avaliacoes)
+    
+    if caminho_para_salvar != None:
+        save_path = os.path.join(caminho_para_salvar, 'Autoencoder.png')
+        plt.savefig(save_path)
+
+        arquivo = os.path.join(caminho_para_salvar,'media_ssim.txt')
+        with open(arquivo, 'w') as f:
+            for av in avaliacoes:
+                f.write(f'{av}\n')
+            f.write(f'Media geral: {media_ssim}')
+    
+    plt.close("all") 
 
 
 #base_de_teste = ['PUC', 'UFPR04', 'UFPR05', 'camera1', 'camera2', 'camera3', 'camera4', 'camera5', 'camera6', 'camera7', 'camera8','camera9']

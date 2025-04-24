@@ -1,6 +1,5 @@
 from Modelos import *
 from Preprocessamento import *
-#from Fusoes import *
 from skimage.metrics import structural_similarity as ssim
 import matplotlib
 import tensorflow as tf
@@ -53,6 +52,7 @@ val, _ = preprocessamento_dataframe(caminho_csv=f'CSV/{args.classificador}/{args
 teste, teste_df = preprocessamento_dataframe(caminho_csv=f'CSV/{args.classificador}/{args.classificador}_Segmentado_Teste.csv', autoencoder=False, data_algumentantation=False)
 
 # Treina em batches
+
 treina_modelos_em_batch(
     nome_modelo=args.nome, 
     base_usada=f'{args.classificador}', 
@@ -62,12 +62,13 @@ treina_modelos_em_batch(
     salvar=True, 
     n_epocas=args.epocas_classificador)
 
+
 # Testa nas demais bases 
 base1, df_base1 = preprocessamento_dataframe(caminho_csv=f'CSV/{args.base_teste1}/{args.base_teste1}.csv', autoencoder=False, data_algumentantation=False)
-testa_modelos(args.nome, base1, df_base1, args.classificador)
+testa_modelos(args.nome, base1, df_base1, args.classificador, args.autoencoder)
 
 base2, df_base2 = preprocessamento_dataframe(caminho_csv=f'CSV/{args.base_teste2}/{args.base_teste2}.csv', autoencoder=False, data_algumentantation=False)
-testa_modelos(args.nome, base2, df_base2, args.classificador)
+testa_modelos(args.nome, base2, df_base2, args.classificador, args.autoencoder)
 
 #Teste na cnr
 """

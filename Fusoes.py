@@ -5,6 +5,11 @@ from sklearn.metrics import accuracy_score
 
 path = '/home/lucas/PIBIC/'
 
+
+
+base_treino = ['PUC', 'UFPR04', 'UFPR05']
+bases_teste = ['PUC', 'UFPR04', 'UFPR05']
+
 def verifica_dir(nome_modelo, nome_base, nome_autoencoder):
     if not os.path.isdir(os.path.join(path, f'Modelos/Fusoes-{nome_modelo}')):
         os.mkdir(os.path.join(path,f'Modelos/Fusoes-{nome_modelo}'))
@@ -21,10 +26,6 @@ def verifica_dir(nome_modelo, nome_base, nome_autoencoder):
 
 def mapear(classes):
     return np.array([1 if classe == 1 else 0 for classe in classes])
-
-
-base_treino = ['PUC', 'UFPR04', 'UFPR05']
-bases_teste = ['PUC', 'UFPR04', 'UFPR05', 'camera1', 'camera2', 'camera3', 'camera4', 'camera5', 'camera6', 'camera7','camera8','camera9']
 
 def soma_previsoes(nome_modelo, batch_size, n_modelos, base_de_treino, base_de_teste, nome_autoencoder=None):
     """
@@ -81,6 +82,7 @@ def soma(nome_modelo, bases_de_treino, nome_autoencoder=None, n_modelos=10):
 
             grafico_batchs(batches, resultados, nome_modelo=f'Soma-{nome_modelo}-{base_treino}',
                 caminho_para_salvar=os.path.join(path, f'Modelos/Fusoes-{nome_modelo}/Autoencoder-{nome_autoencoder}/Treinados_em_{base_treino}/Grafico_batchs'), 
+                nome_autoencoder=nome_autoencoder,
                 nome_base_treino=base_treino, base_usada_teste=base_teste)
 
 def mult_previsoes(nome_modelo, batch_size, n_modelos, base_de_treino, base_de_teste, nome_autoencoder=None):
@@ -140,6 +142,7 @@ def mult(nome_modelo, bases_de_treino, nome_autoencoder=None, n_modelos=10):
 
             grafico_batchs(batches, resultados, nome_modelo=f'Mult-{nome_modelo}-{base_treino}',
                 caminho_para_salvar=os.path.join(path, f'Modelos/Fusoes-{nome_modelo}/Autoencoder-{nome_autoencoder}/Treinados_em_{base_treino}/Grafico_batchs'), 
+                nome_autoencoder=nome_autoencoder,
                 nome_base_treino=base_treino, base_usada_teste=base_teste)
         
 def votacao_previsoes(nome_modelo, batch_size, n_modelos, base_de_treino, base_de_teste, nome_autoencoder=None):
@@ -207,11 +210,12 @@ def voto(nome_modelo, bases_de_treino, nome_autoencoder=None, n_modelos=10):
             #print(base_treino)
             grafico_batchs(batches, resultados, nome_modelo=f'Voto-{nome_modelo}',
                 caminho_para_salvar=os.path.join(path, f'Modelos/Fusoes-{nome_modelo}/Autoencoder-{nome_autoencoder}/Treinados_em_{base_treino}/Grafico_batchs'), 
+                nome_autoencoder=nome_autoencoder,
                 nome_base_treino=base_treino, base_usada_teste=base_teste)
 
-soma("Modelo_Kyoto", base_treino, n_modelos=10)
-mult("Modelo_Kyoto", base_treino, n_modelos=10)
-voto("Modelo_Kyoto", base_treino, n_modelos=10)
+#soma("Modelo_Kyoto", base_treino, n_modelos=10)
+#mult("Modelo_Kyoto", base_treino, n_modelos=10)
+#voto("Modelo_Kyoto", base_treino, n_modelos=10)
 
 soma("Modelo_Kyoto", base_treino, 'CNR', 5)
 mult("Modelo_Kyoto", base_treino, 'CNR', 5)
