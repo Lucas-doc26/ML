@@ -16,6 +16,11 @@ import gc
 import re
 import shutil
 from visualizacao import *
+from tensorflow.keras import mixed_precision
+#from numba import cuda
+
+policy = mixed_precision.Policy('mixed_float16')
+mixed_precision.set_global_policy(policy)
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # '0' = tudo, '1' = warnings, '2' = info, '3' = apenas erros graves
 
@@ -205,7 +210,7 @@ class Gerador:
             else:
                 shape_atual = (shape_atual[0], shape_atual[1], filters) 
 
-        latent_dim = np.random.randint(256,512)
+        latent_dim = np.random.randint(64,128)#256,512 o padrão
 
         if np.random.choice(([0,0,1])):
             encoder_layers.append(BatchNormalization()) 
@@ -350,6 +355,8 @@ class Gerador:
 
         x, y = next(self.teste)
 
+        print(self.input_shape[0])
+        print(self.input_shape[1])
 
         plot_history(df, 
                      save_dir=dir_imagens, 
@@ -395,11 +402,11 @@ class Gerador:
 #preci
 
 """------------------Funções para usar diversos autoencoders----------------------"""
-def cria_modelos(n_modelos=10, nome_modelo=None, filters_list=[8,16,32,64,128]):
+def cria_modelos(n_modelos=10, nome_modelo=None, filters_list=[8,16,32,64,128], input=(64,64,3), min_camadas=3, max_camadas=5):
     for i in range(n_modelos):  
         limpa_memoria()
 
-        Modelo = Gerador(input_shape=(64, 64, 3))
+        Modelo = Gerador(input_shape=input, max_layers=max_camadas, min_layers=min_camadas)
         Modelo.setNome(f'{nome_modelo}-{i}')
         modelo = Modelo.construir_modelo(salvar=True, filters_list=filters_list)
 
@@ -414,7 +421,7 @@ def cria_modelos(n_modelos=10, nome_modelo=None, filters_list=[8,16,32,64,128]):
         del Modelo, modelo, encoder, decoder
         limpa_memoria()
     
-def treina_modelos(treino, validacao, teste, nome_modelo=None, nome_base=None, n_epocas=10, batch_size=16):
+def treina_modelos(treino, validacao, teste, nome_modelo=None, nome_base=None, n_epocas=10, batch_size=16, input_shape=(64,64,3)):
     modelos = os.listdir(os.path.join(path,"Modelos"))
     modelos_para_treinar = []
     
@@ -431,7 +438,7 @@ def treina_modelos(treino, validacao, teste, nome_modelo=None, nome_base=None, n
     for i, m in enumerate(sorted(modelos_para_treinar)):
         limpa_memoria()
 
-        Modelo = Gerador()
+        Modelo = Gerador(input_shape)
         Modelo.carrega_modelo(m)
         Modelo.Dataset(treino, validacao, teste)
         Modelo.compilar_modelo()
@@ -604,7 +611,7 @@ class GeradorClassificador:
             save_history = os.path.join(dir_imagens, 'History')
             if not os.path.isdir(save_history):
                 os.makedirs(save_history)
-            plot_history_batch(history, save_history, self.nome_modelo, nome_base, n_batchs) 
+            plot_history_batch(history, save_history, self.nome_modelo, nome_base, self.nome_autoencoder ,n_batchs) 
             del history                  
 
     def Dataset(self, treino, validacao, teste):
@@ -649,8 +656,9 @@ class GeradorClassificador:
 #classificador.predicao(teste_df) -> cria a matriz de confusão
 
 """------------------Funções para usar diversos classificadores----------------------"""
-def cria_classificadores(n_modelos=10, nome_modelo=None, base_autoencoder='Sem-Peso', treino=None, validacao=None, teste=None):
-    gerador = Gerador()
+def cria_classificadores(n_modelos=10, nome_modelo=None, base_autoencoder='Sem-Peso', treino=None, validacao=None, teste=None, 
+                         input_shape=(64,64,3)):
+    gerador = Gerador(input_shape)
     for i in range(n_modelos):  
         limpa_memoria()
 
@@ -667,7 +675,7 @@ def cria_classificadores(n_modelos=10, nome_modelo=None, base_autoencoder='Sem-P
 
         limpa_memoria()
 
-def treinamento_em_batch(nome_modelo, base_usada, base_autoencoder, treino_csv, validacao, teste, teste_csv ,salvar=True, n_epocas=10, pesos=True):
+def treinamento_em_batch(nome_modelo, base_usada, base_autoencoder, treino_csv, validacao, teste, teste_csv ,salvar=True, n_epocas=10, pesos=True, input_shape=(64,64,3)):
     path_slv = path
 
     #nome da base de treino do classificador
@@ -699,7 +707,7 @@ def treinamento_em_batch(nome_modelo, base_usada, base_autoencoder, treino_csv, 
     for batch, batch_size in zip(batchs, n_batchs):
         limpa_memoria()
 
-        gerador = Gerador()
+        gerador = Gerador(input_shape)
         gerador.carrega_modelo(os.path.join(path,f'Modelos/{nome_modelo}/Modelo-Base/Estrutura/{nome_modelo}.keras'), pesos=False)
         encoder = gerador.encoder
 
@@ -769,7 +777,7 @@ def treinamento_em_batch(nome_modelo, base_usada, base_autoencoder, treino_csv, 
     print(precisoes)
     #return (n_batchs, precisoes, nome_modelo)
 
-def treina_modelos_em_batch(nome_modelo, base_usada, base_autoencoder, treino_csv, validacao, teste, teste_csv, salvar=True, n_epocas=10):
+def treina_modelos_em_batch(nome_modelo, base_usada, base_autoencoder, treino_csv, validacao, teste, teste_csv, salvar=True, n_epocas=10, input_shape=(64,64,3)):
     path_modelos = os.path.join(path, "Modelos")
     modelos = os.listdir(path_modelos)
     modelos_para_treinar = []
@@ -789,7 +797,7 @@ def treina_modelos_em_batch(nome_modelo, base_usada, base_autoencoder, treino_cs
     for i, m in enumerate(sorted(modelos_para_treinar)):
         nome = nome_modelo + f"-{i}"
         #treino cada um dos modelos em batches 
-        treinamento_em_batch(nome, base_usada, base_autoencoder, treino_csv, validacao, teste, teste_csv, salvar, n_epocas, True)
+        treinamento_em_batch(nome, base_usada, base_autoencoder, treino_csv, validacao, teste, teste_csv, salvar, n_epocas, True, input_shape)
 
     #faço o plot comparando os modelos
     comparacao(caminho_para_salvar=os.path.join(path_modelos, "Plots"), 

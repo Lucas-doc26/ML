@@ -370,7 +370,7 @@ def plot_history(df, save_dir, modelo, base_do_autoencoder):
     plt.clf()
     plt.close('all')  
 
-def plot_history_batch(history, save_dir, nome_modelo, nome_base_treino, batch):
+def plot_history_batch(history, save_dir, nome_modelo, nome_base_treino, nome_base_autoencoder, batch):
     accuracy = history.history['accuracy']
     val_accuracy = history.history['val_accuracy']
     loss = history.history['loss']
@@ -399,7 +399,7 @@ def plot_history_batch(history, save_dir, nome_modelo, nome_base_treino, batch):
 
     # Exibir o gráfico
     plt.tight_layout()
-    plt.savefig(os.path.join(save_dir, f"History-{nome_modelo}-{nome_base_treino}-{batch}.png")) 
+    plt.savefig(os.path.join(save_dir, f"History-{nome_modelo}-{nome_base_autoencoder}-{nome_base_treino}-{batch}.png")) 
 
 def plot_heat_map(teste, encoder, decoder):
     # Pegue a camada de interesse (a última Conv2D do encoder)
