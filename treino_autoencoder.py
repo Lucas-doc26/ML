@@ -11,12 +11,15 @@ parser.add_argument("autoencoder", type=str, help="Nome da base de autoencoder u
 parser.add_argument("input", type=str, help="Input Size das imagens")
 parser.add_argument("epocas_autoencoder", type=int, help="Número de épocas para o autoencoder")
 
-args = parser.parse_args()
+args = parser.parse_args()    
 
 # Converte e valida input
 input_size = ast.literal_eval(args.input)
 if not (isinstance(input_size, tuple) and len(input_size) == 2 and all(isinstance(x, int) for x in input_size)):
     raise ValueError("O parâmetro 'input' deve ser uma tupla de dois inteiros, como (256,256)")
+
+if input_size[0] > 64:
+    os.environ["CUDA_VISIBLE_DEVICES"] = ""
 
 if args.autoencoder == 'CNR':
     path_treino = 'CSV/CNR/CNR_autoencoder_treino.csv'

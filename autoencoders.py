@@ -20,6 +20,11 @@ input_size = ast.literal_eval(args.input)
 if not (isinstance(input_size, tuple) and len(input_size) == 2 and all(isinstance(x, int) for x in input_size)):
     raise ValueError("O parâmetro 'input' deve ser uma tupla de dois inteiros, como (256,256)")
 
+print(input_size)
+
+if input_size != (64,64):
+    os.environ["CUDA_VISIBLE_DEVICES"] = ""
+
 input_shape = (*input_size, 3)
 
 # Converte os filtros

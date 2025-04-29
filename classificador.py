@@ -41,9 +41,6 @@ print(gpus)
 # Desabilita os plots gerais 
 matplotlib.use('Agg')
 
-#Segemnta pklot
-#PKLot()
-
 # Preprocessamento imagens dos classificadores
 input_size = ast.literal_eval(args.input)
 input_shape = (*input_size, 3)
@@ -57,7 +54,6 @@ val, _ = preprocessamento_dataframe(caminho_csv=f'CSV/{args.classificador}/{args
 teste, teste_df = preprocessamento_dataframe(caminho_csv=f'CSV/{args.classificador}/{args.classificador}_Segmentado_Teste.csv', autoencoder=False, data_algumentantation=False, input_shape=input_size)
 
 # Treina em batches
-
 treina_modelos_em_batch(
     nome_modelo=args.nome, 
     base_usada=f'{args.classificador}', 

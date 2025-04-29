@@ -5,8 +5,6 @@ from sklearn.metrics import accuracy_score
 
 path = '/home/lucas/PIBIC/'
 
-
-
 base_treino = ['PUC', 'UFPR04', 'UFPR05']
 bases_teste = ['PUC', 'UFPR04', 'UFPR05']
 
@@ -80,7 +78,7 @@ def soma(nome_modelo, bases_de_treino, nome_autoencoder=None, n_modelos=10):
                 acc = accuracy_score(df, resultado)
                 resultados.append(acc)
 
-            grafico_batchs(batches, resultados, nome_modelo=f'Soma-{nome_modelo}-{base_treino}',
+            grafico_batchs(batches, resultados, nome_modelo=f'Soma entre os diferentes {nome_modelo}',
                 caminho_para_salvar=os.path.join(path, f'Modelos/Fusoes-{nome_modelo}/Autoencoder-{nome_autoencoder}/Treinados_em_{base_treino}/Grafico_batchs'), 
                 nome_autoencoder=nome_autoencoder,
                 nome_base_treino=base_treino, base_usada_teste=base_teste)
@@ -133,14 +131,12 @@ def mult(nome_modelo, bases_de_treino, nome_autoencoder=None, n_modelos=10):
                         df = pd.read_csv(f'CSV/{base_teste}/{base_teste}_Segmentado_Teste.csv')
                 df = mapear(df['classe'])
 
-
-
                 #plot_confusion_matrix(df, resultado, title=f'Fusão {nome_modelo} - Batch: {batch_size}',
                  #save_path=os.path.join(path, f'Modelos/Fusoes-{nome_modelo}/Treinados_em_{base_treino}/Matriz_confusao'))
                 acc = accuracy_score(df, resultado)
                 resultados.append(acc)
 
-            grafico_batchs(batches, resultados, nome_modelo=f'Mult-{nome_modelo}-{base_treino}',
+            grafico_batchs(batches, resultados, nome_modelo=f'Mult entre os diferentes {nome_modelo}',
                 caminho_para_salvar=os.path.join(path, f'Modelos/Fusoes-{nome_modelo}/Autoencoder-{nome_autoencoder}/Treinados_em_{base_treino}/Grafico_batchs'), 
                 nome_autoencoder=nome_autoencoder,
                 nome_base_treino=base_treino, base_usada_teste=base_teste)
@@ -208,14 +204,14 @@ def voto(nome_modelo, bases_de_treino, nome_autoencoder=None, n_modelos=10):
                 resultados.append(acc)
 
             #print(base_treino)
-            grafico_batchs(batches, resultados, nome_modelo=f'Voto-{nome_modelo}',
+            grafico_batchs(batches, resultados, nome_modelo=f'Voto entre os diferentes {nome_modelo}',
                 caminho_para_salvar=os.path.join(path, f'Modelos/Fusoes-{nome_modelo}/Autoencoder-{nome_autoencoder}/Treinados_em_{base_treino}/Grafico_batchs'), 
                 nome_autoencoder=nome_autoencoder,
                 nome_base_treino=base_treino, base_usada_teste=base_teste)
 
-#soma("Modelo_Kyoto", base_treino, n_modelos=10)
-#mult("Modelo_Kyoto", base_treino, n_modelos=10)
-#voto("Modelo_Kyoto", base_treino, n_modelos=10)
+soma("Modelo_Kyoto", base_treino, 'Kyoto', n_modelos=10)
+mult("Modelo_Kyoto", base_treino, 'Kyoto', n_modelos=10)
+voto("Modelo_Kyoto", base_treino, 'Kyoto', n_modelos=10)
 
 soma("Modelo_Kyoto", base_treino, 'CNR', 5)
 mult("Modelo_Kyoto", base_treino, 'CNR', 5)

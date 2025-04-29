@@ -2,41 +2,11 @@ from Modelos import *
 from Preprocessamento import *
 from segmentandoDatasets import *
 from Fusoes import *
-from skimage import data, img_as_float
 from skimage.metrics import structural_similarity as ssim
 import matplotlib
-import shutil
-from tensorflow.keras.mixed_precision import set_global_policy
 import tensorflow as tf
-import os
-from tensorflow.keras import mixed_precision
-import os
-import time
-import sys
 import argparse
-import pdb
 from multiprocessing import Pool
-from functools import partial
-
-from Modelos import *
-from Preprocessamento import *
-from segmentandoDatasets import *
-from Fusoes import *
-from skimage import data, img_as_float
-from skimage.metrics import structural_similarity as ssim
-import matplotlib
-import shutil
-from tensorflow.keras.mixed_precision import set_global_policy
-import tensorflow as tf
-import os
-from tensorflow.keras import mixed_precision
-import os
-import time
-import sys
-import argparse
-import pdb
-from multiprocessing import Pool
-from functools import partial
 
 parser = argparse.ArgumentParser()
 

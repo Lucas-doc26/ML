@@ -70,8 +70,6 @@ def retorna_resultados_csv(nome, nome_modelo):
 
     print(f'Arquivo {arquivo_csv} criado com sucesso!')
 
-
-
 retorna_resultados_csv('PUC', 'Modelo_Kyoto')
 retorna_resultados_csv('UFPR04', 'Modelo_Kyoto')
 retorna_resultados_csv('UFPR05', 'Modelo_Kyoto')

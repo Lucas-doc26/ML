@@ -271,15 +271,21 @@ def grafico_batchs(n_batchs, precisoes, nome_modelo, nome_base_treino, base_usad
     plt.close('all')
     plt.figure() 
     plt.close
-    plt.title(f"Comparação de acurácia - {nome_modelo} - {base_usada_teste}")
+    plt.title(f"Comparação de acurácia - {nome_modelo}")
     plt.xlabel('Número de imagens')
     plt.ylabel('Acurácia')
-    plt.plot(n_batchs, precisoes, marker='o', linestyle='-', color='b', label='Acurácia')
+    label = (
+        f"Nome = {nome_modelo}\n"
+        f"Base do Autoencoder: {nome_autoencoder}\n"
+        f"Base do Classificador: {nome_base_treino}\n"
+        f"Base sendo testada: {base_usada_teste}"
+    )
+    plt.plot(n_batchs, precisoes, marker='o', linestyle='-', color='b', label=label)
     plt.xticks(n_batchs)  
     for xi, yi in zip(n_batchs, precisoes):
             plt.text(xi, yi, f"{yi:.3f}", fontsize=6, ha='left', va='top') 
 
-    plt.legend()
+    plt.legend(loc='lower right', fontsize=9, title="Informações do modelo", title_fontsize=10)
 
     if caminho_para_salvar != None:
         save_path = os.path.join(caminho_para_salvar, f'Grafico-{nome_modelo}-{nome_autoencoder}-{nome_base_treino}-{base_usada_teste}')
@@ -307,7 +313,7 @@ def comparacao(caminho_para_salvar=None, nome_modelo=None, base_usada=None, base
     plt.xticks(x)  
 
     for modelo in sorted(modelos):
-        dir_resultados = os.path.join(dir_base, modelo, f'Classificador/Precisao/Treinado_em_{base_usada}')
+        dir_resultados = os.path.join(dir_base, modelo, f'Classificador-{base_autoencoder}/Precisao/Treinado_em_{base_usada}')
         #..Precisao/
         if base_de_teste != base_usada:
             precisao = [r for r in os.listdir(dir_resultados) if f'{base_de_teste}' in r]

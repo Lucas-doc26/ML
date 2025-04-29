@@ -873,7 +873,7 @@ def testa_modelos(nome_modelo, teste, teste_df, base_do_classificador, nome_auto
     for modelo in modelos:
         if os.path.exists(os.path.join(caminho_modelos, modelo)):
             if nome_modelo in modelo and 'Fusoes' not in modelo: #Se nome modelo tiver em modelo e fusão não
-                modelo_base = os.path.join(caminho_modelos, modelo, 'Classificador') #Modelo_Kyoto-0/Classificador_Modelo
+                modelo_base = os.path.join(caminho_modelos, modelo, f'Classificador-{nome_autoencoder}') #Modelo_Kyoto-0/Classificador_Modelo
                 print("A estrutura disponível é:" , os.listdir(os.path.join(modelo_base, 'Estrutura')))
                 estrutura = os.listdir(os.path.join(modelo_base, 'Estrutura'))[0]
                 modelos_usados.append(estrutura)
