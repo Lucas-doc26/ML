@@ -4,6 +4,7 @@ import tensorflow as tf
 import keras
 import pandas as pd
 from keras import ops, layers
+from keras.saving import register_keras_serializable
 import cv2
 import tensorflow.image as tf_img
 from visualizacao import plot_autoencoder_2, plot_heat_map
@@ -35,8 +36,8 @@ def preprocess_images(target_shape, csv):
     #X_processed = np.expand_dims(X_processed, -1)  # (N, 28, 28, 1)
     return np.array(X_processed).astype("float32") / 255.0
 
-treino = preprocess_images((256,256), "CSV/PUC/PUC_Segmentado_Treino.csv")
-teste = preprocess_images((256,256), "CSV/PUC/PUC_Segmentado_Validacao.csv")
+treino = preprocess_images((64,64), "CSV/CNR/CNR_autoencoder_treino.csv")
+teste = preprocess_images((64,64), "CSV/CNR/CNR_autoencoder_teste.csv")
 
 class Sampling(layers.Layer):
     """Uses (z_mean, z_log_var) to sample z, the vector encoding a digit."""
@@ -54,7 +55,7 @@ class Sampling(layers.Layer):
 
 latent_dim = 32
 
-encoder_inputs = keras.Input(shape=(256, 256, 3))
+encoder_inputs = keras.Input(shape=(64, 64, 3))
 x = layers.Conv2D(32, 3, activation="relu", strides=2, padding="same")(encoder_inputs)
 x = layers.Conv2D(64, 3, activation="relu", strides=2, padding="same")(x)
 x = layers.Conv2D(128, 3, activation="relu", padding="same")(x)
@@ -76,7 +77,8 @@ decoder_outputs = layers.Conv2DTranspose(3, 3, activation="sigmoid", padding="sa
 decoder = keras.Model(latent_inputs, decoder_outputs, name="decoder")
 decoder.summary()
 
-class VAE(keras.Model):
+@keras.saving.register_keras_serializable()
+class VAE(tf.keras.Model):
     def __init__(self, encoder, decoder, **kwargs):
         super().__init__(**kwargs)
         self.encoder = encoder
@@ -86,6 +88,20 @@ class VAE(keras.Model):
             name="reconstruction_loss"
         )
         self.kl_loss_tracker = keras.metrics.Mean(name="kl_loss")
+
+    def get_config(self):
+        config = super().get_config()
+        config.update({
+            'encoder': keras.saving.serialize_keras_object(self.encoder),
+            'decoder': keras.saving.serialize_keras_object(self.decoder),
+        })
+        return config
+
+    @classmethod
+    def from_config(cls, config):
+        encoder = keras.saving.deserialize_keras_object(config.pop('encoder'))
+        decoder = keras.saving.deserialize_keras_object(config.pop('decoder'))
+        return cls(encoder=encoder, decoder=decoder, **config)
 
     @property
     def metrics(self):
@@ -123,16 +139,22 @@ dataset = np.concatenate([treino, teste], axis=0)
 
 vae = VAE(encoder, decoder)
 vae.compile(optimizer=keras.optimizers.Adam())
-vae.fit(dataset, epochs=500, batch_size=16)
-vae.build((None, 256, 256, 3))  # Aqui você especifica o formato da entrada.
+vae.fit(dataset, epochs=20, batch_size=16)
+vae.build((None, 64, 64, 3))  # Aqui você especifica o formato da entrada.
 
-#vae.save_weights('vae_weights.weights.h5')
+vae.save_weights('Modelos/Modelo_VAE-0/Modelo-Base/Pesos/Modelo_VAE-0_Base-CNR.weights.h5')
+vae.save('Modelos/Modelo_VAE-0/Modelo-Base/Estrutura/Modelo_VAE-0.keras')
 
-#vae.load_weights('vae_weights.weights.h5')
+vae = tf.keras.models.load_model('Modelos/Modelo_VAE-0/Modelo-Base/Estrutura/Modelo_VAE-0.keras')
+vae.load_weights('Modelos/Modelo_VAE-0/Modelo-Base/Pesos/Modelo_VAE-0_Base-CNR.weights.h5')
 
 def calcular_ssim(image1, image2):
     return tf_img.ssim(image1, image2, max_val=1.0).numpy()
 
-plot_autoencoder_2(teste, vae, caminho_para_salvar='/home/lucas/PIBIC')
+plot_autoencoder_2(teste, vae, caminho_para_salvar='Modelos/Modelo_VAE-0/Plots')
 
 plot_heat_map(teste, encoder, decoder)
+
+from Modelos import *
+
+cria_classificadores(1, 'Modelo_VAE', 'CNR', None, None, None, (64,64,3))

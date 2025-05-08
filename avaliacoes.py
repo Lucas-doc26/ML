@@ -5,7 +5,7 @@ import tensorflow.image as tf_img
 
 
 def calcular_mse(image1, image2):
-    return K.mean(K.square(image1 - image2)).numpy()
+    return np.mean((image1 - image2) ** 2)
 
 def calcular_ssim(image1, image2):
     return tf_img.ssim(image1, image2, max_val=1.0).numpy()

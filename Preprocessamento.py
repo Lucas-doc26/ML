@@ -1,7 +1,9 @@
 import pandas as pd
 import albumentations as A
 import numpy as np
-
+import cv2
+import csv
+import tensorflow as tf 
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from sklearn.model_selection import train_test_split
 from tensorflow.keras.preprocessing.image import load_img, img_to_array
@@ -178,7 +180,31 @@ def mapear_rotulos_binarios(classes):
     return np.array([1 if classe == 'Occupied' else 0 for classe in classes])
 
 
+############################# Nova func de preprocessamento que o vitor deu ideia ###########################
+def input_generator(csv_file, autoencoder=False, albumentations=False):
+    with open(csv_file, mode='r') as file:
+        reader = csv.reader(file, delimiter=' ')
+        for img, label in reader:
+            img = tf.keras.utils.load_img(img)
+            img = img.resize((64, 64), resample=1)
 
+            if albumentations:
+                img = transform(image=img)["image"]
 
+            img = tf.keras.utils.img_to_array(img)/255.0
+            
+            if autoencoder:
+                label = None
+            else:
+                label = mapear_rotulos_binarios(label)
 
-        
+            yield img, label
+
+def gen_dataset(generator, csv_file, input_shape=(64,64,3), autoencoder=False):
+    output_signature = (tf.TensorSpec(shape=input_shape, dtype=tf.float32),
+                        tf.TensorSpec(shape=(), dtype=tf.string if autoencoder else tf.int32))
+
+    return tf.data.Dataset.from_generator(generator,
+                                          args=[csv_file],
+                                          output_signature=output_signature)
+  

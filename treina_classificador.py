@@ -16,8 +16,6 @@ parser.add_argument("autoencoder", type=str, help="Nome da base de autoencoder u
 parser.add_argument("input", type=str, help="Input Size das imagens do autoencoder")
 parser.add_argument("classificador", type=str, help="Nome da base para o classificador")
 parser.add_argument("epocas_classificador", type=int, help="Número de épocas para o classificador")
-parser.add_argument("base_teste1", type=str, help="Nome da base de teste")
-parser.add_argument("base_teste2", type=str, help="Nome da base de teste")
 
 
 # Parse dos argumentos passados na linha de comando
@@ -30,7 +28,6 @@ print(f'Tamanho da imagem: {args.input}')
 print(f'Número de Modelos: {args.numeros}')
 print(f'Base usada para o classificador: {args.classificador}')
 print(f'Épocas Classificador: {args.epocas_classificador}')
-print(f'Bases de teste: {args.base_teste1} e {args.base_teste2}')
 
 limpa_memoria()
 
@@ -63,19 +60,3 @@ treina_modelos_em_batch(
     salvar=True, 
     n_epocas=args.epocas_classificador,
     input_shape=input_shape)
-
-
-# Testa nas demais bases 
-base1, df_base1 = preprocessamento_dataframe(caminho_csv=f'CSV/{args.base_teste1}/{args.base_teste1}.csv', autoencoder=False, data_algumentantation=False, input_shape=input_size)
-testa_modelos(args.nome, base1, df_base1, args.classificador, args.autoencoder)
-
-base2, df_base2 = preprocessamento_dataframe(caminho_csv=f'CSV/{args.base_teste2}/{args.base_teste2}.csv', autoencoder=False, data_algumentantation=False, input_shape=input_size)
-testa_modelos(args.nome, base2, df_base2, args.classificador, args.autoencoder)
-
-#Teste na cnr
-"""
-cameras = ['camera1', 'camera2', 'camera3', 'camera4', 'camera5', 'camera6', 'camera7', 'camera8','camera9']
-for camera in cameras:
-    cnr, df_cnr = preprocessamento_dataframe(caminho_csv=f'CSV/CNR/CNR_{camera}.csv', autoencoder=False, data_algumentantation=False)
-    testa_modelos(args.nome, cnr, df_cnr, args.classificador)
-    del cnr, df_cnr"""

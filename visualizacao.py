@@ -167,14 +167,12 @@ def plot_imagens_incorretas(y_binario, y_predicao, caminhos_imagens, modelo_nome
     plt.savefig(save_path_imgs)
     plt.close()
 
-def plot_autoencoder(x_test, Autoencoder, width=64, height=64, caminho_para_salvar=None):
+def plot_autoencoder(x_test, Autoencoder, width=64, height=64, caminho_para_salvar=None, nome_autoencoder='Kyoto'):
     def normalize(image):
         image = np.clip(image, 0, 1)  # Garante que a imagem esteja no intervalo [0, 1]
         return (image - image.min()) / (image.max() - image.min()) if image.max() != image.min() else image
 
     plt.figure(figsize=(16, 8))
-
-    avaliacoes = []
     for i in range(8):
         # Imagem original
         plt.subplot(2, 8, i + 1)
@@ -189,25 +187,39 @@ def plot_autoencoder(x_test, Autoencoder, width=64, height=64, caminho_para_salv
         plt.subplot(2, 8, i + 8 + 1)
         plt.imshow(pred_img)
 
-        ssim = float(calcular_ssim(pred, pred_img))
-        avaliacoes.append(ssim)
+        ssim = float(calcular_ssim(x_test[i], pred[0]))
+        mse = float(calcular_mse(x_test[i], pred[0]))
+        psnr = float(calcular_psnr(x_test[i], pred[0]))
 
         del pred_img, pred
-        plt.title(f"SSIM: {ssim:.2f}")
+        plt.title(f"SSIM: {ssim:.2f}\nMSE: {mse:.2f}\nPsnr: {psnr:.2f}")
         plt.axis("off")
-
+    
     plt.show()
-    media_ssim = np.mean(avaliacoes)
+
+    avaliacoes = []
+    for i in range(len(x_test)):
+        pred = Autoencoder.predict(x_test[i].reshape((1,width, height,3)))
+        ssim = float(calcular_ssim(x_test[i], pred[0]))
+        mse = float(calcular_mse(x_test[i], pred[0]))
+        psnr = float(calcular_psnr(x_test[i], pred[0]))
+        avaliacoes.append([ssim, mse, psnr])
+
+    df_avaliacoes = pd.DataFrame(avaliacoes, columns=["SSIM", "MSE", "PSNR"])
+    media_ssim = np.mean(df_avaliacoes['SSIM'].values)
+    media_mse = np.mean(df_avaliacoes['MSE'].values)
+    media_psnr = np.mean(df_avaliacoes['PSNR'].values)
     
     if caminho_para_salvar != None:
-        save_path = os.path.join(caminho_para_salvar, 'Autoencoder.png')
+        save_path = os.path.join(caminho_para_salvar, f'Autoencoder-{nome_autoencoder}.png')
         plt.savefig(save_path)
 
-        arquivo = os.path.join(caminho_para_salvar,'media_ssim.txt')
+        arquivo = os.path.join(caminho_para_salvar,f'avaliacoes-{nome_autoencoder}.txt')
         with open(arquivo, 'w') as f:
-            for av in avaliacoes:
-                f.write(f'{av}\n')
-            f.write(f'Media geral: {media_ssim}')
+            f.write(f'Media SSIM: {media_ssim}\n')
+            f.write(f'Media MSE: {media_mse}\n')
+            f.write(f'Media PSNR: {media_psnr}')
+
     
     plt.close("all") 
 
@@ -274,12 +286,14 @@ def grafico_batchs(n_batchs, precisoes, nome_modelo, nome_base_treino, base_usad
     plt.title(f"Comparação de acurácia - {nome_modelo}")
     plt.xlabel('Número de imagens')
     plt.ylabel('Acurácia')
+
     label = (
         f"Nome = {nome_modelo}\n"
         f"Base do Autoencoder: {nome_autoencoder}\n"
         f"Base do Classificador: {nome_base_treino}\n"
         f"Base sendo testada: {base_usada_teste}"
     )
+
     plt.plot(n_batchs, precisoes, marker='o', linestyle='-', color='b', label=label)
     plt.xticks(n_batchs)  
     for xi, yi in zip(n_batchs, precisoes):
@@ -287,11 +301,16 @@ def grafico_batchs(n_batchs, precisoes, nome_modelo, nome_base_treino, base_usad
 
     plt.legend(loc='lower right', fontsize=9, title="Informações do modelo", title_fontsize=10)
 
+    try:
+        nome = nome_modelo.split(' ')[0]
+        nome_modelo = nome
+    except:
+        pass
+    
     if caminho_para_salvar != None:
         save_path = os.path.join(caminho_para_salvar, f'Grafico-{nome_modelo}-{nome_autoencoder}-{nome_base_treino}-{base_usada_teste}')
         plt.savefig(save_path)
         print(f"Salvando gráfico no caminho: {save_path}.png")
-
 
     plt.show()
     plt.close()
@@ -481,7 +500,7 @@ def plot_heat_map(teste, encoder, decoder):
     plt.savefig("img.png")
     plt.show()
 
-def plot_autoencoder_2(x_test, Autoencoder, width=256, height=256, caminho_para_salvar=None):
+def plot_autoencoder_2(x_test, Autoencoder, width=64, height=64, caminho_para_salvar=None):
     def normalize(image):
         image = np.clip(image, 0, 1)  # Garante que a imagem esteja no intervalo [0, 1]
         return (image - image.min()) / (image.max() - image.min()) if image.max() != image.min() else image
@@ -504,7 +523,7 @@ def plot_autoencoder_2(x_test, Autoencoder, width=256, height=256, caminho_para_
         plt.subplot(2, 8, i + 8 + 1)
         plt.imshow(pred_img)
 
-        ssim = float(calcular_ssim(pred, pred_img))
+        ssim = float(calcular_ssim(x_test[i], pred))
         avaliacoes.append(ssim)
 
         del pred_img, pred

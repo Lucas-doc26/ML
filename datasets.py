@@ -7,17 +7,17 @@ SEED = 42
 cameras = [['camera1', 56], ['camera2', 56], ['camera3', 56], ['camera4', 56], ['camera5', 56], ['camera6', 55], ['camera7', 55], ['camera8', 55], ['camera9', 55]]
 
 def CNR_autoencoder():
-    df_final = pd.DataFrame()
+    df_treino = pd.DataFrame()
     for camera, valor in cameras:
         df_camera = pd.read_csv(f'CSV/CNR/CNR_{camera}.csv')
         df_occ = df_camera[df_camera['classe'] == 1].sample(n=valor, random_state=SEED)
         df_empt = df_camera[df_camera['classe'] == 0].sample(n=valor,random_state=SEED)
-        df_final = pd.concat([df_final, df_occ, df_empt], axis=0, ignore_index=True)
+        df_treino = pd.concat([df_treino, df_occ, df_empt], axis=0, ignore_index=True)
 
     df_val = pd.DataFrame()
     for camera, valor in cameras:
         df_camera = pd.read_csv(f'CSV/CNR/CNR_{camera}.csv')
-        df_camera = df_camera[~df_camera['caminho_imagem'].isin(df_final['caminho_imagem'])]
+        df_camera = df_camera[~df_camera['caminho_imagem'].isin(df_treino['caminho_imagem'])]
         df_occ = df_camera[df_camera['classe'] == 1].sample(n=5, random_state=SEED)
         df_empt = df_camera[df_camera['classe'] == 0].sample(n=5,random_state=SEED)
         df_val = pd.concat([df_val, df_occ, df_empt], axis=0, ignore_index=True)
@@ -25,15 +25,50 @@ def CNR_autoencoder():
     df_teste = pd.DataFrame()
     for camera, valor in cameras:
         df_camera = pd.read_csv(f'CSV/CNR/CNR_{camera}.csv')
-        df_camera = df_camera[~df_camera['caminho_imagem'].isin(df_final['caminho_imagem'])]
+        df_camera = df_camera[~df_camera['caminho_imagem'].isin(df_treino['caminho_imagem'])]
         df_camera = df_camera[~df_camera['caminho_imagem'].isin(df_val['caminho_imagem'])]
         df_occ = df_camera[df_camera['classe'] == 1].sample(n=5, random_state=SEED)
         df_empt = df_camera[df_camera['classe'] == 0].sample(n=5,random_state=SEED)
         df_teste = pd.concat([df_teste, df_occ, df_empt], axis=0, ignore_index=True)
     
-    return df_final, df_val, df_teste
+    return df_treino, df_val, df_teste
     
-treino, val, teste = CNR_autoencoder()
-treino.to_csv('CSV/CNR/CNR_autoencoder_treino.csv', index=False)
-teste.to_csv('CSV/CNR/CNR_autoencoder_teste.csv', index=False)
-val.to_csv('CSV/CNR/CNR_autoencoder_val.csv', index=False)
+#treino, val, teste = CNR_autoencoder()
+#treino.to_csv('CSV/CNR/CNR_autoencoder_treino.csv', index=False)
+#teste.to_csv('CSV/CNR/CNR_autoencoder_teste.csv', index=False)
+#val.to_csv('CSV/CNR/CNR_autoencoder_val.csv', index=False)
+
+
+faculdades = [['PUC', 168], ['UFPR04', 166], ['UFPR05', 166]]
+def PKLOT_autoencoder():
+    df_treino = pd.DataFrame()
+    for facul, valor in faculdades:
+        df_facul = pd.read_csv(f'CSV/{facul}/{facul}_Segmentado_Treino.csv')
+        df_occ = df_facul[df_facul['classe'] == 1].sample(n=valor, random_state=SEED)
+        df_empt = df_facul[df_facul['classe'] == 0].sample(n=valor,random_state=SEED)
+        df_treino = pd.concat([df_treino, df_occ, df_empt], axis=0, ignore_index=True)
+
+    df_val = pd.DataFrame()
+    for camera, valor in cameras:
+        df_facul = pd.read_csv(f'CSV/{facul}/{facul}_Segmentado_Validacao.csv')
+        df_facul = df_facul[~df_facul['caminho_imagem'].isin(df_treino['caminho_imagem'])]
+        df_occ = df_facul[df_facul['classe'] == 1].sample(n=5, random_state=SEED)
+        df_empt = df_facul[df_facul['classe'] == 0].sample(n=5,random_state=SEED)
+        df_val = pd.concat([df_val, df_occ, df_empt], axis=0, ignore_index=True)
+
+    df_teste = pd.DataFrame()
+    for camera, valor in cameras:
+        df_facul = pd.read_csv(f'CSV/{facul}/{facul}_Segmentado_Teste.csv')
+        df_facul = df_facul[~df_facul['caminho_imagem'].isin(df_treino['caminho_imagem'])]
+        df_facul = df_facul[~df_facul['caminho_imagem'].isin(df_val['caminho_imagem'])]
+        df_occ = df_facul[df_facul['classe'] == 1].sample(n=5, random_state=SEED)
+        df_empt = df_facul[df_facul['classe'] == 0].sample(n=5,random_state=SEED)
+        df_teste = pd.concat([df_teste, df_occ, df_empt], axis=0, ignore_index=True)
+    
+    return df_treino, df_val, df_teste
+
+treino, val, teste = PKLOT_autoencoder()
+treino.to_csv('CSV/PKLot/PKLot_autoencoder_treino.csv', index=False)
+teste.to_csv('CSV/PKLot/PKLot_autoencoder_teste.csv', index=False)
+val.to_csv('CSV/PKLot/PKLot_autoencoder_val.csv', index=False)
+

@@ -210,7 +210,7 @@ class Gerador:
             else:
                 shape_atual = (shape_atual[0], shape_atual[1], filters) 
 
-        latent_dim = np.random.randint(64,128)#256,512 o padrão
+        latent_dim = np.random.randint(256,512) #256,512 o padrão
 
         if np.random.choice(([0,0,1])):
             encoder_layers.append(BatchNormalization()) 
@@ -219,8 +219,9 @@ class Gerador:
             encoder_layers.append(LeakyReLU(alpha=0.5)) #Função de ativação 
             leaky = True
         if np.random.choice(([0,0,1])):
-            encoder_layers.append(Dropout(np.random.choice(([0.4 , 0.3 , 0.2])))) 
+            encoder_layers.append(Dropout(np.random.choice(([0.4 , 0.3 , 0.2]))))
 
+        #encoder_layers.append(Dropout(0.4))
         encoder_layers.append(Flatten())
 
         encoder_layers.append(Dense(latent_dim, activation='relu')) #transformo o meu shape_atual no meu latent_dim 
@@ -305,6 +306,15 @@ class Gerador:
     def treinar_autoencoder(self, salvar=False ,nome_da_base='', epocas=10, batch_size=64):
         print("Treinando o modelo: ", self.nome_modelo)
         checkpoint_path = os.path.join(path, 'Pesos/Pesos_parciais/weights-improvement-{epoch:02d}-{val_loss:.2f}.weights.h5')
+
+        agora = datetime.datetime.now().strftime("%d%m%y-%H%M")
+        log_dir = f"logs/fit/{self.nome_modelo}-Autoencoder-{agora}"
+        log_dir = os.path.join(path, f'Modelos/{self.nome_modelo}/Modelo-Base', log_dir)
+        if not os.path.isdir(log_dir):
+            os.makedirs(log_dir)
+
+        tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+
         cp_callback = ModelCheckpoint(filepath=checkpoint_path, 
                                         save_weights_only=True, 
                                         monitor='val_loss', 
@@ -319,7 +329,7 @@ class Gerador:
 
         # Para caso quiser acompanhar o treinamento
         history = self.autoencoder.fit(self.treino, epochs=epocas,
-                                       callbacks=[cp_callback, early_stopping],
+                                       callbacks=[cp_callback, early_stopping, tensorboard_callback],
                                        batch_size=batch_size, 
                                        validation_data=(self.validacao))
         df = pd.DataFrame(history.history) # crio um df com o histórico
@@ -363,7 +373,7 @@ class Gerador:
                      modelo=self.nome_modelo, 
                      base_do_autoencoder=nome_da_base)
         
-        plot_autoencoder(x, self.autoencoder, self.input_shape[0], self.input_shape[1],caminho_para_salvar=dir_imagens)
+        plot_autoencoder(x, self.autoencoder, self.input_shape[0], self.input_shape[1],caminho_para_salvar=dir_imagens, nome_autoencoder = nome_da_base)
 
     def carrega_modelo(self, modelo:str, pesos:str=None):
         self.autoencoder = tf.keras.models.load_model(modelo)
@@ -423,12 +433,22 @@ def cria_modelos(n_modelos=10, nome_modelo=None, filters_list=[8,16,32,64,128], 
     
 def treina_modelos(treino, validacao, teste, nome_modelo=None, nome_base=None, n_epocas=10, batch_size=16, input_shape=(64,64,3)):
     modelos = os.listdir(os.path.join(path,"Modelos"))
+    print(modelos)
+    print(nome_modelo)
+    padrao = re.compile(f"{re.escape(nome_modelo)}-\\d+$") #crio um padrão para pegar os modelos: nome_modelo-Decimal
+    modelos = [m for m in modelos if padrao.fullmatch(m)]#filtro pelo padrão que eu criei
     modelos_para_treinar = []
-    
+    print(modelos)
+    print("----------------------------------")
     for modelo in modelos:
         if os.path.exists(os.path.join(path, 'Modelos', modelo)) and nome_modelo in modelo and "Fusoes" not in modelo:
             modelo_base = os.path.join(path, 'Modelos', modelo, 'Modelo-Base')
-            estrutura, peso  = sorted(os.listdir(modelo_base)) # no computador da puc ele retorna (p,e) / no meu pc ele retorna (e,p) -> ver uma maneira de arrumar isso
+
+            #no computador da puc ele retorna (p,e,l) / no meu pc ele retorna (e,p,l) -> ver uma maneira de arrumar isso
+            if len(os.listdir(modelo_base)) == 3:
+                estrutura, peso, _  = sorted(os.listdir(modelo_base)) 
+            else:
+                estrutura, peso = sorted(os.listdir(modelo_base))
             print(peso)
             m = os.listdir(os.path.join(modelo_base, estrutura))
             print(m)
@@ -559,7 +579,8 @@ class GeradorClassificador:
                                         save_best_only=True, 
                                         verbose=1)
 
-        log_dir = "logs/fit/" + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+        agora = datetime.datetime.now().strftime("%d%m%y-%H%M")
+        log_dir = f"logs/fit/{self.nome_modelo}-{agora}"
         log_dir = os.path.join(path_slv, f'Modelos/{self.nome_modelo}/Classificador-{self.nome_autoencoder}', log_dir)
         if not os.path.isdir(log_dir):
             os.makedirs(log_dir)

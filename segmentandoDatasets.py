@@ -976,14 +976,6 @@ def cria_csvs():
     nomes = ['PUC', 'UFPR04', 'UFPR05']
     for nome in nomes:
         dividir_em_batchs(f'CSV/{nome}/{nome}_Segmentado_Treino.csv', nome)
-    
-    cameras = ['camera1', 'camera2', 'camera3', 'camera4', 'camera5', 'camera6', 'camera7', 'camera8', 'camera9']
-    df_cnr = pd.read_csv('CSV/CNR/CNR.csv')
-    for camera in cameras:
-        df_camera = df_cnr[(df_cnr['Camera'] == camera)]
-        df_camera_final = df_camera[['caminho_imagem', 'classe']]
-        df_camera_final['classe'] = df_camera_final['classe'].replace({'Empty': 1, 'Occupied': 0})
-        df_camera_final.to_csv(f'CSV/CNR/CNR_{camera}.csv', index=False)
 
 args = parser.parse_args()
 
