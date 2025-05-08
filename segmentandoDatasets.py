@@ -9,7 +9,6 @@ from typing import Tuple, Optional
 import requests
 import zipfile
 import shutil
-import shutil
 import argparse
 
 parser = argparse.ArgumentParser()

@@ -806,7 +806,11 @@ def treina_modelos_em_batch(nome_modelo, base_usada, base_autoencoder, treino_cs
         if os.path.exists(os.path.join(path_modelos, modelo)):
             if nome_modelo in modelo and 'Fusoes' not in modelo:
                 modelo_base = os.path.join(path_modelos, modelo, 'Modelo-Base')
-                peso, estrutura = os.listdir(modelo_base)
+                if len(os.listdir(modelo_base)) == 3:
+                    peso, estrutura, logs = os.listdir(modelo_base)
+                else:
+                    peso, estrutura = os.listdir(modelo_base)
+                    
                 m = os.listdir(os.path.join(modelo_base , estrutura))
                 dir_modelo = os.path.join(modelo_base, estrutura, m[0])
                 modelos_para_treinar.append(dir_modelo)

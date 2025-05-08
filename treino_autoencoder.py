@@ -30,9 +30,9 @@ elif args.autoencoder == 'Kyoto':
     path_teste = 'CSV/Kyoto/Kyoto_Segmentado_Teste.csv'
     path_val = 'CSV/Kyoto/Kyoto_Segmentado_Validacao.csv'
 elif args.autoencoder.upper() == 'PKLOT':
-    path_treino = 'CSV/PKLot/PKLot_Segmentado_Treino.csv'
-    path_teste = 'CSV/PKLot/PKLot_Segmentado_Teste.csv'
-    path_val = 'CSV/PKLot/PKLot_Segmentado_Validacao.csv'
+    path_treino = 'CSV/PKLot/PKLot_autoencoder_treino.csv'
+    path_teste = 'CSV/PKLot/PKLot_autoencoder_teste.csv'
+    path_val = 'CSV/PKLot/PKLot_autoencoder_val.csv'
 
 # Preprocessa
 treino_autoencoder, _ = preprocessamento_dataframe(caminho_csv=path_treino, autoencoder=True, data_algumentantation=False, input_shape=input_size)
