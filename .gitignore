@@ -1,9 +1,8 @@
-# DLL files
+# Python
 __pycache__/
 *.py[cod]
 *$py.class
-
-# packaging
+*.so
 .Python
 build/
 develop-eggs/
@@ -23,16 +22,7 @@ share/python-wheels/
 *.egg
 MANIFEST
 
-# JSON
-*.json
-
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow and github.com/pdm-project/pdm
-__pypackages__/
-
-# Environments
+# Ambientes virtuais
 .env
 .venv
 .venv_pibic
@@ -42,37 +32,64 @@ ENV/
 env.bak/
 venv.bak/
 .python-version
-.pyc
 
-# numpy
-Resultados/Predicoes/predicoes.numpy/
-.pyc
+# IDEs e editores
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
 
-# Datasets
+# Arquivos de dados e modelos
+*.h5
+*.keras
+*.pkl
+*.npy
+*.npz
+*.json
+*.csv
+*.xlsx
+*.xls
+
+# Diretórios de dados e resultados
 PKLot/
 CNR-EXT-Patches-150x150/
 kyoto/
-
-# CSV
-.csv
+Resultados/
+Modelos/
 CSV/
 
-# IDE
-.idea/
-.vscode/
+# Logs e arquivos temporários
+*.log
+*.tmp
+*.temp
+logs/
+temp/
 
-# Modelos e pesos
-Modelos/Pesos/
-Modelos/Estruturas/
-Modelos/Pesos_parciais/
-Modelos/
-*.h5
-*.keras
+# Arquivos de sistema
+.DS_Store
+Thumbs.db
 
-# imagens
-*.png
+# Arquivos de configuração local
+config.local.py
+.env.local
 
+# Arquivos de backup
+*.bak
+*.backup
+*~
 
-#Modelo
+# Arquivos de cache
+.cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Arquivos de compressão
 *.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Arquivos específicos do projeto
 PIBIC (copy).code-workspace
