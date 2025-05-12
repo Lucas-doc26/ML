@@ -15,7 +15,7 @@ def plot_history_autoencoder(history_dataframe:pd.DataFrame, save_dir:Path, mode
     """
 
     plt.figure(figsize=(8, 6))
-    df.plot()
+    history_dataframe.plot()
     plt.title("Treinamento do Autoencoder")
     plt.xlabel("Épocas")
     plt.ylabel("Métricas")
@@ -24,7 +24,7 @@ def plot_history_autoencoder(history_dataframe:pd.DataFrame, save_dir:Path, mode
     nome_img = f"History-Autoencoder-{model_name}-{autoencoder_base}.png"
 
 
-    if save_dir != None:
+    if save_dir:
         plt.savefig(os.path.join(save_dir, nome_img)) 
     else:
         plt.show()

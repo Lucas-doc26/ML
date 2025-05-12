@@ -4,3 +4,4 @@ from .confusion_matrix import *
 from .heatmap import *
 from .history import *
 from .autoencoder import *
+from .plot_autoencoder import *

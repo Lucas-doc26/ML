@@ -1,5 +1,5 @@
 import numpy as np
-from visualizacao import *
+from utils.view.visualizacao import *
 from Preprocessamento import *
 from sklearn.metrics import accuracy_score
 

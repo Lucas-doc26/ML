@@ -93,3 +93,9 @@ htmlcov/
 
 # Arquivos específicos do projeto
 PIBIC (copy).code-workspace
+
+#
+Kyoto/
+*.png
+*.jpg
+*/__pycache__

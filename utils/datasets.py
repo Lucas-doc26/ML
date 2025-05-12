@@ -10,7 +10,6 @@ from .preprocessing import data_augmentation_kyoto
 
 from .config import SEED
 
-
 #Kyoto - criando csvs
 def create_Kyoto_csv(kyoto_path:Path):
 
@@ -26,8 +25,6 @@ def create_Kyoto_csv(kyoto_path:Path):
     df = pd.DataFrame({
             'path_image': sorted(path_images)
     })
-
-    print(df)
 
     df_train = df['path_image'][:32]
     df_validation = df['path_image'][32:32+20]
@@ -47,9 +44,9 @@ def create_Kyoto_csv(kyoto_path:Path):
 
     df_train = pd.concat([df_train, df_dataAug], ignore_index=False)
 
-    df_train.to_csv('CSV/Kyoto/Kyoto_train.csv', index=False)
-    df_validation.to_csv('CSV/Kyoto/Kyoto_validation.csv', index=False)
-    df_test.to_csv('CSV/Kyoto/Kyoto_test.csv', index=False)
+    df_train.to_csv('CSV/Kyoto/Kyoto_autoencoder_train.csv', index=False)
+    df_validation.to_csv('CSV/Kyoto/Kyoto_autoencoder_validation.csv', index=False)
+    df_test.to_csv('CSV/Kyoto/Kyoto_autoencoder_test.csv', index=False)
 
 #CNR - criando csvs
 cameras = [f'camera{i}' for i in range(1, 10)]
@@ -75,10 +72,6 @@ def create_CNR_csv(path_dataset:Path) -> None:
                 wheather, day, camera, _ = path_image.strip().split('/')
                 path_images.append(path_image_complete)
                 class_image = parts[1]
-                if class_image == '0':
-                    class_image = 'Empty'
-                else:
-                    class_image = 'Occupied'
                 classes.append(class_image)
                 data.append([wheather, day, camera, path_image_complete, class_image])
 
@@ -104,8 +97,8 @@ def create_CNR_cameras():
                 break
 
             df_day = df_camera[df_camera['day'] == day]
-            empty = df_day[df_day['class'] == 'Empty']
-            occupied = df_day[df_day['class'] == 'Occupied']
+            empty = df_day[df_day['class'] == 1]
+            occupied = df_day[df_day['class'] == 0]
 
             images_per_class = min(len(empty), len(occupied))
 
@@ -132,7 +125,7 @@ def create_CNR_cameras():
             days_train.append(day)
             days.remove(day)
             
-        df_train.to_csv(f'CSV/{camera}/{camera}_treino.csv', columns=['path_image', 'class'], index=False)
+        df_train.to_csv(f'CSV/{camera}/{camera}_train.csv', columns=['path_image', 'class'], index=False)
         print(f"Câmera {camera} - Treino: {len(df_train)} images (balanceado), dias utilizados: {days_train}")
 
         # ---------- Validação ----------
@@ -144,8 +137,8 @@ def create_CNR_cameras():
                 break
 
             df_day = df_camera[df_camera['day'] == day]
-            empty = df_day[df_day['class'] == 'Empty']
-            occupied = df_day[df_day['class'] == 'Occupied']
+            empty = df_day[df_day['class'] == 1]
+            occupied = df_day[df_day['class'] == 0]
 
             n_balanco = min(len(empty), len(occupied))
 
@@ -172,8 +165,8 @@ def create_CNR_cameras():
             days_validation.append(day)
             days.remove(day)
             
-        df_validation.to_csv(f'CSV/{camera}/{camera}_validacao.csv', columns=['path_image', 'class'], index=False)
-        print(f"Câmera {camera} - Validacao: {len(df_validation)} images (balanceado), dias utilizados: {days_validation}")
+        df_validation.to_csv(f'CSV/{camera}/{camera}_validation.csv', columns=['path_image', 'class'], index=False)
+        print(f"Câmera {camera} - Validation: {len(df_validation)} images (balanceado), dias utilizados: {days_validation}")
 
         # ---------- Teste ----------
         df_test = pd.DataFrame()
@@ -187,7 +180,7 @@ def create_CNR_cameras():
             days_test.append(day)
             days.remove(day)
             
-        df_test.to_csv(f'CSV/{camera}/{camera}_teste.csv', columns=['path_image', 'class'], index=False)
+        df_test.to_csv(f'CSV/{camera}/{camera}_test.csv', columns=['path_image', 'class'], index=False)
         print(f"Câmera {camera} - Teste: {len(df_test)} images (balanceado), dias utilizados: {days_test}")
 
 def create_CNR_autoencoder():
@@ -195,37 +188,36 @@ def create_CNR_autoencoder():
     
     df_train = pd.DataFrame()
     for camera, value in cameras:
-        df = pd.read_csv(f'CSV/{camera}/{camera}_teste.csv')
-        occupied = df[df['class'] == 'Occupied'].sample(n=value, random_state=SEED)
-        empty = df[df['class'] == 'Empty'].sample(n=value, random_state=SEED)
+        df = pd.read_csv(f'CSV/{camera}/{camera}_test.csv')
+        occupied = df[df['class'] == 0].sample(n=value, random_state=SEED)
+        empty = df[df['class'] == 1].sample(n=value, random_state=SEED)
         df = pd.concat([occupied, empty], axis=0, ignore_index=True)
         df_train =pd.concat([df_train, df], axis=0, ignore_index=True)
 
-    df_train.to_csv(f'CSV/CNR/CNR_autoencoder_treino.csv', columns=['path_image', 'class'], index=False) 
+    df_train.to_csv(f'CSV/CNR/CNR_autoencoder_train.csv', columns=['path_image', 'class'], index=False) 
 
     cameras = [['camera1', 8], ['camera2', 7], ['camera3', 7], ['camera4', 7], ['camera5', 7], ['camera6', 7], ['camera7', 7], ['camera8', 7], ['camera9', 7]]
     df_val = pd.DataFrame()
     for camera, value in cameras:
-        df = pd.read_csv(f'CSV/{camera}/{camera}_validacao.csv')
-        occupied = df[df['class'] == 'Occupied'].sample(n=value, random_state=SEED)
-        empty = df[df['class'] == 'Empty'].sample(n=value, random_state=SEED)
+        df = pd.read_csv(f'CSV/{camera}/{camera}_validation.csv')
+        occupied = df[df['class'] == 0].sample(n=value, random_state=SEED)
+        empty = df[df['class'] == 1].sample(n=value, random_state=SEED)
         df = pd.concat([occupied, empty], axis=0, ignore_index=True)
         df_val =pd.concat([df_val, df], axis=0, ignore_index=True)
         
-    df_val.to_csv(f'CSV/CNR/CNR_autoencoder_validacao.csv', columns=['path_image', 'class'], index=False)
+    df_val.to_csv(f'CSV/CNR/CNR_autoencoder_validation.csv', columns=['path_image', 'class'], index=False)
 
     df_test = pd.DataFrame()
     for camera, value in cameras:
-        df = pd.read_csv(f'CSV/{camera}/{camera}_teste.csv')
+        df = pd.read_csv(f'CSV/{camera}/{camera}_test.csv')
         df_test =pd.concat([df_test, df], axis=0, ignore_index=True)
         
-    df_test.to_csv(f'CSV/CNR/CNR_autoencoder_teste.csv', columns=['path_image', 'class'], index=False) 
+    df_test.to_csv(f'CSV/CNR/CNR_autoencoder_test.csv', columns=['path_image', 'class'], index=False) 
 
 #PKLot - criando csvs
 universities = ['PUC', 'UFPR04', 'UFPR05']
 
 def create_PKLot_csv(path_pklot):
-    final_df = pd.DataFrame()  
     universities = ['PUC', 'UFPR04', 'UFPR05']
     wheathers = ['Cloudy', 'Rainy', 'Sunny']
     classes = ['Empty', 'Occupied']
@@ -249,15 +241,13 @@ def create_PKLot_csv(path_pklot):
 
     df = pd.DataFrame(data=data, columns=['University', 'Wheather', 'Day', 'path_image' ,'class'])
     df['class'] = df['class'].replace({'Empty': 1, 'Occupied': 0})
-    df.to_csv("CSV/PKLot/PKLot.csv")
+    df.to_csv("CSV/PKLot/PKLot.csv", index=False)
 
 def create_PKLot_universities():
     #Variveis de controle
     final_df = pd.DataFrame()  
     n_imgs = [102, 102, 102, 103, 103]
     universities = ['PUC', 'UFPR04', 'UFPR05']
-    wheathers = ['Cloudy', 'Rainy', 'Sunny']
-    classes = ['Empty', 'Occupied']
     df = pd.read_csv('CSV/PKLot/PKLot.csv')
 
     days_per_university = []
@@ -378,6 +368,90 @@ def create_PKLot_autoencoder():
         
     df_test.to_csv(f'CSV/PKLot/PKLot_autoencoder_test.csv', columns=['path_image', 'class'], index=False) 
 
+def print_csv(path_manager:PathManager):
+    dirs = []
+    for root, _, files in os.walk(os.path.join(path_manager.get_base_path(), 'CSV')):
+        for file in files:
+            dir = os.path.join(root, file)
+            print(dir)
+            dirs.append(dir)
+    return dirs
+
+def split_balanced(df, size, class_column='class'):
+    df_class_0 = df[df[class_column] == 0]
+    df_class_1 = df[df[class_column] == 1]
+    
+    n_class_0 = size // 2
+    n_class_1 = size // 2
+
+    if size % 2 != 0:
+        n_class_0 += 1
+
+    if not df_class_0.empty and n_class_0 > 0:
+        n_class_0 = min(n_class_0, len(df_class_0))
+        df_class_0_sampled = df_class_0.sample(n=n_class_0, random_state=SEED)
+    else:
+        df_class_0_sampled = pd.DataFrame()
+
+    if not df_class_1.empty and n_class_1 > 0:
+        n_class_1 = min(n_class_1, len(df_class_1))
+        df_class_1_sampled = df_class_1.sample(n=n_class_1, random_state=SEED)
+    else:
+        df_class_1_sampled = pd.DataFrame()
+
+    balanced_df = pd.concat([df_class_0_sampled, df_class_1_sampled])
+
+    return balanced_df
+
+def create_batches(datasets):
+    for base_name in datasets:
+        csv_path = f'CSV/{base_name}/{base_name}.csv'
+
+        if not os.path.exists(csv_path):
+            print(f'[ERRO] CSV não encontrado: {csv_path}')
+            continue
+
+        print(f'[INFO] Processando {base_name}...')
+
+        df = pd.read_csv(csv_path)
+        print(df['class'].value_counts())
+
+        sizes = [64, 128, 256, 512, 1024]
+        dfs = []
+        df_64 = split_balanced(df, sizes[0])
+        dfs.append(df_64)
+
+        for i in range(1, len(sizes)):
+            previous_size = sizes[i-1]
+            current_size = sizes[i]
+
+            additional_size = current_size - previous_size
+
+            remaining_df = df.drop(dfs[i-1].index)
+
+            df_additional = split_balanced(remaining_df, additional_size)
+
+            df_current = pd.concat([dfs[i-1], df_additional])
+            dfs.append(df_current)
+
+        batches_dir = f'CSV/{base_name}/batches'
+        os.makedirs(batches_dir, exist_ok=True)
+
+        for i, size in enumerate(sizes):
+            dfs[i].to_csv(f'{batches_dir}/batch-{size}.csv', index=False)
+
+        print(f'[OK] Batches criados para {base_name} em {batches_dir}')
+
+def format_datasets(datasets_dirs):
+    for dir_data in datasets_dirs:
+        df = pd.read_csv(dir_data)
+        if 'Kyoto' in dir_data:
+            df = df.sample(frac=1, random_state=SEED)
+            df.to_csv(dir_data, index=False)
+        else:
+            df = df[['path_image', 'class']].sample(frac=1, random_state=SEED)
+            df.to_csv(dir_data, index=False)
+
 def create_datasets_csv(path_manager:PathManager=None, path_datasets_downloaded:Path=None):
     """
     Função para criar os csvs para os datasets
@@ -386,7 +460,9 @@ def create_datasets_csv(path_manager:PathManager=None, path_datasets_downloaded:
         create_folder(path_manager, 'datasets')
     
     datasets_path = download_all_datasets(path_datasets_downloaded)
-
+    print(datasets_path)
+    
+    pass
     #Realizo o data augmentation no dataset Kyoto
     data_augmentation_kyoto(datasets_path[2])
 
@@ -403,6 +479,14 @@ def create_datasets_csv(path_manager:PathManager=None, path_datasets_downloaded:
     create_PKLot_universities()
     create_PKLot_autoencoder()
 
+    #Criando os batches:
+    datasets = universities + cameras
+    print(datasets)
+    create_batches(datasets)
+    
+    all_datas = print_csv(path_manager)
+
+    format_datasets(datasets_dirs=all_datas)
+
     print("Datasets criados com sucesso!")
 
-    

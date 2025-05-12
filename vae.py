@@ -7,7 +7,7 @@ from keras import ops, layers
 from keras.saving import register_keras_serializable
 import cv2
 import tensorflow.image as tf_img
-from visualizacao import plot_autoencoder_2, plot_heat_map
+from utils.view.visualizacao import plot_autoencoder_2, plot_heat_map
 
 
 os.environ["KERAS_BACKEND"] = "tensorflow"

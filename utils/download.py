@@ -104,12 +104,14 @@ def download_all_datasets(path_datasets):
     """
     Função para baixar e extrair todos os datasets
     """
-    if len(os.listdir(path_datasets)) > 2: 
-        print(f"Os datasets já foram baixados!")
+    datasets = os.listdir(path_datasets)
+    if 'PKLot' not in datasets:
+        download_datasets(path_datasets, 'http://www.inf.ufpr.br/vri/databases/PKLot.tar.gz')
+    if 'Kyoto' not in datasets:
+        download_Kyoto(path_datasets)
+    if 'CNR-EXT-Patches-150x150' not in datasets:
+        download_datasets(path_datasets, 'https://github.com/fabiocarrara/deep-parking/releases/download/archive/CNR-EXT-Patches-150x150.zip')
     else:
-        print(f"Diretório de destino: {path_datasets}")
-        #download_Kyoto(path_datasets)
-        #download_datasets(path_datasets, 'http://www.inf.ufpr.br/vri/databases/PKLot.tar.gz')
-        #download_datasets(path_datasets, 'https://github.com/fabiocarrara/deep-parking/releases/download/archive/CNR-EXT-Patches-150x150.zip')
-    
+        print("Todos os datasets já no sistema!")
+
     return os.path.join(path_datasets , 'PKLot', 'PKLotSegmented'), os.path.join(path_datasets , 'CNR-EXT-Patches-150x150'), os.path.join(path_datasets , 'Kyoto')

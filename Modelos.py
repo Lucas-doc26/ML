@@ -15,7 +15,7 @@ import random
 import gc
 import re
 import shutil
-from visualizacao import *
+from utils.view.visualizacao import *
 from tensorflow.keras import mixed_precision
 #from numba import cuda
 

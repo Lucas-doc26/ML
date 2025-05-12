@@ -24,9 +24,9 @@ class PathManager:
         """
         try:
             print('Criando pastas...')
-            os.makedirs(os.path.join(self.base_path, 'Modelos'), exist_ok=True)
-            os.makedirs(os.path.join(self.base_path, 'Modelos', 'Fusoes'), exist_ok=True)
-            os.makedirs(os.path.join(self.base_path, 'Modelos', 'Plots'), exist_ok=True)
+            #os.makedirs(os.path.join(self.base_path, 'Modelos'), exist_ok=True)
+            #os.makedirs(os.path.join(self.base_path, 'Modelos', 'Fusoes'), exist_ok=True)
+            #os.makedirs(os.path.join(self.base_path, 'Modelos', 'Plots'), exist_ok=True)
             os.makedirs(os.path.join(self.base_path, 'Pesos_parciais'), exist_ok=True)
             os.makedirs(os.path.join(self.base_path, 'resultados'), exist_ok=True)
 

@@ -15,14 +15,17 @@ import shutil
 import datetime
 from pathlib import Path
 
-path = Path('/home/lucas/PIBIC-2024-2025')
+path = Path('/home/lucas/PIBIC')
 
 # Importações locais do projeto
 from utils.path_manager import *
 from utils.preprocessing import map_classes_to_binary
 from utils.gpu import clear_session
 from utils.config import *
-#from utils.view import plot_history, plot_autoencoder, normalize
+from utils.view import *
+
+
+os.environ["TF_XLA_FLAGS"] = "--tf_xla_auto_jit=0"
 
 
 
@@ -166,7 +169,7 @@ class AutoencoderGenerator:
         return self.autoencoder
 
     def model_compile(self, optimizer='adam', loss='mse'):
-        self.autoencoder.compile(optimizer=optimizer, loss=loss)
+        self.autoencoder.compile(optimizer=optimizer, loss=loss, jit_compile=False)
 
     def dataset(self, train, validation, test):
         self.train = train
@@ -243,12 +246,12 @@ class AutoencoderGenerator:
         print(self.input_shape[0])
         print(self.input_shape[1])
 
-        plot_history(df, 
-                     save_dir=dir_imagens, 
-                     modelo=self.model_name, 
-                     base_do_autoencoder=autoencoder_base)
+        plot_history_autoencoder(df, 
+                     save_dir==dir_imagens, 
+                     model_name=self.model_name, 
+                     autoencoder_base=autoencoder_base)
         
-        plot_autoencoder(x, self.autoencoder, self.input_shape[0], self.input_shape[1],caminho_para_save=dir_imagens, nome_autoencoder = autoencoder_base)
+        plot_autoencoder(x, self.autoencoder, self.input_shape[0], self.input_shape[1], dir_imagens, autoencoder_base)
 
     def load_model(self, modelo:Path, weights:Path=None):
         self.autoencoder = tf.keras.models.load_model(modelo)
@@ -338,7 +341,7 @@ def train_models(train, validation, test, model_name=None, autoencoder_base=None
         autoencoder.set_model_name(f"{model_name}-{i}")
         clear_session()
 
-        autoencoder.train_autoencoder(epochs=n_epochs, save=True, nome_da_base=autoencoder_base, batch_size=batch_size)
+        autoencoder.train_autoencoder(epochs=n_epochs, save=True, autoencoder_base=autoencoder_base, batch_size=batch_size)
 
         del autoencoder
         gc.collect()  
