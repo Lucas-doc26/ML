@@ -8,7 +8,7 @@ from typing import Tuple
 from tensorflow.keras.models import Model
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
-def preprocessamento_dataframe(path_csv: str, autoencoder: bool = False, data_algumentantation:bool = True, input_shape:int=(64,64)):
+def preprocessing_dataframe(path_csv: str, autoencoder: bool = False, data_algumentantation:bool = True, input_shape:int=(64,64)):
     """
     Ao passar um dataFrame .csv, ele irá retornar o gerador e dataframe
     

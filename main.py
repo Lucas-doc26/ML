@@ -12,17 +12,17 @@ config_gpu() #Usar GPU
 
 
 #Crio o gerenciador de caminhos para o projeto
-path_manager = PathManager('/home/lucas/PIBIC')
+path_manager = PathManager('/home/lucas/Área de Trabalho/Ml')
 
 #Crio os csvs para os datasets
-create_datasets_csv(path_manager, '/datasets') #-> fazer uma forma de fazer um shuffle nos csv
+create_datasets_csv(path_manager, '/home/lucas/Área de Trabalho/Ml/datasets') #-> fazer uma forma de fazer um shuffle nos csv
 #|-> caso queira colocar os datasets em outra pasta(usar ssd por exemplo), só passar o caminho como argumento
 
 #Plotando as imagens
-#plot_images_from_csv(Path('CSV/PKLot/PKLot_autoencoder_test.csv'), 3, (10, 10), 'PKLot')    
+plot_images_from_csv(Path(f'CSV/{args.bases[0]}/{args.bases[0]}_autoencoder_test.csv'), 3, (10, 10), f'{args.bases[0]}')    
 
 #Gerando modelos de autoencoders
-#generate_models(n_models=10, model_name='Modelo_Kyoto', filters_list=[8,16,32,64,128], input=(64,64,3), min_layers=3, max_layers=5)
+generate_models(n_models=10, model_name='Modelo_Kyoto', filters_list=[8,16,32,64,128], input=(64,64,3), min_layers=3, max_layers=5)
 
 #Preprocessando as bases de treino:
 for autoencoder_base in args.bases:

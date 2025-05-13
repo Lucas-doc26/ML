@@ -13,7 +13,8 @@
 1. **Instalar o Conda**:
 ```bash
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
-bash Miniconda3-latest-Linux-x86_64.sh
+chmod +x Miniconda3-latest-Linux-x86_64.sh
+./Miniconda3-latest-Linux-x86_64.sh
 ```
 
 2. **Criar e ativar o ambiente**:
@@ -25,6 +26,11 @@ conda activate pibic-2024-2025
 3. **Verificar a instalação**:
 ```bash
 python -c "import tensorflow as tf; print(tf.__version__)"
+```
+
+4. **Dependências do Linux**:
+```bash
+export QT_QPA_PLATFORM=offscreen
 ```
 
 ### Configurações de Reproducibilidade

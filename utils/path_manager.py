@@ -24,9 +24,9 @@ class PathManager:
         """
         try:
             print('Criando pastas...')
-            #os.makedirs(os.path.join(self.base_path, 'Modelos'), exist_ok=True)
-            #os.makedirs(os.path.join(self.base_path, 'Modelos', 'Fusoes'), exist_ok=True)
-            #os.makedirs(os.path.join(self.base_path, 'Modelos', 'Plots'), exist_ok=True)
+            os.makedirs(os.path.join(self.base_path, 'Modelos'), exist_ok=True)
+            os.makedirs(os.path.join(self.base_path, 'Modelos', 'Fusoes'), exist_ok=True)
+            os.makedirs(os.path.join(self.base_path, 'Modelos', 'Plots'), exist_ok=True)
             os.makedirs(os.path.join(self.base_path, 'Pesos_parciais'), exist_ok=True)
             os.makedirs(os.path.join(self.base_path, 'resultados'), exist_ok=True)
 
@@ -103,3 +103,21 @@ def recreate_folder_force(path_folder):
     if os.path.exists(path_folder):
         shutil.rmtree(path_folder)
     os.makedirs(path_folder)
+
+def return_name_df(df):
+    universities = ['PUC', 'UFPR04', 'UFPR05']
+    mask = df['path_image'].str.contains('|'.join(universities), regex=True)
+    #/datasets/PKLot/PKLotSegmented/PUC/Cloudy/2012-10-16/Empty/2012-10-16_05_56_42#081.jpg,1
+    if mask.any():  
+        name = df.loc[mask, 'path_image'].iloc[0].split('/')[4]  # Pega a faculdade
+    else:
+        name = df['path_image'].iloc[0].split('/')[6]  
+        #/datasets/CNR-EXT-Patches-150x150/PATCHES/SUNNY/2016-01-15/camera9/S_2016-01-15_11.40_C09_326.jpg,0
+
+    return name
+
+def return_name_csv(path):
+    name = path.split('/')[-1]
+    name = name.rsplit('.csv', 1)[0]
+    name = name.split('_')
+    return (name[0], name[2])

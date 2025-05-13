@@ -38,7 +38,10 @@ def plot_images_from_csv(path_csv: Path, num_images_per_column: int = 3, figsize
             break
 
         img_path = row['path_image']
-        label = row['class']
+        try:
+            label = row['class']
+        except:
+            label = row['path_image'].split('/')[-1].split('.')[0]
 
         try:
             image = plt.imread(img_path)

@@ -55,7 +55,7 @@ def graphic_accuracy_per_batch( batches: List[int], accuracies: List[float], mod
     plt.close('all')
     plt.clf()
 
-def models_comparison( path_save: Union[str, Path], model_name: Optional[str] = None, classifier_base: Optional[str] = None,test_base: Optional[str] = None,autoencoder_base: Optional[str] = None) -> None:
+def models_comparison( path_save: Optional[Path]=None, model_name:str = None, classifier_base: str = None,test_base: str = None,autoencoder_base: str = None) -> None:
     """
     Plota um gráfico de comparação entre os modelos.
 

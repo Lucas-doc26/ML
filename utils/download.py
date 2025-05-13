@@ -82,23 +82,29 @@ def download_Kyoto(path):
     else:
         print(f"\nProcesso concluído! {images_copied} imagens foram copiadas para a pasta Kyoto")
 
-def download_datasets(path, link_datasets):
-    """
-    Função para baixar e extrair um dataset.tar.gz 
-    """
-    name = link_datasets.split('/')[-1]
-    file_name = Path(path) / name
-
+def download_datasets(path, url):
+    file_name = os.path.join(path, os.path.basename(url))
+    
     print(f"Baixando arquivo {file_name}...")
-    urllib.request.urlretrieve(link_datasets, file_name)
-
-    print(f"Extraindo arquivo {file_name}...")
-    with tarfile.open(file_name, 'r:gz') as tar:
-        tar.extractall(path=path)
-
-    print(f"Arquivo {file_name} extraído com sucesso!")
-
-    return file_name
+    urllib.request.urlretrieve(url, file_name)
+    
+    print("Extraindo arquivo...")
+    if file_name.endswith('.tar.gz'):
+        with tarfile.open(file_name, 'r:gz') as tar:
+            tar.extractall(path=path)
+    elif file_name.endswith('.zip'):
+        # Se for o arquivo CNR, extrair para pasta específica
+        if 'CNR-EXT-Patches-150x150' in file_name:
+            cnr_path = os.path.join(path, 'CNR-EXT-Patches-150x150')
+            os.makedirs(cnr_path, exist_ok=True)
+            with zipfile.ZipFile(file_name, 'r') as zip_ref:
+                zip_ref.extractall(cnr_path)
+        else:
+            with zipfile.ZipFile(file_name, 'r') as zip_ref:
+                zip_ref.extractall(path=path)
+    
+    print("Arquivo extraído com sucesso!")
+    os.remove(file_name)
 
 def download_all_datasets(path_datasets):
     """
@@ -114,4 +120,4 @@ def download_all_datasets(path_datasets):
     else:
         print("Todos os datasets já no sistema!")
 
-    return os.path.join(path_datasets , 'PKLot', 'PKLotSegmented'), os.path.join(path_datasets , 'CNR-EXT-Patches-150x150'), os.path.join(path_datasets , 'Kyoto')
+    return os.path.join(path_datasets, 'PKLot', 'PKLotSegmented'), os.path.join(path_datasets, 'CNR-EXT-Patches-150x150'), os.path.join(path_datasets, 'Kyoto')
