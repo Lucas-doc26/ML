@@ -15,8 +15,8 @@ set_seeds() #Reprodutibilidade
 config_gpu() #Usar GPU
 
 #Gerando modelos dos classificadores 
-#create_classifiers(n_models=10, model_name=args.name, autoencoder_base=args.autoencoder_base)
-#generate_models(n_models=10, model_name='Modelo_Kyoto', filters_list=[8,16,32,64,128], input=(64,64,3), min_layers=3, max_layers=5)
+create_classifiers(n_models=10, model_name=args.name, autoencoder_base=args.autoencoder_base)
+# Não tem problema de ficar gerando eles, pois eles são sempre gerados com o msm classificador
 
 #Preprocessando as bases de treino:
 for i, classifier_base in enumerate(args.classifier_base):

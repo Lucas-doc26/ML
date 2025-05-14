@@ -122,3 +122,9 @@ def return_name_csv(path):
     name = name.split('_')
     print(name)
     return (name[0])
+
+def verify_path(path_manager, model_name, train_base, autoencoder_base):
+    """
+    Verifica se o caminho para o modelo existe
+    """
+    os.mkdir(os.path.join(path_manager.get_base_path(), f'Modelos/Fusoes-{model_name}/Autoencoder-{autoencoder_base}/Treinados_em_{train_base}/Grafico_batchs'))

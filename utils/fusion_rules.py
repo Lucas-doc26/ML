@@ -4,13 +4,9 @@ import os
 import pandas as pd
 from .path_manager import PathManager
 from .models.autoencoder_generator import map_classes
-
-
-def verifica_dir(nome_modelo, nome_base, nome_autoencoder):
-    os.mkdir(os.path.join(path, f'Modelos/Fusoes-{nome_modelo}/Autoencoder-{nome_autoencoder}/Treinados_em_{nome_base}/Grafico_batchs'))
-
-
-
+from .utils.preprocessing import map_classes_to_binary
+from .path_manager import PathManager
+from .view.graphics import graphic_accuracy_per_batch
 
 class FusionRule:
     def __init__(self, path_manager):
@@ -66,13 +62,13 @@ def fusion_process(model_name, train_bases, test_bases, fusion_rule, autoencoder
     
     for train_base in train_bases:
         for test_base in test_bases:
-            verifica_dir(model_name, train_base, autoencoder_base)
+            path_manager.verify_path(model_name, train_base, autoencoder_base)
             results = []
             
             for batch_size in batches:
                 fusion_rule_result = fusion_rule.apply_fusion(model_name, batch_size, number_of_models, train_base, test_base, autoencoder_base)
                 df = pd.read_csv(path_manager.get_csv_path(test_base, train_base))
-                df = mapear(df['classe']) # Converte a classe para 0 e 1
+                df = map_classes_to_binary(df['class']) # Converte a classe para 0 e 1
                 
                 acc = accuracy_score(df, fusion_rule_result)
                 results.append(acc)
@@ -85,15 +81,15 @@ def fusion_process(model_name, train_bases, test_bases, fusion_rule, autoencoder
                     'Batch': int(batch_size)
                 })
             
-            """grafico_batchs(
+            graphic_accuracy_per_batch(
                 batches, 
                 results, 
-                model=f'{fusion_rule.__class__.__name__} entre os diferentes {model_name}',
-                caminho_para_salvar=path_manager.get_graph_path(model_name, autoencoder_base, train_base),
-                nome_autoencoder=autoencoder_base,
-                nome_train_bases=train_base,
-                base_usada_teste=test_base
-            )"""
+                model_name=f'{fusion_rule.__class__.__name__} entre os diferentes {model_name}',
+                train_base=train_base,
+                test_base=test_base,
+                autoencoder_base=autoencoder_base, 
+                save_path=os.path.join(path_manager.get_base_path(), f'Modelos/Fusoes-{model_name}/Grafico_batchs/Grafico_batchs_{fusion_rule.__class__.__name__}-{autoencoder_base}-{train_base}-{test_base}.png')
+            )
     
     df_results = pd.DataFrame(results_csv)
     df_results.to_csv(path_manager.get_results_path(model_name, autoencoder_base, fusion_rule.__class__.__name__), index=False)

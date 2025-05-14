@@ -2,11 +2,9 @@ from utils import *
 import argparse
 
 parser = argparse.ArgumentParser(description="Descrição do seu script.")
-parser.add_argument('--nome', type=str, help='Nome do modelo')
+parser.add_argument('--name_model', type=str, help='Nome do modelo')
 parser.add_argument('--autoencoder_bases', type=str, nargs='+', help='Lista de bases a serem treinadas pelo autoencoder')
 parser.add_argument('--autoencoder_epocas', type=int, nargs='+', help='Lista de épocas de cada um dos modelos')
-#parser.add_argument('--classificador_base', type=str, nargs='+', help='Lista de bases a serem treinadas pelo classificador')
-#parser.add_argument('--classificador_epocas', type=int, nargs='+', help='Lista de épocas de cada um dos modelos')
 
 args = parser.parse_args()
 print("Argumentos:", args)
@@ -15,20 +13,6 @@ print("Argumentos:", args)
 set_seeds() #Reprodutibilidade  
 config_gpu() #Usar GPU
 
-
-#Crio o gerenciador de caminhos para o projeto
-path_manager = PathManager('/home/lucas/PIBIC')
-
-#Crio os csvs para os datasets
-#create_datasets_csv(path_manager, '/datasets') #-> fazer uma forma de fazer um shuffle nos csv
-#|-> caso queira colocar os datasets em outra pasta(usar ssd por exemplo), só passar o caminho como argumento
-
-#Plotando as imagens
-#plot_images_from_csv(Path('CSV/PKLot/PKLot_autoencoder_test.csv'), 3, (10, 10), 'PKLot')    
-
-#Gerando modelos de autoencoders -> já estão prontos
-#generate_models(n_models=10, model_name='Modelo_Kyoto', filters_list=[8,16,32,64,128], input=(64,64,3), min_layers=3, max_layers=5)
-
 #Preprocessando as bases de treino:
 for i, autoencoder_base in enumerate(args.autoencoder_bases):
     train, _ = preprocessing_dataframe(path_csv=f'CSV/{autoencoder_base}/{autoencoder_base}_autoencoder_train.csv', autoencoder=True, data_algumentantation=False, input_shape=(64,64))
@@ -36,4 +20,4 @@ for i, autoencoder_base in enumerate(args.autoencoder_bases):
     test, _ = preprocessing_dataframe(path_csv=f'CSV/{autoencoder_base}/{autoencoder_base}_autoencoder_test.csv', autoencoder=True, data_algumentantation=False, input_shape=(64,64))
 
     #Treinando modelos de autoencoder
-    train_models(train, validation, test, model_name=args.nome, autoencoder_base=autoencoder_base, n_epochs=args.autoencoder_epocas[i], batch_size=4, input_shape=(64,64,3))
+    train_models(train, validation, test, model_name=args.name_model, autoencoder_base=autoencoder_base, n_epochs=args.autoencoder_epocas[i], batch_size=4, input_shape=(64,64,3))
