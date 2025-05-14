@@ -21,7 +21,6 @@
   <i>Este repositório documenta um projeto de iniciação científica focado na adaptação de domínio em modelos profundos para detecção de vagas de estacionamento.</i>
 </p>
 
-<hr>
 
 <h2 id="projeto">📫 Projeto Atual</h2>
 
@@ -31,7 +30,6 @@ O projeto é desenvolvido no âmbito do Programa Institucional de Bolsas de Inic
   <img src="https://img.shields.io/badge/Estado:-Em%20Desenvolvimento-yellow?style=for-the-badge" alt="Estado do projeto: Em Desenvolvimento"/>
 </p>
 
-<hr>
 
 <h2 id="objetivos">🚀 Objetivos do Projeto</h2>
 
@@ -46,7 +44,6 @@ A pesquisa busca analisar soluções que melhorem a escalabilidade dos modelos a
     <li>Divulgação da pesquisa (publicação de artigo) para a comunidade científica.</li>
 </ul>
 
-<hr>
 
 <h2 id="datasets">📍 Bases de Dados (Datasets)</h2>
 
@@ -56,15 +53,12 @@ A pesquisa busca analisar soluções que melhorem a escalabilidade dos modelos a
   <img src="https://ars.els-cdn.com/content/image/1-s2.0-S0957417422002032-gr1.jpg" alt="Exemplo de imagens da base PKLot" width="600px">
 </p>
 
-<br>
 
 <h3>CNR-EXT</h3>
 <p>A base CNR-EXT é composta por imagens coletadas entre novembro de 2015 e fevereiro de 2016, abrangendo várias condições climáticas e utilizando 9 câmeras com diferentes perspectivas e ângulos de visão. Esta base de dados captura diversas situações de iluminação e inclui padrões de oclusão parcial (devido a obstáculos como árvores, postes de iluminação, outros carros) e carros com sombreamento parcial ou total.</p>
 <p align="center">
   <img src="https://www.researchgate.net/profile/Razib-Iqbal/publication/357722449/figure/fig1/AS:1147004549894144@1650478603121/mage-samples-from-the-CNRPark-EXT-and-PKLot-datasets.ppm" alt="Exemplo de imagens da base CNR-EXT" width="600px">
 </p>
-
-<hr>
 
 <h2 id="rodar">🚀 Como Rodar o Projeto</h2>
 
@@ -92,15 +86,14 @@ Para executar este projeto em sua máquina local, siga os passos abaixo:
     ./main.sh
     ```
 
-<hr>
 
 <h2 id="autor">🤝 Autor</h2>
 <table align="left">
   <tr>
     <td align="left">
       <a href="https://www.linkedin.com/in/lucasdoc/">
-        <img src="https://avatars.githubusercontent.com/u/89359426?v=4" width="100px;" alt="Foto de Lucas Cunha"/><br>
-        <sub>
+        <img src="https://avatars.githubusercontent.com/u/89359426?v=4" width="100px;" alt="Foto de Lucas Cunha"/>        <sub>
+        <br>
           <b>Lucas Cunha</b>
         </sub>
       </a>
