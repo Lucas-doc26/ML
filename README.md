@@ -1,24 +1,12 @@
-[TENSORFLOW_BADGE]:https://img.shields.io/badge/TensorFlow-%23FF6F00.svg?style=for-the-badge&logo=TensorFlow&logoColor=white
-
-[KERAS_BADGE]:https://img.shields.io/badge/Keras-%23D00000.svg?style=for-the-badge&logo=Keras&logoColor=white
-
-[NUMPY_BADGE]:https://img.shields.io/badge/numpy-%23013243.svg?style=for-the-badge&logo=numpy&logoColor=white
-
-[PANDAS_BADGE]:https://img.shields.io/badge/pandas-%23150458.svg?style=for-the-badge&logo=pandas&logoColor=white
-
-[SCIKIT-LEARN_BADGE]:https://img.shields.io/badge/scikit--learn-%23F7931E.svg?style=for-the-badge&logo=scikit-learn&logoColor=white
-
-[PYTHON_BADGE]:https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54
-
 <h1 align="center" style="font-weight: bold;">Machine Learning & Pesquisa Científica 💻</h1>
 
 <p align="center">
-  ![Python][PYTHON_BADGE]
-  ![Keras][KERAS_BADGE]
-  ![TensorFlow][TENSORFLOW_BADGE]
-  ![Pandas][PANDAS_BADGE]
-  ![Scikit-Learn][SCIKIT-LEARN_BADGE]
-  ![NumPy][NUMPY_BADGE]
+    <img src="https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54" alt="Python"/>
+    <img src="https://img.shields.io/badge/Keras-%23D00000.svg?style=for-the-badge&logo=Keras&logoColor=white" alt="Keras"/>
+    <img src="https://img.shields.io/badge/TensorFlow-%23FF6F00.svg?style=for-the-badge&logo=TensorFlow&logoColor=white" alt="TensorFlow"/>
+    <img src="https://img.shields.io/badge/pandas-%23150458.svg?style=for-the-badge&logo=pandas&logoColor=white" alt="Pandas"/>
+    <img src="https://img.shields.io/badge/scikit--learn-%23F7931E.svg?style=for-the-badge&logo=scikit-learn&logoColor=white" alt="Scikit-Learn"/>
+    <img src="https://img.shields.io/badge/numpy-%23013243.svg?style=for-the-badge&logo=numpy&logoColor=white" alt="NumPy"/>
 </p>
 
 <p align="center">
@@ -119,10 +107,3 @@ Para executar este projeto em sua máquina local, siga os passos abaixo:
     </td>
   </tr>
 </table>
-
-
-
-<hr>
-<p align="center">
-  <a href="#top">Voltar ao topo</a>
-</p>
