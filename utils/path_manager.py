@@ -120,4 +120,5 @@ def return_name_csv(path):
     name = path.split('/')[-1]
     name = name.rsplit('.csv', 1)[0]
     name = name.split('_')
-    return (name[0], name[2])
+    print(name)
+    return (name[0])

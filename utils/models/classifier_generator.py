@@ -10,6 +10,7 @@ from utils.models.autoencoder_generator import AutoencoderGenerator
 from utils.gpu import clear_session
 from utils.preprocessing import map_classes_to_binary, map_classes, preprocessing_dataframe
 from pathlib import Path
+import utils
 from utils.path_manager import *
 from utils.view import *
 
@@ -228,10 +229,10 @@ def create_classifiers(n_models=10, model_name=None, autoencoder_base='Sem-Peso'
 
         del autoencoder, encoder, classifier
 
-def train_per_batch(model_name, classifier_base, autoencoder_base, train_csv, validation, test, test_csv, save=True, epochs=10, weights=True, input_shape=(64,64,3)):
+def train_per_batch(model_name, classifier_base, autoencoder_base, train_csv, validation, test, test_df, save=True, epochs=10, weights=True, input_shape=(64,64,3)):
     #name da base de train do classificador
-    name, _ = return_name_csv(train_csv)
-    test_base = return_name_df(test_csv)
+    name = return_name_csv(train_csv)
+    test_base = return_name_df(test_df)
 
     batch_dir = f"CSV/{name}/batches"
     batches = sorted(os.listdir(batch_dir), key=lambda x: int(x.split("batch-")[1].split(".")[0]))
@@ -281,7 +282,7 @@ def train_per_batch(model_name, classifier_base, autoencoder_base, train_csv, va
         train, _ = preprocessing_dataframe(os.path.join(batch_dir, batch), autoencoder=False)
         classifier.set_train(train)
         classifier.train(epochs=epochs, save=save ,n_batches=batch_size, classifier_base=classifier_base, weights=weights)
-        predicts_np, accuracy = classifier.predict(test_csv)
+        predicts_np, accuracy = classifier.predict(test_df)
         accuracies.append(accuracy)
 
         results_dir = os.path.join(dir_resultados_base, test_base)
@@ -322,7 +323,7 @@ def train_per_batch(model_name, classifier_base, autoencoder_base, train_csv, va
 
     print("Final accuracies:", accuracies)
 
-def train_all_models_per_batch(model_name, classifier_base, autoencoder_base, train_csv, validation, test, test_csv, save=True, epochs=10, input_shape=(64,64,3)):
+def train_all_models_per_batch(model_name, classifier_base, autoencoder_base, train_csv, validation, test, test_df, save=True, epochs=10, input_shape=(64,64,3)):
     path_models = "Modelos"
     models = os.listdir(path_models)
     models_to_train = []
@@ -353,7 +354,7 @@ def train_all_models_per_batch(model_name, classifier_base, autoencoder_base, tr
     for i, model in enumerate(sorted(models_to_train)):
         name = model_name + f"-{i}"
         #train cada um dos models em batches 
-        train_per_batch(name, classifier_base, autoencoder_base, train_csv, validation, test, test_csv, save, epochs, True, input_shape)
+        train_per_batch(name, classifier_base, autoencoder_base, train_csv, validation, test, test_df, save, epochs, True, input_shape)
 
     #faço o plot comparando os models
     utils.view.graphics.models_comparison(path_save=os.path.join(path_models, "Plots"), model_name=model_name, classifier_base=classifier_base, 
@@ -412,7 +413,6 @@ def test_model_per_batch(model_name, test, test_df, classifier_base, weights=Tru
     dir_graf_facul = f'Modelos/{model_name}/Plots/Graficos/Treinado_em_{classifier_base}'
 
     graphic_accuracy_per_batch(batches=batches, accuracies=accuracies, model_name=model_name, train_base=classifier_base, test_base=test_base, autoencoder_base=autoencoder_base, save_path=dir_graf_facul)
-
 
 def test_all_models_per_batch(model_name, test, test_df, classifier_base, autoencoder_base):
     #classificador = GeradorClassificador()
