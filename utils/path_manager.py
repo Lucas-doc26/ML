@@ -69,13 +69,13 @@ class PathManager:
         """
         return f'resultados/{model_name}/tabela_resultado-{fusion_type}-{autoencoder_base}.csv'
 
-def recreate_folder(PathManager, path_folder):
+def recreate_folder(path_folder):
     """
     Recria a pasta do modelo
     """
-    if os.path.exists(os.path.join(PathManager.get_base_path(), path_folder)):
-        shutil.rmtree(os.path.join(PathManager.get_base_path(), path_folder))
-    os.makedirs(os.path.join(PathManager.get_base_path(), path_folder))
+    if os.path.exists(path_folder):
+        shutil.rmtree(path_folder)
+    os.makedirs(path_folder)
 
 def create_folder(PathManager, *args):
     """

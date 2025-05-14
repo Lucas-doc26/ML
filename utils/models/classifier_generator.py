@@ -14,6 +14,10 @@ import utils
 from utils.path_manager import *
 from utils.view import *
 
+tf.config.optimizer.set_jit(False)
+os.environ["TF_XLA_FLAGS"] = "--tf_xla_enable_xla_devices=false"
+
+
 class ClassifierGenerator:
     def __init__(self, encoder:AutoencoderGenerator=None, weights:Path=None, model_name:str=None, autoencoder_base:str='Sem-Peso', path:Path=None):
         self.encoder = encoder
@@ -88,7 +92,7 @@ class ClassifierGenerator:
         self.model_name = name
     
     def compile(self, optimizer='adam', loss='sparse_categorical_crossentropy', metrics=['accuracy']):
-        self.model.compile(optimizer=optimizer, loss=loss, metrics=metrics)
+        self.model.compile(optimizer=optimizer, loss=loss, metrics=metrics, jit_compile=False)
 
     def load_weights(self, weights):
         if weights == None:
@@ -103,7 +107,7 @@ class ClassifierGenerator:
                 print(f"Erro ao carregar os pesos: {e}")
         clear_session()
 
-    def train(self, save=False, epochs=10, batch_size=64, n_batches=None, classifier_base=None, weights=True):
+    def train_classifier(self, save=False, epochs=10, batch_size=64, n_batches=None, classifier_base=None, weights=True):
         checkpoint_path = 'Pesos/Pesos_parciais/weights-improvement-{epoch:02d}-{val_loss:.2f}.weights.h5'
 
         cp_callback = ModelCheckpoint(
@@ -128,6 +132,8 @@ class ClassifierGenerator:
             os.makedirs(log_dir)
 
         tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram_freq=1)
+
+        print(f"type(classifier): {type(self.model)}")
 
         history = self.model.fit(
             self.train, 
@@ -281,7 +287,8 @@ def train_per_batch(model_name, classifier_base, autoencoder_base, train_csv, va
 
         train, _ = preprocessing_dataframe(os.path.join(batch_dir, batch), autoencoder=False)
         classifier.set_train(train)
-        classifier.train(epochs=epochs, save=save ,n_batches=batch_size, classifier_base=classifier_base, weights=weights)
+        print(classifier)
+        classifier.train_classifier(epochs=epochs, save=save ,n_batches=batch_size, classifier_base=classifier_base, weights=weights)
         predicts_np, accuracy = classifier.predict(test_df)
         accuracies.append(accuracy)
 

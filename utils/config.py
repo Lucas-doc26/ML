@@ -27,7 +27,6 @@ def set_seeds():
     os.environ['TF_CUDNN_DETERMINISTIC'] = '1'
     os.environ["TF_XLA_FLAGS"] = "--tf_xla_auto_jit=0"
 
-
     # Configurações do TensorFlow
     os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # '0' = tudo, '1' = warnings, '2' = info, '3' = apenas erros graves
     

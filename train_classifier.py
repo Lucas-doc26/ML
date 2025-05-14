@@ -15,14 +15,25 @@ set_seeds() #Reprodutibilidade
 config_gpu() #Usar GPU
 
 #Gerando modelos dos classificadores 
-create_classifiers(n_models=10, model_name=args.name, autoencoder_base=args.autoencoder_base)
+#create_classifiers(n_models=10, model_name=args.name, autoencoder_base=args.autoencoder_base)
 #generate_models(n_models=10, model_name='Modelo_Kyoto', filters_list=[8,16,32,64,128], input=(64,64,3), min_layers=3, max_layers=5)
 
 #Preprocessando as bases de treino:
 for i, classifier_base in enumerate(args.classifier_base):
-    train, _ = preprocessing_dataframe(path_csv=f'CSV/{classifier_base}/{classifier_base}_train.csv', autoencoder=True, data_algumentantation=False, input_shape=(64,64))
-    validation, _ = preprocessing_dataframe(path_csv=f'CSV/{classifier_base}/{classifier_base}_validation.csv', autoencoder=True, data_algumentantation=False, input_shape=(64,64))
-    test, test_df = preprocessing_dataframe(path_csv=f'CSV/{classifier_base}/{classifier_base}_test.csv', autoencoder=True, data_algumentantation=False, input_shape=(64,64))
+    train, _ = preprocessing_dataframe(path_csv=f'CSV/{classifier_base}/{classifier_base}_train.csv', autoencoder=False, data_algumentantation=False, input_shape=(64,64))
+    validation, _ = preprocessing_dataframe(path_csv=f'CSV/{classifier_base}/{classifier_base}_validation.csv', autoencoder=False, data_algumentantation=False, input_shape=(64,64))
+    test, test_df = preprocessing_dataframe(path_csv=f'CSV/{classifier_base}/{classifier_base}_test.csv', autoencoder=False, data_algumentantation=False, input_shape=(64,64))
+
+    print(test.dtype)
 
     #Treinando modelos de classificação
-    train_all_models_per_batch(model_name=args.name, classifier_base=classifier_base, train_csv=f'CSV/{classifier_base}/{classifier_base}_train.csv', test=test, test_df=test_df, save=True, epochs=args.classifier_epochs, autoencoder_base=args.autoencoder_base, validation=validation)
+    train_all_models_per_batch(model_name=args.name, 
+                                classifier_base=classifier_base,
+                                autoencoder_base=args.autoencoder_base,
+                                train_csv=f'CSV/{classifier_base}/{classifier_base}_train.csv',
+                                validation=validation,
+                                test=test,
+                                test_df=test_df,
+                                save=True,
+                                epochs=args.classifier_epochs[i],
+                                input_shape=(64,64,3))
