@@ -1,7 +1,7 @@
 from Modelos import *
 from Preprocessamento import *
 from segmentandoDatasets import *
-from Fusoes import *
+from utils.Fusoes import *
 from skimage.metrics import structural_similarity as ssim
 import matplotlib
 import tensorflow as tf
