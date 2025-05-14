@@ -83,20 +83,25 @@ def data_augmentation_kyoto(kyoto_path):
     Função para realizar data augmentation no dataset Kyoto
     """
     transform1 = A.Compose([
-            A.GaussNoise(var_limit=(0.0, 0.0007), mean=0, p=1),
-            A.Rotate(limit=180, p=1),
+        A.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.1, p=1),  # Iluminação 
+        A.GaussNoise(var_limit=(0.0, 0.002), mean=0, p=1),  # Ruído 
     ])
+
     transform2 = A.Compose([
-                A.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.2,brightness_by_max=True, p=1),
-                A.AdvancedBlur(blur_limit=(7,9), noise_limit=(0.75, 1.25), p=1),
-        ])
+        A.ShiftScaleRotate(shift_limit=0.05, scale_limit=0.02, rotate_limit=10, border_mode=0, p=1),  # Movimento da câmera
+        A.CLAHE(clip_limit=3.0, tile_grid_size=(8,8), p=1),  # Contraste
+    ])
+
     transform3 = A.Compose([
-                A.ChannelShuffle(p=1),
+        A.HueSaturationValue(hue_shift_limit=10, sat_shift_limit=20, val_shift_limit=10, p=1),  # variação de tom
+        A.RandomBrightnessContrast(brightness_limit=0.15, contrast_limit=0.1, p=1),  # brilho/contraste 
     ])
+
     transform4 = A.Compose([
-                A.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.2,brightness_by_max=True, p=1),
-                A.AdvancedBlur(blur_limit=(7,9), noise_limit=(0.75, 1.25), p=1),
-    ])
+        A.AdvancedBlur(blur_limit=(3,5), noise_limit=(0.3, 0.6), p=1),  # Desfoque leve
+        A.GaussNoise(var_limit=(0.0, 0.002), mean=0, p=1),  # Ruído adicional muito leve
+    ])  
+
 
     if not os.path.isdir(os.path.join(kyoto_path, 'dataAug')):
         os.makedirs(os.path.join(kyoto_path, 'dataAug'))

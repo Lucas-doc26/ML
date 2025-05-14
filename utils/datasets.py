@@ -456,13 +456,13 @@ def create_datasets_csv(path_manager:PathManager=None, path_datasets_downloaded:
     """
     Função para criar os csvs para os datasets
     """
+
     if not os.path.isdir(path_datasets_downloaded) or path_datasets_downloaded is None:
         create_folder(path_manager, 'datasets')
     
     datasets_path = download_all_datasets(path_datasets_downloaded)
     print(datasets_path)
     
-    pass
     #Realizo o data augmentation no dataset Kyoto
     data_augmentation_kyoto(datasets_path[2])
 

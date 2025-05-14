@@ -14,7 +14,7 @@ from utils.path_manager import *
 from utils.view import *
 
 class ClassifierGenerator:
-    def __init__(self, encoder:AutoencoderGenerator.encoder=None, weights:Path=None, model_name:str=None, autoencoder_base:str='Sem-Peso', path:Path=None):
+    def __init__(self, encoder:AutoencoderGenerator=None, weights:Path=None, model_name:str=None, autoencoder_base:str='Sem-Peso', path:Path=None):
         self.encoder = encoder
         self.model_name = model_name
 
@@ -404,7 +404,7 @@ def test_model_per_batch(model_name, test, test_df, classifier_base, weights=Tru
     #save as precisões no arquivo
     #print(test_base)
     print(test_base)
-    file_path =  f'Modelos/{model_name}/Classificador-{autoencoder_base}/Precisao/Treinado_em_{classifier_base}', f'precisao-{test_base}.txt')
+    file_path =  f'Modelos/{model_name}/Classificador-{autoencoder_base}/Precisao/Treinado_em_{classifier_base}', f'precisao-{test_base}.txt'
     with open(file_path, 'w') as f:
         for prec in accuracies:
             f.write(f"{prec}\n")
