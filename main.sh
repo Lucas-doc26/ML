@@ -2,7 +2,7 @@
 #args: nome, numeros, autoencoder, classificador, epocas, teste1, teste2 
 set -e
 
-echo "Executando Script: Treinando classificadores"
+echo "Executando Script!"
 
 python3 train_classifier.py --name Modelo_Kyoto --classifier_base PUC UFPR04 UFPR05 --classifier_epochs 20 20 20 --autoencoder_base Kyoto
 
