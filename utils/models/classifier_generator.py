@@ -107,7 +107,7 @@ class ClassifierGenerator:
                 print(f"Erro ao carregar os pesos: {e}")
         clear_session()
 
-    def train_classifier(self, save=False, epochs=10, batch_size=64, n_batches=None, classifier_base=None, weights=True):
+    def train_classifier(self, save=False, epochs=10, batch_size=2, n_batches=None, classifier_base=None, weights=True):
         checkpoint_path = 'Pesos/Pesos_parciais/weights-improvement-{epoch:02d}-{val_loss:.2f}.weights.h5'
 
         cp_callback = ModelCheckpoint(
@@ -139,7 +139,7 @@ class ClassifierGenerator:
             self.train, 
             epochs=epochs, 
             callbacks=[cp_callback, tensorboard_callback], 
-            batch_size=8,
+            batch_size=batch_size,
             validation_data=self.validation
         )
 
