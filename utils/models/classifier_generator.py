@@ -139,7 +139,7 @@ class ClassifierGenerator:
             self.train, 
             epochs=epochs, 
             callbacks=[cp_callback, tensorboard_callback], 
-            batch_size=batch_size,
+            batch_size=8,
             validation_data=self.validation
         )
 
