@@ -13,6 +13,11 @@ print("Argumentos:", args)
 set_seeds() #Reprodutibilidade  
 config_gpu() #Usar GPU
 
+path = PathManager('/home/lucas/PIBIC')
+
+create_datasets_csv(path, '/datasets')
+
+clear_session()
 #Preprocessando as bases de treino:
 for i, autoencoder_base in enumerate(args.autoencoder_bases):
     train, _ = preprocessing_dataframe(path_csv=f'CSV/{autoencoder_base}/{autoencoder_base}_autoencoder_train.csv', autoencoder=True, data_algumentantation=False, input_shape=(64,64))
@@ -21,3 +26,5 @@ for i, autoencoder_base in enumerate(args.autoencoder_bases):
 
     #Treinando modelos de autoencoder
     train_models(train, validation, test, model_name=args.name_model, autoencoder_base=autoencoder_base, n_epochs=args.autoencoder_epocas[i], batch_size=4, input_shape=(64,64,3))
+
+    clear_session()
