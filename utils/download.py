@@ -119,5 +119,7 @@ def download_all_datasets(path_datasets):
         download_datasets(path_datasets, 'https://github.com/fabiocarrara/deep-parking/releases/download/archive/CNR-EXT-Patches-150x150.zip')
     else:
         print("Todos os datasets já no sistema!")
+    download_datasets(path_datasets, 'https://data.mendeley.com/public-files/datasets/rscbjbr9sj/files/f12eaf6d-6023-432f-acc9-80c9d7393433/file_downloaded')
+    
 
     return os.path.join(path_datasets, 'PKLot', 'PKLotSegmented'), os.path.join(path_datasets, 'CNR-EXT-Patches-150x150'), os.path.join(path_datasets, 'Kyoto')

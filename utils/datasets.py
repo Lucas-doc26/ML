@@ -1,10 +1,8 @@
 import os
 import pandas as pd
-import numpy as np
-import cv2
 from pathlib import Path
 
-from .path_manager import PathManager, create_folder
+from .path_manager import *
 from .download import download_all_datasets
 from .preprocessing import data_augmentation_kyoto
 
@@ -405,7 +403,7 @@ def split_balanced(df, size, class_column='class'):
 
 def create_batches(datasets):
     for base_name in datasets:
-        csv_path = f'CSV/{base_name}/{base_name}.csv'
+        csv_path = f'CSV/{base_name}/{base_name}_train.csv'
 
         if not os.path.exists(csv_path):
             print(f'[ERRO] CSV não encontrado: {csv_path}')
@@ -418,19 +416,24 @@ def create_batches(datasets):
 
         sizes = [64, 128, 256, 512, 1024]
         dfs = []
-        df_64 = split_balanced(df, sizes[0])
+
+        # 1. Cria o primeiro batch (64 imagens)
+        df_64 = split_balanced(df, sizes[0]) 
         dfs.append(df_64)
 
+        # 2. Itera para criar os batches subsequentes
         for i in range(1, len(sizes)):
-            previous_size = sizes[i-1]
-            current_size = sizes[i]
+            # dfs[i-1] é o batch anterior 
+            
+            additional_size = sizes[i] - sizes[i-1] # Calcula quantas NOVAS imagens são necessárias
 
-            additional_size = current_size - previous_size
-
+            # remaining_df contém todas as imagens do CSV original QUE NÃO ESTÃO no batch anterior
             remaining_df = df.drop(dfs[i-1].index)
 
+            # df_additional seleciona as NOVAS imagens balanceadas do remaining_df
             df_additional = split_balanced(remaining_df, additional_size)
 
+            # df_current é formado pelo batch anterior COMPLETO + as NOVAS imagens
             df_current = pd.concat([dfs[i-1], df_additional])
             dfs.append(df_current)
 
@@ -490,3 +493,36 @@ def create_datasets_csv(path_manager:PathManager=None, path_datasets_downloaded:
 
     print("Datasets criados com sucesso!")
 
+def create_x_ray_dataset(path_dataset:Path):
+    data = []
+    
+    path_train = os.path.join(path_dataset, 'train')
+    if os.path.isdir(path_train): 
+        for class_dir_name in os.listdir(path_train):
+            path_class_dir = os.path.join(path_train, class_dir_name)
+            if os.path.isdir(path_class_dir): # (ignora arquivos como .DS_Store)
+                for file in os.listdir(path_class_dir):
+                    if file.endswith('.jpeg'):   
+                        path_image = os.path.join(path_class_dir, file)
+                        data.append([path_image, class_dir_name])
+
+    path_test = os.path.join(path_dataset, 'test')
+    if os.path.isdir(path_test): 
+        for class_dir_name in os.listdir(path_test):
+            path_class_dir = os.path.join(path_test, class_dir_name)
+            if os.path.isdir(path_class_dir): 
+                for file in os.listdir(path_class_dir):
+                    if file.endswith('.jpeg'):
+                        path_image = os.path.join(path_class_dir, file)
+                        data.append([path_image, class_dir_name])
+
+    map_class = {'PNEUMONIA': 0, 'NORMAL': 1}
+    df = pd.DataFrame(data, columns=['path_image', 'class']).sample(frac=1, random_state=SEED)
+    df['class'] = df['class'].map(map_class)
+    print(df.head())
+    recreate_folder('CSV/X-Ray')
+    df.to_csv('CSV/X-Ray/X-Ray.csv', index=False)
+
+    
+    
+    

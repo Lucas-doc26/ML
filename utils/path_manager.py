@@ -2,7 +2,6 @@ import os
 import shutil
 from pathlib import Path
 
-
 class PathManager:
     """
     Gerencia os caminhos do projeto
