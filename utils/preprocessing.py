@@ -8,6 +8,47 @@ from typing import Tuple
 from tensorflow.keras.models import Model
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 
+
+#Funções auxiliares ao preprocessamento
+def normalize_image(img):
+    """
+    Retorna a imagem normalizada 
+    """
+    return img / 255.0
+
+def albumentations_wrapper(image, label, input_shape:int=(64,64,3)):
+    # Usa tf.numpy_function pra aplicar o albumentations que não roda nativamente em TensorFlow
+    image = tf.numpy_function(func=albumentations_tf, inp=[image], Tout=tf.float32)
+    image.set_shape(input_shape) 
+    return image, label
+
+def albumentations_tf(img):
+    # Garante que esteja em formato certo
+    if isinstance(img, tf.Tensor):
+        img = img.numpy()
+
+    # Aplica transformações
+    data = {"image": normalize_image(img)}
+    if img.shape[2] == 3:
+        augmented = transform(**data)
+    else:
+        augmented = data
+    return augmented['image'].astype(np.float32)
+
+def process_image(path, label, input_shape:int=(64,64)):
+    image = tf.io.read_file(path)              
+    image = tf.image.decode_jpeg(image, channels=3)
+    image = tf.image.resize(image, input_shape)
+    image = image / 255.0
+    
+    
+    
+    if label is None:
+        # pro autoencoder, retorna a mesma imagem como entrada e alvo
+        return image, image
+    
+    return image, tf.one_hot(label, depth=2)
+
 def preprocessing_dataframe(path_csv: str, autoencoder: bool = False, data_algumentantation:bool = True, input_shape:int=(64,64)):
     """
     Ao passar um dataFrame .csv, ele irá retornar o gerador e dataframe
@@ -25,7 +66,7 @@ def preprocessing_dataframe(path_csv: str, autoencoder: bool = False, data_algum
     dataframe = pd.read_csv(path_csv)
     batch_size = 64
 
-    datagen = ImageDataGenerator(preprocessing_function=albumentations if data_algumentantation else normalize_image)
+    datagen = ImageDataGenerator(preprocessing_function=albumentations_tf if data_algumentantation else normalize_image)
 
     if len(dataframe.columns) > 1:
         dataframe['class'] = dataframe['class'].astype(str)
@@ -50,6 +91,27 @@ def preprocessing_dataframe(path_csv: str, autoencoder: bool = False, data_algum
 
     return generator, dataframe
 
+def preprocessing_dataset(path_csv: str, autoencoder: bool = False, data_algumentantation:bool = True, input_shape:int=(64,64), batch_size=32):
+    dataframe = pd.read_csv(path_csv)
+    image_paths = dataframe['path_image'].tolist()
+
+    if autoencoder:
+        labels = None
+    else:
+        labels = dataframe['class'].tolist()
+        #print(labels)
+
+    dataset = tf.data.Dataset.from_tensor_slices((image_paths, labels))
+
+    #para cada imagem e label, eu vou preprocessar a imagem, 
+    dataset = dataset.map(lambda x, y : process_image(x, y, input_shape), num_parallel_calls=tf.data.AUTOTUNE)
+
+    if data_algumentantation:
+        dataset = dataset.map(albumentations_wrapper, num_parallel_calls=tf.data.AUTOTUNE)
+
+    dataset = dataset.batch(batch_size)
+    return dataset, dataframe
+
 transform = A.Compose([
             A.RandomRain(
                 drop_length=8, drop_width=1,
@@ -62,21 +124,6 @@ transform = A.Compose([
             A.AdvancedBlur(blur_limit=(7,9), noise_limit=(0.75, 1.25), p=0.15),
             #A.Resize(height=256, width=256)
     ])
-
-#Funções auxiliares ao preprocessamento
-def normalize_image(img):
-    """
-    Retorna a imagem normalizada 
-    """
-    return img / 255.0
-
-def albumentations(img):
-        """
-        Faz a transformação da imagem a partir do transform definido
-        """
-        data = {"image": normalize_image(img)}
-        augmented = transform(**data)  #** para expandir o dicionário
-        return augmented['image']
 
 def data_augmentation_kyoto(kyoto_path):
     """

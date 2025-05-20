@@ -140,7 +140,8 @@ class ClassifierGenerator:
             epochs=epochs, 
             callbacks=[cp_callback, tensorboard_callback], 
             batch_size=batch_size,
-            validation_data=self.validation
+            validation_data=self.validation,
+            verbose=0
         )
 
         if os.path.isdir("Pesos/Pesos_parciais"):
@@ -285,7 +286,7 @@ def train_per_batch(model_name, classifier_base, autoencoder_base, train_csv, va
         classifier.compile()
         classifier.dataset(train=None, validation=validation, test=test)
 
-        train, _ = preprocessing_dataframe(os.path.join(batch_dir, batch), autoencoder=False)
+        train, _ = preprocessing_dataframe(os.path.join(batch_dir, batch), autoencoder=False, data_algumentantation=True)
         classifier.set_train(train)
         print(classifier)
         classifier.train_classifier(epochs=epochs, save=save ,n_batches=batch_size, classifier_base=classifier_base, weights=weights)
@@ -311,6 +312,7 @@ def train_per_batch(model_name, classifier_base, autoencoder_base, train_csv, va
                 f.write(f"{acc}\n")
         
         clear_session() 
+        del autoencoder, encoder, classifier, train
 
     dir_graf = f'Modelos/{model_name}/Plots/Graficos'
     os.makedirs(dir_graf, exist_ok=True)

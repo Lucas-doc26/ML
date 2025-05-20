@@ -28,8 +28,6 @@ from utils.view import *
 os.environ["TF_XLA_FLAGS"] = "--tf_xla_auto_jit=0"
 
 
-
-
 """------------------Gerador de Autoencoders----------------------"""
 
 class AutoencoderGenerator:
@@ -176,7 +174,7 @@ class AutoencoderGenerator:
         self.validation = validation
         self.test = test
 
-    def train_autoencoder(self, save=False ,autoencoder_base='', epochs=10, batch_size=64):
+    def train_autoencoder(self, save=False ,autoencoder_base='', epochs=10, batch_size=4):
         print("Treinando o modelo: ", self.model_name)
         checkpoint_path = os.path.join(path, 'Pesos/Pesos_parciais/weights-improvement-{epoch:02d}-{val_loss:.2f}.weights.h5')
 
@@ -301,7 +299,7 @@ def generate_models(n_models=10, model_name=None, filters_list=[8,16,32,64,128],
         del autoencoder, encoder, decoder
         clear_session()
     
-def train_models(train, validation, test, model_name=None, autoencoder_base=None, n_epochs=10, batch_size=16, input_shape=(64,64,3)):
+def train_models(train, validation, test, model_name=None, autoencoder_base=None, n_epochs=10, batch_size=4, input_shape=(64,64,3)):
     """
     Treina nº modelos de autoencoders.
     """

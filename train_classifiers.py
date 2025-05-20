@@ -20,7 +20,7 @@ create_classifiers(n_models=10, model_name=args.name, autoencoder_base=args.auto
 
 #Preprocessando as bases de treino:
 for i, classifier_base in enumerate(args.classifier_base):
-    train, _ = preprocessing_dataframe(path_csv=f'CSV/{classifier_base}/{classifier_base}_train.csv', autoencoder=False, data_algumentantation=False, input_shape=(64,64))
+    clear_session()
     validation, _ = preprocessing_dataframe(path_csv=f'CSV/{classifier_base}/{classifier_base}_validation.csv', autoencoder=False, data_algumentantation=False, input_shape=(64,64))
     test, test_df = preprocessing_dataframe(path_csv=f'CSV/{classifier_base}/{classifier_base}_test.csv', autoencoder=False, data_algumentantation=False, input_shape=(64,64))
 
@@ -37,3 +37,6 @@ for i, classifier_base in enumerate(args.classifier_base):
                                 save=True,
                                 epochs=args.classifier_epochs[i],
                                 input_shape=(64,64,3))
+    clear_session()
+
+    del validation, test, test_df
