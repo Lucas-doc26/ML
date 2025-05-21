@@ -15,12 +15,5 @@ print("Argumentos:", args)
 set_seeds() #Reprodutibilidade  
 config_gpu() #Usar GPU
 
-#Crio o gerenciador de caminhos para o projeto
-path_manager = PathManager('/home/lucas/PIBIC')
-
-#Crio os csvs para os datasets
-create_datasets_csv(path_manager, '/datasets') #-> fazer uma forma de fazer um shuffle nos csv
-#|-> caso queira colocar os datasets em outra pasta(usar ssd por exemplo), só passar o caminho como argumento
-
 #Gerando modelos de autoencoders -> já estão prontos
 generate_models(n_models=args.n_models, model_name=args.name_model, filters_list=args.filters_list, input=(64,64,3), min_layers=args.min_layers, max_layers=args.max_layers)

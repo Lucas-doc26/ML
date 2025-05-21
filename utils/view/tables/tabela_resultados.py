@@ -121,7 +121,7 @@ def tabela_excel():
 
     doc.save()
 
-tabela_excel()
+#tabela_excel()
 
 path = 'Modelos/Plots'
 
@@ -154,9 +154,10 @@ def retorna_resultados_csv(autoencoder, classificador, modelo):
                 valores = df[coluna].astype(float)
                 media, desvio = desvio_padrao(valores)
                 
+                print(tabela)
                 # pegando as infos pelo caminho do arquivo
-                treino = (tabela.split('/')[8]).split('-')[3] 
-                teste = ((tabela.split('/')[8]).split('-')[4]).split('.')[0]
+                treino = (tabela.split('/')[2]).split('-')[4] 
+                teste = ((tabela.split('/')[2]).split('-')[5]).split('.')[0]
                 
                 print(f'Base de treino {treino}, base de teste {teste}, media dos valores {media}, desvio padrao {desvio}, no batch {batch}')
                 
@@ -170,9 +171,10 @@ def retorna_resultados_csv(autoencoder, classificador, modelo):
     save_dir = f'resultados/{modelo}'
     if not os.path.isdir(save_dir):
         os.makedirs(save_dir)
-    arquivo_csv = os.path.join(save_dir, f'tabela_resultado-{classificador}.csv')
+    arquivo_csv = os.path.join(save_dir, f'tabela_resultado-{autoencoder}-{classificador}.csv')
 
     ordem_teste = ['PUC', 'UFPR04', 'UFPR05'] + [f'camera{i}' for i in range(1, 10)]
+
     dados_ordenados = sorted(dados, key=lambda x: ordem_teste.index(x[1]) if x[1] in ordem_teste else float('inf'))
 
     with open(arquivo_csv, mode='w', newline='') as file:
@@ -185,6 +187,8 @@ def retorna_resultados_csv(autoencoder, classificador, modelo):
             writer.writerow(linha)
 
     print(f'Arquivo {arquivo_csv} criado com sucesso!')
+
+    
 
 def resultados(modelo, autoencoder, classificador=None):
     tabelas = [t for t in os.listdir(path) if f'Tabela' in t and 'Grafico' not in t] 

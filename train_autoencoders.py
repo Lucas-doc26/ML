@@ -4,7 +4,7 @@ import argparse
 parser = argparse.ArgumentParser(description="Descrição do seu script.")
 parser.add_argument('--name_model', type=str, help='Nome do modelo')
 parser.add_argument('--autoencoder_bases', type=str, nargs='+', help='Lista de bases a serem treinadas pelo autoencoder')
-parser.add_argument('--autoencoder_epocas', type=int, nargs='+', help='Lista de épocas de cada um dos modelos')
+parser.add_argument('--autoencoder_epochs', type=int, nargs='+', help='Lista de épocas de cada um dos modelos')
 
 args = parser.parse_args()
 print("Argumentos:", args)
@@ -12,10 +12,6 @@ print("Argumentos:", args)
 #Configurações
 set_seeds() #Reprodutibilidade  
 config_gpu() #Usar GPU
-
-path = PathManager('/home/lucas/PIBIC')
-
-create_datasets_csv(path, '/datasets')
 
 clear_session()
 #Preprocessando as bases de treino:
@@ -25,7 +21,7 @@ for i, autoencoder_base in enumerate(args.autoencoder_bases):
     test, _ = preprocessing_dataframe(path_csv=f'CSV/{autoencoder_base}/{autoencoder_base}_autoencoder_test.csv', autoencoder=True, data_algumentantation=False, input_shape=(64,64))
 
     #Treinando modelos de autoencoder
-    train_models(train, validation, test, model_name=args.name_model, autoencoder_base=autoencoder_base, n_epochs=args.autoencoder_epocas[i], batch_size=2, input_shape=(64,64,3))
+    train_models(train, validation, test, model_name=args.name_model, autoencoder_base=autoencoder_base, n_epochs=args.autoencoder_epochs[i], batch_size=2, input_shape=(64,64,3))
 
     clear_session()
 

@@ -46,7 +46,6 @@ def graphic_accuracy_per_batch( batches: List[int], accuracies: List[float], mod
     
     if save_path is not None:
         save_path = Path(save_path)
-        save_path = save_path / f'Grafico-{model_name}-{autoencoder_base}-{train_base}-{test_base}.png'
         save_path.parent.mkdir(parents=True, exist_ok=True)
         plt.savefig(save_path)
         print(f"Salvando gráfico no caminho: {save_path}")

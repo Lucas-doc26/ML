@@ -202,6 +202,8 @@ class ClassifierGenerator:
         return predict_np, accuracy
     
     def load_model(self, model_path:str, weights_path:str):
+        model_path = os.path.join('/home/lucas/PIBIC', model_path)
+        print(model_path)
         model_loaded = tf.keras.models.load_model(model_path)
         self.model = model_loaded
         self.load_weights(weights_path)
@@ -288,7 +290,7 @@ def train_per_batch(model_name, classifier_base, autoencoder_base, train_csv, va
 
         train, _ = preprocessing_dataframe(os.path.join(batch_dir, batch), autoencoder=False, data_algumentantation=True)
         classifier.set_train(train)
-        print(classifier)
+        #print(classifier)
         classifier.train_classifier(epochs=epochs, save=save ,n_batches=batch_size, classifier_base=classifier_base, weights=weights)
         predicts_np, accuracy = classifier.predict(test_df)
         accuracies.append(accuracy)
@@ -305,7 +307,7 @@ def train_per_batch(model_name, classifier_base, autoencoder_base, train_csv, va
         dir_prec_base = os.path.join(dir_prec, f'Treinado_em_{classifier_base}')
         recreate_folder(dir_prec_base)
 
-        print(f"Saving accuracy for {test_base}")
+        print(f"Salvando a acuracia {test_base}")
         dir_file_path = os.path.join(dir_prec_base, f'precisao-{test_base}.txt')
         with open(dir_file_path, 'w') as f:
             for acc in accuracies:
@@ -336,9 +338,11 @@ def train_all_models_per_batch(model_name, classifier_base, autoencoder_base, tr
     path_models = "Modelos"
     models = os.listdir(path_models)
     models_to_train = []
+    print(models)
     for model in models:
         if os.path.exists(os.path.join(path_models, model)):
             if model_name in model and 'Fusoes' not in model:
+                print(model)
                 model_base = os.path.join(path_models, model, 'Modelo-Base')
 
                 files = os.listdir(model_base)
@@ -370,7 +374,6 @@ def train_all_models_per_batch(model_name, classifier_base, autoencoder_base, tr
         test_base=classifier_base, autoencoder_base=autoencoder_base)
 
 def test_model_per_batch(model_name, test, test_df, classifier_base, weights=True, autoencoder_base='Kyoto'):
-
     if not weights:
         autoencoder_base='Sem-Peso'
 
@@ -385,10 +388,12 @@ def test_model_per_batch(model_name, test, test_df, classifier_base, weights=Tru
         
     accuracies = []
     batches = [64,128,256,512,1024]
-
     structure = f'Modelos/{model_name}/Classificador-{autoencoder_base}/Estrutura/Classificador_{model_name}.keras'
     for batch_size in [64,128,256,512,1024]:
-        dir_peso = f'Modelos/{model_name}/Classificador-{autoencoder_base}/Pesos/Treinado_em_{classifier_base}/Classificador_{model_name}_batches-{batch_size}.weights.h5'
+        dir_peso = f'/home/lucas/PIBIC/Modelos/{model_name}/Classificador-{autoencoder_base}/Pesos/Treinado_em_{classifier_base}/Classificador_{model_name}_batches-{batch_size}.weights.h5' 
+        ## TODO: tem que arrumar essa parte do model name, antes estava sem o Classificador_{model_name}
+
+
         weights = dir_peso
         classifier.load_model(structure, weights)
         predicts_np, accuracy = classifier.predict(test_df)
@@ -414,7 +419,7 @@ def test_model_per_batch(model_name, test, test_df, classifier_base, weights=Tru
     #save as precisões no arquivo
     #print(test_base)
     print(test_base)
-    file_path =  f'Modelos/{model_name}/Classificador-{autoencoder_base}/Precisao/Treinado_em_{classifier_base}', f'precisao-{test_base}.txt'
+    file_path =  f'Modelos/{model_name}/Classificador-{autoencoder_base}/Precisao/Treinado_em_{classifier_base}/precisao-{test_base}.txt'
     with open(file_path, 'w') as f:
         for prec in accuracies:
             f.write(f"{prec}\n")
@@ -433,9 +438,10 @@ def test_all_models_per_batch(model_name, test, test_df, classifier_base, autoen
         if os.path.exists(os.path.join(path_models, model)):
             if model_name in model and 'Fusoes' not in model: #Se name modelo tiver em modelo e fusão não
                 model_base = os.path.join(path_models, model, f'Classificador-{autoencoder_base}') #Modelo_Kyoto-0/Classificador_Modelo
-                print("A estrutura disponível é:" , os.listdir(os.path.join(modelo_base, 'Estrutura')))
-                structure = os.listdir(os.path.join(model_base, 'Estrutura'))[0]
-                models_to_test.append(structure)
+                print("A estrutura disponível é:" , os.listdir(os.path.join(model_base, 'Estrutura')))
+                structure = os.listdir(os.path.join(model_base, 'Estrutura'))
+                if len(structure) > 0:
+                    models_to_test.append(structure[0])
             else:
                 pass
         else:
@@ -443,9 +449,9 @@ def test_all_models_per_batch(model_name, test, test_df, classifier_base, autoen
     
     print(models_to_test)
     for model in models_to_test:
-        name = return_model_name(model)
-        print(f"Testando o modelo: {name}")
-        test_model_per_batch(name, test, test_df, classifier_base, weights=True, autoencoder_base=autoencoder_base)
+        name = return_model_name(model).split('Classificador_')
+        print(f"Testando o modelo: {name[1]}")
+        test_model_per_batch(name[1], test, test_df, classifier_base, weights=True, autoencoder_base=autoencoder_base)
         clear_session()
 
     test_base = return_name_df(test_df)
@@ -457,5 +463,3 @@ def test_all_models_per_batch(model_name, test, test_df, classifier_base, autoen
         test_base=test_base,
         autoencoder_base=autoencoder_base
     )
-
-

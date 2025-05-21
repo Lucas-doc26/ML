@@ -344,3 +344,4 @@ def train_models(train, validation, test, model_name=None, autoencoder_base=None
         del autoencoder
         gc.collect()  
         tf.keras.backend.clear_session() 
+

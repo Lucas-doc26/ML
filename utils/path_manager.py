@@ -1,6 +1,5 @@
 import os
 import shutil
-from pathlib import Path
 
 class PathManager:
     """
@@ -24,7 +23,6 @@ class PathManager:
         try:
             print('Criando pastas...')
             os.makedirs(os.path.join(self.base_path, 'Modelos'), exist_ok=True)
-            os.makedirs(os.path.join(self.base_path, 'Modelos', 'Fusoes'), exist_ok=True)
             os.makedirs(os.path.join(self.base_path, 'Modelos', 'Plots'), exist_ok=True)
             os.makedirs(os.path.join(self.base_path, 'Pesos_parciais'), exist_ok=True)
             os.makedirs(os.path.join(self.base_path, 'resultados'), exist_ok=True)
@@ -45,22 +43,16 @@ class PathManager:
         Me retorna o caminho para o arquivo de previsão
         """
         classifier = f'Classificador-{autoencoder_base}' if autoencoder_base else 'Classificador'
-        batch_suffix = 'batches' if test_base == train_base else 'batchs'
         return os.path.join(
             self.base_path,
-            f'Modelos/{model_name}-{model_index}/{classifier}/Resultados/Treinados_em_{train_base}/{test_base}/{batch_suffix}-{batch_size}.npy'
+            f'Modelos/{model_name}-{model_index}/{classifier}/Resultados/Treinados_em_{train_base}/{test_base}/batches-{batch_size}.npy'
         )
     
-    def get_csv_path(self, base_teste, base_treino):
+    def get_csv_path(self, base_teste):
         """
         Me retorna o caminho para o arquivo CSV
         """
-        if base_teste != base_treino and not 'camera' in base_teste:
-            return f'CSV/{base_teste}/{base_teste}.csv'
-        elif 'camera' in base_teste:
-            return f'CSV/CNR/CNR_{base_teste}.csv'
-        else:
-            return f'CSV/{base_teste}/{base_teste}_Segmentado_Teste.csv'
+        return f'CSV/{base_teste}/{base_teste}_test.csv'
     
     def get_results_path(self, model_name, autoencoder_base, fusion_type):
         """
@@ -124,6 +116,10 @@ def return_name_csv(path):
 
 def verify_path(path_manager, model_name, train_base, autoencoder_base):
     """
-    Verifica se o caminho para o modelo existe
+    Verifica se o caminho para o modelo existe, e cria o arquivo
     """
-    os.mkdir(os.path.join(path_manager.get_base_path(), f'Modelos/Fusoes-{model_name}/Autoencoder-{autoencoder_base}/Treinados_em_{train_base}/Grafico_batchs'))
+    path = os.path.join(
+        path_manager.get_base_path(),
+        f'Modelos/Fusoes-{model_name}/Autoencoder-{autoencoder_base}/Treinados_em_{train_base}/Grafico_batchs'
+    )
+    os.makedirs(path, exist_ok=True)  # cria todos os diretórios necessários

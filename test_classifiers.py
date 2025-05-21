@@ -18,7 +18,7 @@ vote_fusion = VoteFusion(path_manager)
 
 for base in args.test_bases:
     test, test_df = preprocessing_dataframe(path_csv=f'CSV/{base}/{base}_test.csv', autoencoder=False, data_algumentantation=False, input_shape=(64,64))
-
+    print(args.name_model)
     test_all_models_per_batch(model_name=args.name_model, 
                             test=test, test_df=test_df, 
                             classifier_base=args.classifier_base, 
