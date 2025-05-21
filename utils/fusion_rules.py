@@ -65,7 +65,7 @@ def fusion_process(model_name, train_bases, test_bases, fusion_rule, autoencoder
             
             for batch_size in batches:
                 fusion_rule_result = fusion_rule.apply_fusion(model_name, batch_size, number_of_models, train_base, test_base, autoencoder_base)
-                df = pd.read_csv(path_manager.get_csv_path(test_base))
+                df = pd.read_csv(f'CSV/{test_base}/{test_base}.csv')
                 df = map_classes_to_binary(df['class']) # Converte a classe para 0 e 1
                 
                 acc = accuracy_score(df, fusion_rule_result)
