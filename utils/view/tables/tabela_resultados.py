@@ -155,6 +155,7 @@ def retorna_resultados_csv(autoencoder, classificador, modelo):
                 media, desvio = desvio_padrao(valores)
                 
                 print(tabela)
+                #Modelos/Plots/Tabela-Comparacao-Modelo_Kyoto-Kyoto-UFPR05-UFPR05.csv
                 # pegando as infos pelo caminho do arquivo
                 treino = (tabela.split('/')[2]).split('-')[4] 
                 teste = ((tabela.split('/')[2]).split('-')[5]).split('.')[0]

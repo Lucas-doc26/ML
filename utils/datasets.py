@@ -459,11 +459,7 @@ def create_datasets_csv(path_manager:PathManager=None, path_datasets_downloaded:
     """
     Função para criar os csvs para os datasets
     """
-    csv_dir = os.path.join(path_manager.get_base_path(), 'CSV')
-    print(csv_dir)
-    if len(os.listdir(csv_dir)) >= 15:
-        print("Todos os datasets já foram criados!")
-        return
+    #TODO: verificação se os datasets já existem
 
     if not os.path.isdir(path_datasets_downloaded) or path_datasets_downloaded is None:
         create_folder(path_manager, 'datasets')

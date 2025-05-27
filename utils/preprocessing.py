@@ -73,6 +73,7 @@ def preprocessing_dataframe(path_csv: str, autoencoder: bool = False, data_algum
 
     #Embaralho o dataframe aqui e não no shuffle, para garantir o mesmo csv sempre 
     #dataframe = dataframe.sample(frac=1).reset_index(drop=True)
+    
     class_mode = 'input' if autoencoder else 'sparse'
 
     generator = datagen.flow_from_dataframe(

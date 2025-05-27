@@ -21,7 +21,7 @@ def plot_images_from_csv(path_csv: Path, num_images_per_column: int = 3, figsize
 
     # Carregar e embaralhar o DataFrame
     df = pd.read_csv(path_csv)
-    df = df.sample(frac=1).reset_index(drop=True)  # embaralhar linhas
+    #df = df.sample(frac=1).reset_index(drop=True)  # embaralhar linhas
 
     # Criar a grade de subplots
     fig, axs = plt.subplots(

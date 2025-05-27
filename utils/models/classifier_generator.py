@@ -5,6 +5,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.utils import plot_model 
 from sklearn.metrics import accuracy_score
 from utils.models.autoencoder_generator import AutoencoderGenerator
 from utils.gpu import clear_session
@@ -38,6 +39,11 @@ class ClassifierGenerator:
             raise ValueError("O name do modelo não foi definido.")
         else:
             self.verify_dirs()
+
+        try:
+            keras.utils.plot_model(self.model, to_file=f'Modelos/{self.model_name}/Plost/classifier.png', show_shapes=True, show_trainable=True)
+        except:
+            pass
 
     def build_model(self, encoder):
         """Build the model architecture"""
@@ -87,6 +93,7 @@ class ClassifierGenerator:
         else:
             path_save_model = os.path.join(save_dir, f'Modelos/{self.model_name}/Classificador-{self.autoencoder_base}/Estrutura/Classificador_{self.model_name}.keras')
         self.model.save(path_save_model)
+        
     
     def set_name(self, name):
         self.model_name = name
