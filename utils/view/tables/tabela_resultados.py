@@ -164,7 +164,7 @@ def retorna_resultados_csv(autoencoder, classificador, modelo):
                 
                 # add os dados na lista
                 txt = "{m:.3f}"
-                dados.append([treino, teste, txt.format(m=media), txt.format(d=desvio), batch])
+                dados.append([treino, teste, txt.format(m=media), txt.format(m=desvio), batch])
             else:
                 print(f"Aviso: Coluna {coluna} não encontrada em {tabela}")
 
@@ -221,7 +221,7 @@ def resultados(modelo, autoencoder, classificador=None):
                 
                 # add os dados na lista
                 txt = "{m:.3f}"
-                dados.append([autoencoder, treino, teste, txt.format(m=media), txt.format(d=desvio), batch])
+                dados.append([autoencoder, treino, teste, txt.format(m=media), txt.format(m=desvio), batch])
             else:
                 print(f"Aviso: Coluna {coluna} não encontrada em {tabela}")
 

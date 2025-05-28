@@ -48,11 +48,15 @@ class PathManager:
             f'Modelos/{model_name}-{model_index}/{classifier}/Resultados/Treinados_em_{train_base}/{test_base}/batches-{batch_size}.npy'
         )
     
-    def get_csv_path(self, base_teste):
+    def get_csv_path(self, base, type='_test'):
         """
         Me retorna o caminho para o arquivo CSV
         """
-        return f'CSV/{base_teste}/{base_teste}_test.csv'
+        if type is not None:
+            path = f'CSV/{base}/{base}{type}.csv'
+        else:
+            path = f'CSV/{base}/{base}.csv'
+        return path
     
     def get_results_path(self, model_name, autoencoder_base, fusion_type):
         """

@@ -3,95 +3,131 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score
 from utils.view import graphic_accuracy_per_batch
-
+from utils.path_manager import PathManager
 path = '/home/lucas/PIBIC'
 
-def verifica_dir(nome_modelo, nome_base, nome_autoencoder):
-    if not os.path.isdir(os.path.join(path, f'Modelos/Fusoes-{nome_modelo}')):
-        os.mkdir(os.path.join(path,f'Modelos/Fusoes-{nome_modelo}'))
-    if not os.path.isdir(os.path.join(path, f'Modelos/Fusoes-{nome_modelo}/Autoencoder-{nome_autoencoder}')):
-        os.mkdir(os.path.join(path,f'Modelos/Fusoes-{nome_modelo}/Autoencoder-{nome_autoencoder}'))
-    if not os.path.isdir(os.path.join(path,f'Modelos/Fusoes-{nome_modelo}/Autoencoder-{nome_autoencoder}/Treinados_em_{nome_base}')):
-        os.mkdir(os.path.join(path,f'Modelos/Fusoes-{nome_modelo}/Autoencoder-{nome_autoencoder}/Treinados_em_{nome_base}'))
-    if not os.path.isdir(os.path.join(path,f'Modelos/Fusoes-{nome_modelo}/Autoencoder-{nome_autoencoder}/Treinados_em_{nome_base}/Matriz_confusao')):
-        os.mkdir(os.path.join(path,f'Modelos/Fusoes-{nome_modelo}/Autoencoder-{nome_autoencoder}/Treinados_em_{nome_base}/Matriz_confusao'))
-    if not os.path.isdir(os.path.join(path,f'Modelos/Fusoes-{nome_modelo}/Autoencoder-{nome_autoencoder}/Treinados_em_{nome_base}/Grafico_batches')):
-        os.mkdir(os.path.join(path, f'Modelos/Fusoes-{nome_modelo}/Autoencoder-{nome_autoencoder}/Treinados_em_{nome_base}/Grafico_batches'))
+class FusionRule:
+    def __init__(self, path_manager:PathManager):
+        self.path_manager = path_manager
+
+    def apply_fusion(self, model_name, batch_size, autoencoder_base, train_base, test_base):
+        #me retorna o npy
+        base = np.load(self.path_manager.get_prediction_path(model_name=model_name, batch_size=batch_size, model_index=0, train_base=train_base, test_base=test_base, autoencoder_base=autoencoder_base))
+        
+        if isinstance(self, SumFusion) or isinstance(self, VoteFusion):
+            result = np.zeros_like(base)
+        else:
+            result = np.ones_like(base) 
+
+        for i in range(10):
+            npy = self.path_manager.get_prediction_path(model_name=model_name, batch_size=batch_size, model_index=i, train_base=train_base, test_base=test_base, autoencoder_base=autoencoder_base)
+            array = np.load(npy)
+
+            #Faz a fusão
+            result = self._combine_predictions(result, array)
+            del array
+
+        result = np.argmax(result, axis=1)
+        return result
+
+    def run(self, model_name, autoencoder_base, train_bases, test_bases):
+        path = self.path_manager.get_base_path()
+        batches = [64, 128, 256, 512, 1024]
+        results_csv = []
+        fusion_name = self.__class__.__name__
+
+        for train in train_bases:
+            for test in test_bases:
+                results = []
+                for batch in batches:
+                    result_fusion = self.apply_fusion(
+                        model_name=model_name, 
+                        batch_size=batch, 
+                        autoencoder_base=autoencoder_base, 
+                        train_base=train, 
+                        test_base=test
+                    ) 
+
+                    if test == train:
+                        path_csv = self.path_manager.get_csv_path(base=test, type='_test')
+                    else:
+                        path_csv = self.path_manager.get_csv_path(base=test, type=None)
+                    
+                    df = pd.read_csv(path_csv)
+                    y_true = mapear(df['class'])  # Confirma que mapear está definida!
+
+                    acc = accuracy_score(y_true, result_fusion)
+
+                    results.append(acc)
+                    results_csv.append({
+                        'Base do Autoencoder': autoencoder_base,
+                        'Base de Treino': train,
+                        'Base de Teste': test,
+                        'Acuracia': format(acc, '.3f'),
+                        'Batch': int(batch)
+                    })
+
+                graphic_accuracy_per_batch(
+                    batches=batches, 
+                    accuracies=results, 
+                    model_name=f'Soma entre os diferentes {model_name}',
+                    save_path=os.path.join(
+                        path, 
+                        f'Modelos/Fusoes-{model_name}/Autoencoder-{autoencoder_base}/Treinados_em_{train}/Grafico_batches_{fusion_name}-{autoencoder_base}-{train}-{test}.png'
+                    ), 
+                    autoencoder_base=autoencoder_base,
+                    train_base=train, 
+                    test_base=test
+                )
+
+        df_results = pd.DataFrame(results_csv)  
+        path_table = os.path.join(
+            path,
+            f'resultados/{model_name}/tabela_{fusion_name}-{autoencoder_base}.csv'
+        )
+        df_results.to_csv(path_table, index=False)
+
+    def _combine_predictions(self, result, array):
+        raise NotImplementedError("A implementação deve ser feita na classe filha")
+    
+class SumFusion(FusionRule):
+    def _combine_predictions(self, result, array):
+        return result + array
+
+class MultFusion(FusionRule):
+    def _combine_predictions(self, result, array):
+        return result * array
+
+class VoteFusion(FusionRule):
+    def _combine_predictions(self, result, array):
+        array_result = np.zeros_like(array)
+        for j in range(len(array)):
+            value = array[j][0]
+            if value > 0.5:
+                array_result[j] = [1, 0]  # Voto para classe 0
+            else:
+                array_result[j] = [0, 1]  # Voto para classe 1
+        return result + array_result
 
 def mapear(classes):
     return np.array([1 if classe == 1 else 0 for classe in classes])
 
-def soma_previsoes(nome_modelo, batch_size, n_modelos, base_de_treino, base_de_teste, nome_autoencoder=None):
-    """
-    Retorna um array com todos os resultados de todas as classes conforme o batch passado
-    """
-    if nome_autoencoder != None:
-        classificador = f'Classificador-{nome_autoencoder}'
-    else:
-        classificador = 'Classificador'
+path = PathManager('/home/lucas/PIBIC')
+sum = SumFusion(path)
+mult = MultFusion(path)
+voto = VoteFusion(path)
 
-    dir_base = f'Modelos/{nome_modelo}-0/{classificador}/Resultados/Treinados_em_{base_de_treino}/{base_de_teste}/batches-{batch_size}.npy' 
+sum.run(model_name='Modelo_Kyoto',
+        autoencoder_base='CNR', 
+        train_bases=['PUC', 'UFPR04', 'UFPR05'], 
+        test_bases=['PUC', 'UFPR04', 'UFPR05'])
 
-    base = np.load(os.path.join(path, 
-        dir_base)
-    )
+mult.run(model_name='Modelo_Kyoto',
+        autoencoder_base='CNR', 
+        train_bases=['PUC', 'UFPR04', 'UFPR05'], 
+        test_bases=['PUC', 'UFPR04', 'UFPR05'])
 
-    resultado = np.zeros_like(base)
-    for i in range(n_modelos):
-        if base_de_teste == base_de_treino:
-            npy = f'Modelos/{nome_modelo}-{i}/{classificador}/Resultados/Treinados_em_{base_de_treino}/{base_de_teste}/batches-{batch_size}.npy' 
-        else:
-            npy = f'Modelos/{nome_modelo}-{i}/{classificador}/Resultados/Treinados_em_{base_de_treino}/{base_de_teste}/batches-{batch_size}.npy' 
-        caminho = os.path.join(path,npy)
-        print(caminho)
-
-        array = np.load(caminho)
-        resultado = resultado + array
-        #print(resultado)
-    resultado = np.argmax(resultado, axis=1)
-    return resultado 
-
-def soma(nome_modelo, bases_de_treino, nome_autoencoder=None, n_modelos=10):
-    batches = [64,128,256,512,1024]
-    resultados_csv = []
-    for base_treino in bases_de_treino:
-        for base_teste in bases_teste:
-            verifica_dir(nome_modelo, base_treino, nome_autoencoder)
-            resultados = []
-            for batch_size in batches:  
-                resultado = soma_previsoes(nome_modelo, batch_size, n_modelos, base_treino, base_teste, nome_autoencoder)
-                if base_teste != base_treino and not 'camera' in base_teste:
-                    df = pd.read_csv(f'CSV/{base_teste}/{base_teste}.csv')
-                else:
-                    if 'camera' in base_teste:
-                        df = pd.read_csv(f'CSV/CNR/CNR_{base_teste}.csv')
-                    else:
-                        df = pd.read_csv(f'CSV/{base_teste}/{base_teste}_test.csv')
-                df = mapear(df['class'])
-
-                #plot_confusion_matrix(df, resultado, title=f'Fusão {nome_modelo} - Batch: {batch_size}',
-                #save_path=os.path.join(path, f'Modelos/Fusoes-{nome_modelo}/Treinados_em_{base_treino}/Matriz_confusao'))
-                acc = accuracy_score(df, resultado)
-                resultados.append(acc)
-
-                resultados_csv.append({
-                    'Base do Autoencoder':nome_autoencoder,
-                    'Base de Treino':base_treino,
-                    'Base de Teste':base_teste,
-                    'Acuracia':format(acc, '.3f'),
-                    'Batch':int(batch_size)
-                })
-
-            graphic_accuracy_per_batch(batches, resultados, model_name=f'Soma entre os diferentes {nome_modelo}',
-                save_path=os.path.join(path, f'Modelos/Fusoes-{nome_modelo}/Autoencoder-{nome_autoencoder}/Treinados_em_{base_treino}/Grafico_batches'), 
-                autoencoder_base=nome_autoencoder,
-                train_base=base_treino, test_base=base_teste)
-            
-    df_resultados = pd.DataFrame(resultados_csv)
-    caminho_csv = f'resultados/{nome_modelo}/tabela_resultado-Sum-{nome_autoencoder}.csv'
-    df_resultados.to_csv(caminho_csv, index=False)
-
-
-base_treino = ['PUC']
-bases_teste = ['PUC', 'UFPR04', 'UFPR05']
-soma("Modelo_Kyoto", base_treino, 'CNR', 10 )
+voto.run(model_name='Modelo_Kyoto',
+        autoencoder_base='CNR', 
+        train_bases=['PUC', 'UFPR04', 'UFPR05'], 
+        test_bases=['PUC', 'UFPR04', 'UFPR05'])

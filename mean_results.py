@@ -9,6 +9,8 @@ parser.add_argument('--classifiers', type=str, nargs='+', help='Lista de épocas
 args = parser.parse_args()
 print("Argumentos:", args)
 
-for classifier in args.classifiers:
-    retorna_resultados_csv(autoencoder=args.autoencoder_base, classificador=classifier, modelo=args.name_model)
+resultados('Modelo_Kyoto', 'CNR')
+
+"""for classifier in args.classifiers:
+    retorna_resultados_csv(autoencoder=args.autoencoder_base, classificador=classifier, modelo=args.name_model)"""
 
