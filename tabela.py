@@ -415,6 +415,222 @@ def tabela_excel():
         valores = extrair_valores(df4, 'Kyoto', treino, teste, 'Acuracia')  # retorna array
         preencher_planilha_fusoes(sheet, linha, 4, valores)
 
+    del df1, df2, df3, df4, sheet, Kyoto, Kyoto_sum, Kyoto_mult, Kyoto_voto
+
+    #Tabela PKLot
+    sheet = doc.sheets[1]
+
+    df1 = pd.read_csv('resultados/Modelo_Kyoto/tabela_resultado-Kyoto.csv')
+    df2 = pd.read_csv('resultados/Modelo_Kyoto/tabela_SumFusion-Kyoto.csv')
+    df3 = pd.read_csv('resultados/Modelo_Kyoto/tabela_MultFusion-Kyoto.csv')
+    df4 = pd.read_csv('resultados/Modelo_Kyoto/tabela_VoteFusion-Kyoto.csv') 
+
+    pklot = [
+        #Para camera1
+        ('camera1', 'camera1', 8), ('camera2', 'camera1', 9), ('camera3', 'camera1', 10),
+        ('camera4', 'camera1', 11), ('camera5', 'camera1', 12), ('camera6', 'camera1', 13),
+        ('camera7', 'camera1', 14), ('camera8', 'camera1', 15), ('camera9', 'camera1', 16),
+
+        #Para camera2
+        ('camera1', 'camera2', 55), ('camera2', 'camera2', 56), ('camera3', 'camera2', 57),
+        ('camera4', 'camera2', 58), ('camera5', 'camera2', 59), ('camera6', 'camera2', 60),
+        ('camera7', 'camera2', 61), ('camera8', 'camera2', 62), ('camera9', 'camera2', 63),
+
+        #Para camera3
+        ('camera1', 'camera3', 102), ('camera2', 'camera3', 103), ('camera3', 'camera3', 104),
+        ('camera4', 'camera3', 105), ('camera5', 'camera3', 106), ('camera6', 'camera3', 107),
+        ('camera7', 'camera3', 108), ('camera8', 'camera3', 109), ('camera9', 'camera3', 110),
+
+        #Para camera4
+        ('camera1', 'camera4', 149), ('camera2', 'camera4', 150), ('camera3', 'camera4', 151),
+        ('camera4', 'camera4', 152), ('camera5', 'camera4', 153), ('camera6', 'camera4', 154),
+        ('camera7', 'camera4', 155), ('camera8', 'camera4', 156), ('camera9', 'camera4', 157),
+        
+        #Para camera5
+        ('camera1', 'camera5', 196), ('camera2', 'camera5', 197), ('camera3', 'camera5', 198),
+        ('camera4', 'camera5', 199), ('camera5', 'camera5', 200), ('camera6', 'camera5', 201),
+        ('camera7', 'camera5', 202), ('camera8', 'camera5', 203), ('camera9', 'camera5', 204),
+
+        #Para camera6
+        ('camera1', 'camera6', 243), ('camera2', 'camera6', 244), ('camera3', 'camera6', 245),
+        ('camera4', 'camera6', 246), ('camera5', 'camera6', 247), ('camera6', 'camera6', 248),
+        ('camera7', 'camera6', 249), ('camera8', 'camera6', 250), ('camera9', 'camera6', 251),
+
+        #Para camera7   
+        ('camera1', 'camera7', 290), ('camera2', 'camera7', 291), ('camera3', 'camera7', 292),
+        ('camera4', 'camera7', 293), ('camera5', 'camera7', 294), ('camera6', 'camera7', 295),
+        ('camera7', 'camera7', 296), ('camera8', 'camera7', 297), ('camera9', 'camera7', 298),
+
+        #Para camera8
+        ('camera1', 'camera8', 337), ('camera2', 'camera8', 338), ('camera3', 'camera8', 339),  
+        ('camera4', 'camera8', 340), ('camera5', 'camera8', 341), ('camera6', 'camera8', 342),
+        ('camera7', 'camera8', 343), ('camera8', 'camera8', 344), ('camera9', 'camera8', 345),
+
+        #Para camera9
+        ('camera1', 'camera9', 384), ('camera2', 'camera9', 385), ('camera3', 'camera9', 386),
+        ('camera4', 'camera9', 387), ('camera5', 'camera9', 388), ('camera6', 'camera9', 389),
+        ('camera7', 'camera9', 390), ('camera8', 'camera9', 391), ('camera9', 'camera9', 392),        
+    ]
+
+    pklot_sum = [
+        #Para camera1
+        ('camera1', 'camera1', 18), ('camera2', 'camera1', 19), ('camera3', 'camera1', 20),
+        ('camera4', 'camera1', 21), ('camera5', 'camera1', 22), ('camera6', 'camera1', 23),
+        ('camera7', 'camera1', 24), ('camera8', 'camera1', 25), ('camera9', 'camera1', 26),
+
+        #Para camera2
+        ('camera1', 'camera2', 65), ('camera2', 'camera2', 66), ('camera3', 'camera2', 67),
+        ('camera4', 'camera2', 68), ('camera5', 'camera2', 69), ('camera6', 'camera2', 70),
+        ('camera7', 'camera2', 71), ('camera8', 'camera2', 72), ('camera9', 'camera2', 73),
+
+        #Para camera3
+        ('camera1', 'camera3', 112), ('camera2', 'camera3', 113), ('camera3', 'camera3', 114),
+        ('camera4', 'camera3', 115), ('camera5', 'camera3', 116), ('camera6', 'camera3', 117),
+        ('camera7', 'camera3', 118), ('camera8', 'camera3', 119), ('camera9', 'camera3', 120),
+
+        #Para camera4
+        ('camera1', 'camera4', 159), ('camera2', 'camera4', 160), ('camera3', 'camera4', 161),
+        ('camera4', 'camera4', 162), ('camera5', 'camera4', 163), ('camera6', 'camera4', 164),
+        ('camera7', 'camera4', 165), ('camera8', 'camera4', 166), ('camera9', 'camera4', 167),
+        
+        #Para camera5
+        ('camera1', 'camera5', 206), ('camera2', 'camera5', 207), ('camera3', 'camera5', 208),
+        ('camera4', 'camera5', 209), ('camera5', 'camera5', 210), ('camera6', 'camera5', 211),
+        ('camera7', 'camera5', 212), ('camera8', 'camera5', 213), ('camera9', 'camera5', 214),
+
+        #Para camera6
+        ('camera1', 'camera6', 253), ('camera2', 'camera6', 254), ('camera3', 'camera6', 255),
+        ('camera4', 'camera6', 256), ('camera5', 'camera6', 257), ('camera6', 'camera6', 258),
+        ('camera7', 'camera6', 259), ('camera8', 'camera6', 260), ('camera9', 'camera6', 261),
+
+        #Para camera7   
+        ('camera1', 'camera7', 300), ('camera2', 'camera7', 301), ('camera3', 'camera7', 302),
+        ('camera4', 'camera7', 303), ('camera5', 'camera7', 304), ('camera6', 'camera7', 305),
+        ('camera7', 'camera7', 306), ('camera8', 'camera7', 307), ('camera9', 'camera7', 308),
+
+        #Para camera8
+        ('camera1', 'camera8', 347), ('camera2', 'camera8', 348), ('camera3', 'camera8', 349),  
+        ('camera4', 'camera8', 350), ('camera5', 'camera8', 351), ('camera6', 'camera8', 352),
+        ('camera7', 'camera8', 353), ('camera8', 'camera8', 354), ('camera9', 'camera8', 355),
+
+        #Para camera9
+        ('camera1', 'camera9', 394), ('camera2', 'camera9', 395), ('camera3', 'camera9', 396),
+        ('camera4', 'camera9', 397), ('camera5', 'camera9', 398), ('camera6', 'camera9', 399),
+        ('camera7', 'camera9', 400), ('camera8', 'camera9', 401), ('camera9', 'camera9', 402),        
+    ]
+
+    pklot_mult = [
+        #Para camera1
+        ('camera1', 'camera1', 28), ('camera2', 'camera1', 29), ('camera3', 'camera1', 30),
+        ('camera4', 'camera1', 31), ('camera5', 'camera1', 32), ('camera6', 'camera1', 33),
+        ('camera7', 'camera1', 34), ('camera8', 'camera1', 35), ('camera9', 'camera1', 36),
+
+        #Para camera2
+        ('camera1', 'camera2', 75), ('camera2', 'camera2', 76), ('camera3', 'camera2', 77),
+        ('camera4', 'camera2', 78), ('camera5', 'camera2', 79), ('camera6', 'camera2', 80),
+        ('camera7', 'camera2', 81), ('camera8', 'camera2', 82), ('camera9', 'camera2', 83),
+
+        #Para camera3
+        ('camera1', 'camera3', 122), ('camera2', 'camera3', 123), ('camera3', 'camera3', 124),
+        ('camera4', 'camera3', 125), ('camera5', 'camera3', 126), ('camera6', 'camera3', 127),
+        ('camera7', 'camera3', 128), ('camera8', 'camera3', 129), ('camera9', 'camera3', 130),
+
+        #Para camera4
+        ('camera1', 'camera4', 169), ('camera2', 'camera4', 170), ('camera3', 'camera4', 171),
+        ('camera4', 'camera4', 172), ('camera5', 'camera4', 173), ('camera6', 'camera4', 174),
+        ('camera7', 'camera4', 175), ('camera8', 'camera4', 176), ('camera9', 'camera4', 177),
+        
+        #Para camera5
+        ('camera1', 'camera5', 216), ('camera2', 'camera5', 217), ('camera3', 'camera5', 218),
+        ('camera4', 'camera5', 219), ('camera5', 'camera5', 220), ('camera6', 'camera5', 221),
+        ('camera7', 'camera5', 222), ('camera8', 'camera5', 223), ('camera9', 'camera5', 224),
+
+        #Para camera6
+        ('camera1', 'camera6', 263), ('camera2', 'camera6', 264), ('camera3', 'camera6', 265),
+        ('camera4', 'camera6', 266), ('camera5', 'camera6', 267), ('camera6', 'camera6', 268),
+        ('camera7', 'camera6', 269), ('camera8', 'camera6', 270), ('camera9', 'camera6', 271),
+
+        #Para camera7   
+        ('camera1', 'camera7', 310), ('camera2', 'camera7', 311), ('camera3', 'camera7', 312),
+        ('camera4', 'camera7', 313), ('camera5', 'camera7', 314), ('camera6', 'camera7', 315),
+        ('camera7', 'camera7', 316), ('camera8', 'camera7', 317), ('camera9', 'camera7', 318),
+
+        #Para camera8
+        ('camera1', 'camera8', 357), ('camera2', 'camera8', 358), ('camera3', 'camera8', 359),  
+        ('camera4', 'camera8', 360), ('camera5', 'camera8', 361), ('camera6', 'camera8', 362),
+        ('camera7', 'camera8', 363), ('camera8', 'camera8', 364), ('camera9', 'camera8', 365),
+
+        #Para camera9
+        ('camera1', 'camera9', 404), ('camera2', 'camera9', 405), ('camera3', 'camera9', 406),
+        ('camera4', 'camera9', 407), ('camera5', 'camera9', 408), ('camera6', 'camera9', 409),
+        ('camera7', 'camera9', 410), ('camera8', 'camera9', 411), ('camera9', 'camera9', 412),        
+    ]
+
+    pklot_voto = [
+        #Para camera1
+        ('camera1', 'camera1', 38), ('camera2', 'camera1', 39), ('camera3', 'camera1', 40),
+        ('camera4', 'camera1', 41), ('camera5', 'camera1', 42), ('camera6', 'camera1', 43),
+        ('camera7', 'camera1', 44), ('camera8', 'camera1', 45), ('camera9', 'camera1', 46),
+
+        #Para camera2
+        ('camera1', 'camera2', 85), ('camera2', 'camera2', 86), ('camera3', 'camera2', 87),
+        ('camera4', 'camera2', 88), ('camera5', 'camera2', 89), ('camera6', 'camera2', 90),
+        ('camera7', 'camera2', 91), ('camera8', 'camera2', 92), ('camera9', 'camera2', 93),
+
+        #Para camera3
+        ('camera1', 'camera3', 132), ('camera2', 'camera3', 133), ('camera3', 'camera3', 134),
+        ('camera4', 'camera3', 135), ('camera5', 'camera3', 136), ('camera6', 'camera3', 137),
+        ('camera7', 'camera3', 138), ('camera8', 'camera3', 139), ('camera9', 'camera3', 140),
+
+        #Para camera4
+        ('camera1', 'camera4', 179), ('camera2', 'camera4', 180), ('camera3', 'camera4', 181),
+        ('camera4', 'camera4', 182), ('camera5', 'camera4', 183), ('camera6', 'camera4', 184),
+        ('camera7', 'camera4', 185), ('camera8', 'camera4', 186), ('camera9', 'camera4', 187),
+        
+        #Para camera5
+        ('camera1', 'camera5', 226), ('camera2', 'camera5', 227), ('camera3', 'camera5', 228),
+        ('camera4', 'camera5', 229), ('camera5', 'camera5', 230), ('camera6', 'camera5', 231),
+        ('camera7', 'camera5', 232), ('camera8', 'camera5', 233), ('camera9', 'camera5', 234),
+
+        #Para camera6
+        ('camera1', 'camera6', 273), ('camera2', 'camera6', 274), ('camera3', 'camera6', 275),
+        ('camera4', 'camera6', 276), ('camera5', 'camera6', 277), ('camera6', 'camera6', 278),
+        ('camera7', 'camera6', 279), ('camera8', 'camera6', 280), ('camera9', 'camera6', 281),
+
+        #Para camera7   
+        ('camera1', 'camera7', 320), ('camera2', 'camera7', 321), ('camera3', 'camera7', 322),
+        ('camera4', 'camera7', 323), ('camera5', 'camera7', 324), ('camera6', 'camera7', 325),
+        ('camera7', 'camera7', 326), ('camera8', 'camera7', 327), ('camera9', 'camera7', 328),
+
+        #Para camera8
+        ('camera1', 'camera8', 367), ('camera2', 'camera8', 368), ('camera3', 'camera8', 369),  
+        ('camera4', 'camera8', 370), ('camera5', 'camera8', 371), ('camera6', 'camera8', 372),
+        ('camera7', 'camera8', 373), ('camera8', 'camera8', 374), ('camera9', 'camera8', 375),
+
+        #Para camera9
+        ('camera1', 'camera9', 414), ('camera2', 'camera9', 415), ('camera3', 'camera9', 416),
+        ('camera4', 'camera9', 417), ('camera5', 'camera9', 418), ('camera6', 'camera9', 419),
+        ('camera7', 'camera9', 420), ('camera8', 'camera9', 421), ('camera9', 'camera9', 422),        
+    ]
+
+    for treino, teste, linha in pklot:
+        valores = extrair_media_desvio(df1, 'PKLot', treino, teste)
+        preencher_planilha_media_desvio(sheet, linha, 4, valores)
+
+    for treino, teste, linha in pklot_sum:
+        valores = extrair_valores(df2, 'PKLot', treino, teste, 'Acuracia')  # retorna array
+        preencher_planilha_fusoes(sheet, linha, 4, valores)
+
+    for treino, teste, linha in pklot_mult:
+        valores = extrair_valores(df3, 'PKLot', treino, teste, 'Acuracia')  # retorna array
+        preencher_planilha_fusoes(sheet, linha, 4, valores)
+    
+    for treino, teste, linha in pklot_voto:
+        valores = extrair_valores(df4, 'PKLot', treino, teste, 'Acuracia')  # retorna array
+        preencher_planilha_fusoes(sheet, linha, 4, valores)
+
+    del df1, df2, df3, df4, sheet, pklot, pklot_sum, pklot_mult, pklot_voto
+
     #Tabela CNR
     sheet = doc.sheets[2]
 
