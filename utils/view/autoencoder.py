@@ -23,9 +23,9 @@ def plot_autoencoder_quality(x_test:np.ndarray, Autoencoder:Model, width:int=64,
         plt.subplot(2, 8, i + 8 + 1)
         plt.imshow(pred_img)
 
-        ssim = float(calculete_ssim(x_test[i], pred[0]))
-        mse = float(calculete_mse(x_test[i], pred[0]))
-        psnr = float(calculete_psnr(x_test[i], pred[0]))
+        ssim = float(calculate_ssim(x_test[i], pred[0]))
+        mse = float(calculate_mse(x_test[i], pred[0]))
+        psnr = float(calculate_psnr(x_test[i], pred[0]))
 
         del pred_img, pred
         plt.title(f"SSIM: {ssim:.2f}\nMSE: {mse:.2f}\nPsnr: {psnr:.2f}")
@@ -36,9 +36,9 @@ def plot_autoencoder_quality(x_test:np.ndarray, Autoencoder:Model, width:int=64,
     evaluations = []
     for i in range(len(x_test)):
         pred = Autoencoder.predict(x_test[i].reshape((1,width, height,3)))
-        ssim = float(calculete_ssim(x_test[i], pred[0]))
-        mse = float(calculete_mse(x_test[i], pred[0]))
-        psnr = float(calculete_psnr(x_test[i], pred[0]))
+        ssim = float(calculate_ssim(x_test[i], pred[0]))
+        mse = float(calculate_mse(x_test[i], pred[0]))
+        psnr = float(calculate_psnr(x_test[i], pred[0]))
         evaluations.append([ssim, mse, psnr])
 
     df_evaluations = pd.DataFrame(evaluations, columns=["SSIM", "MSE", "PSNR"])
@@ -89,7 +89,7 @@ def plot_vae_quality(x_test:np.ndarray, Autoencoder:Model, width:int=64, height:
         plt.subplot(2, 8, i + 8 + 1)
         plt.imshow(pred_img)
 
-        ssim = float(calculete_ssim(x_test[i], pred))
+        ssim = float(calculate_ssim(x_test[i], pred))
         evaluations.append(ssim)
 
         del pred_img, pred

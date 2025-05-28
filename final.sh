@@ -13,6 +13,9 @@ NAME_MODEL="Modelo_Kyoto"
 # Organizar datasets
 python3 datasets.py
 
+#Gera os modelos 
+python3 generate_autoencoders.py
+
 # Treino autoencoders
 for AE in "${AUTOENCODERS[@]}"; do
     EPOCHS=50
@@ -68,5 +71,5 @@ for AE in "${AUTOENCODERS[@]}"; do
         CLASSIFIERS=("${CLASSIFIERS_PKLOT[@]}")
     fi
 
-    python3 mean_results.py --name_model "$NAME_MODEL" --autoencoder_base "$AE" --classifiers "${CLASSIFIERS[@]}"
+    python3 mean_results.py --name_model "$NAME_MODEL" --autoencoder_base "$AE"
 done

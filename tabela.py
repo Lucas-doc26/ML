@@ -420,10 +420,10 @@ def tabela_excel():
     #Tabela PKLot
     sheet = doc.sheets[1]
 
-    df1 = pd.read_csv('resultados/Modelo_Kyoto/tabela_resultado-Kyoto.csv')
-    df2 = pd.read_csv('resultados/Modelo_Kyoto/tabela_SumFusion-Kyoto.csv')
-    df3 = pd.read_csv('resultados/Modelo_Kyoto/tabela_MultFusion-Kyoto.csv')
-    df4 = pd.read_csv('resultados/Modelo_Kyoto/tabela_VoteFusion-Kyoto.csv') 
+    df1 = pd.read_csv('resultados/Modelo_Kyoto/tabela_resultado-PKLot.csv')
+    df2 = pd.read_csv('resultados/Modelo_Kyoto/tabela_SumFusion-PKLot.csv')
+    df3 = pd.read_csv('resultados/Modelo_Kyoto/tabela_MultFusion-PKLot.csv')
+    df4 = pd.read_csv('resultados/Modelo_Kyoto/tabela_VoteFusion-PKLot.csv') 
 
     pklot = [
         #Para camera1
@@ -660,7 +660,7 @@ def tabela_excel():
 
     cnr_voto = [
         ('PUC', 'PUC', 20), ('UFPR04', 'PUC', 21), ('UFPR05', 'PUC', 22),
-        ('PUC', 'UFPR04', 59), ('UFPR04', 'UFPR04', 60), ('UFPR05', 'UFPR04', 61),
+        ('PUC', 'UFPR04', 43), ('UFPR04', 'UFPR04', 44), ('UFPR05', 'UFPR04', 45),
         ('PUC', 'UFPR05', 66), ('UFPR04', 'UFPR05', 67), ('UFPR05', 'UFPR05', 68),
     ]
 
@@ -678,6 +678,8 @@ def tabela_excel():
     
     for treino, teste, linha in cnr_voto:
         valores = extrair_valores(df4, 'CNR', treino, teste, 'Acuracia')  # retorna array
+        if treino == 'UFPR04':
+            print(treino, teste, len(valores))
         preencher_planilha_fusoes(sheet, linha, 4, valores)
 
     # Salvar o arquivo (sobrescreve o original)

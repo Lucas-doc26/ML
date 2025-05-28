@@ -281,6 +281,7 @@ def generate_models(n_models=10, model_name=None, filters_list=[8,16,32,64,128],
     """
     Gera nº modelos de autoencoders.    
     """
+
     for i in range(n_models):  
         clear_session()
 
