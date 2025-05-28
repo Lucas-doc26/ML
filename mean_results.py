@@ -3,14 +3,10 @@ import argparse
 
 parser = argparse.ArgumentParser(description="Descrição do seu script.")
 parser.add_argument('--name_model', type=str, help='Nome do modelo')
-parser.add_argument('--autoencoder_base', type=str, help='Lista de bases a serem treinadas pelo autoencoder')
-parser.add_argument('--classifiers', type=str, nargs='+', help='Lista de épocas de cada um dos modelos')
+parser.add_argument('--autoencoder_base', type=str, help='Base do autoencoder')
 
 args = parser.parse_args()
 print("Argumentos:", args)
 
-resultados('Modelo_Kyoto', 'CNR')
-
-"""for classifier in args.classifiers:
-    retorna_resultados_csv(autoencoder=args.autoencoder_base, classificador=classifier, modelo=args.name_model)"""
+resultados(args.name_model, args.autoencoder_base)
 

@@ -177,7 +177,6 @@ def tabela_excel():
         ('camera7', 'camera9', 666), ('camera8', 'camera9', 667), ('camera9', 'camera9', 668)
     ]
 
-
     Kyoto_sum = [
         # Para PUC
         ('PUC', 'PUC', 21), ('UFPR04', 'PUC', 22), ('UFPR05', 'PUC', 23),
