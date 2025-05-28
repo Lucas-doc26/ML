@@ -163,8 +163,8 @@ def retorna_resultados_csv(autoencoder, classificador, modelo):
                 print(f'Base de treino {treino}, base de teste {teste}, media dos valores {media}, desvio padrao {desvio}, no batch {batch}')
                 
                 # add os dados na lista
-                txt = "{m:.3f} ~ {d:.3f}"
-                dados.append([treino, teste, txt.format(m=media, d=desvio), batch])
+                txt = "{m:.3f}"
+                dados.append([treino, teste, txt.format(m=media), txt.format(d=desvio), batch])
             else:
                 print(f"Aviso: Coluna {coluna} não encontrada em {tabela}")
 
@@ -182,7 +182,7 @@ def retorna_resultados_csv(autoencoder, classificador, modelo):
         writer = csv.writer(file)
         
         # Cabeçalho do CSV
-        writer.writerow(['Base de Treino', 'Base de Teste', 'Média', 'Batch'])
+        writer.writerow(['Base de Treino', 'Base de Teste', 'Média', 'Desvio Padrão', 'Batch'])
         
         for linha in dados_ordenados:
             writer.writerow(linha)
@@ -220,8 +220,8 @@ def resultados(modelo, autoencoder, classificador=None):
                 print(f'Base de treino {treino}, base de teste {teste}, media dos valores {media}, desvio padrao {desvio}, no batch {batch}')
                 
                 # add os dados na lista
-                txt = "{m:.3f} ~ {d:.3f}"
-                dados.append([autoencoder, treino, teste, txt.format(m=media, d=desvio), batch])
+                txt = "{m:.3f}"
+                dados.append([autoencoder, treino, teste, txt.format(m=media), txt.format(d=desvio), batch])
             else:
                 print(f"Aviso: Coluna {coluna} não encontrada em {tabela}")
 
@@ -237,7 +237,7 @@ def resultados(modelo, autoencoder, classificador=None):
         writer = csv.writer(file)
         
         # Cabeçalho do CSV
-        writer.writerow(['Base do Autoencoder','Base de Treino', 'Base de Teste', 'Média', 'Batch'])
+        writer.writerow(['Base do Autoencoder','Base de Treino', 'Base de Teste', 'Média', 'Desvio Padrão', 'Batch'])
         
         for linha in dados_ordenados:
             writer.writerow(linha)
