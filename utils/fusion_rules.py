@@ -14,19 +14,28 @@ class FusionRule:
         """
         Aplica a fusão entre as predições
         """
-        #print(self.path_manager.get_prediction_path(model_name, batch_size, 0, train_base, test_base, autoencoder_base))
+        # Carrega a primeira predição para inicializar o formato
         base = np.load(self.path_manager.get_prediction_path(model_name, batch_size, 0, train_base, test_base, autoencoder_base))
-        result = np.zeros_like(base) # Cria um array com o mesmo tamanho da base de predições
         
+        if isinstance(self, SumFusion):
+            result = np.zeros_like(base)  # Para soma, começa com zeros
+        elif isinstance(self, MultFusion):
+            result = np.ones_like(base)   # Para multiplicação, começa com uns
+        elif isinstance(self, VoteFusion):
+            result = np.zeros_like(base)  # Para votação, começa com zeros
+        else:
+            raise ValueError("Tipo de fusão não reconhecido")
+        
+        # Combina as predições de todos os modelos
         for i in range(n_models):
-            print(self.path_manager.get_prediction_path(model_name, batch_size, i, train_base, test_base, autoencoder_base))
-            #pega o array de predições do modelo i
-            array = np.load(self.path_manager.get_prediction_path(model_name, batch_size, i, train_base, test_base, autoencoder_base))
+            npy = self.path_manager.get_prediction_path(model_name, batch_size, i, train_base, test_base, autoencoder_base)
+            print(f"Carregando predição do modelo {i}: {npy}")
+            array = np.load(npy)
             result = self._combine_predictions(result, array)
-            
+        
+        # Retorna a classe com maior probabilidade
         return np.argmax(result, axis=1)
-        #retorna o array com os resultados da fusão
-    
+
     # Método abstrato das predições
     def _combine_predictions(self, result, array):
         raise NotImplementedError("A implementação deve ser feita na classe filha")
@@ -45,11 +54,9 @@ class VoteFusion(FusionRule):
         for j in range(len(array)):
             value = array[j][0]
             if value > 0.5:
-                array_result[j] = [1, 0]
-            elif value == 0.5:
-                array_result[j] = [1, 1]
+                array_result[j] = [1, 0]  # Voto para classe 0
             else:
-                array_result[j] = [0, 1]
+                array_result[j] = [0, 1]  # Voto para classe 1
         return result + array_result
 
 def fusion_process(model_name, train_bases, test_bases, fusion_rule, autoencoder_base=None, number_of_models=10, path_manager='/home/lucas/PIBIC/'):

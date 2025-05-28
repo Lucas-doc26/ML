@@ -40,7 +40,7 @@ class PathManager:
 
     def get_prediction_path(self, model_name, batch_size, model_index, train_base, test_base, autoencoder_base=None):
         """
-        Me retorna o caminho para o arquivo de previsão
+        Me retorna o caminho para o arquivo de previsão - arquivo npy
         """
         classifier = f'Classificador-{autoencoder_base}' if autoencoder_base else 'Classificador'
         return os.path.join(
