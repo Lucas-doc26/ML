@@ -300,6 +300,26 @@ def generate_models(n_models=10, model_name=None, filters_list=[8,16,32,64,128],
         del autoencoder, encoder, decoder
         clear_session()
     
+def generete_models2(n_models=10, model_name=None, filters_list=[8,16,32,64,128], input=(64,64,3), min_layers=3, max_layers=5):
+    for i in range(n_models):  
+        clear_session()
+
+        autoencoder = AutoencoderGenerator(input_shape=input, max_layers=max_layers, min_layers=min_layers)
+        autoencoder.set_model_name(f'{model_name}-{i}')
+        model = autoencoder.build_model(save=True, filters_list=filters_list)
+
+        model.summary()
+
+        encoder = autoencoder.encoder  
+        decoder = autoencoder.decoder  
+
+        encoder.summary()
+        decoder.summary()
+
+        yield autoencoder, encoder, decoder
+        clear_session()
+    
+
 def train_models(train, validation, test, model_name=None, autoencoder_base=None, n_epochs=10, batch_size=4, input_shape=(64,64,3)):
     """
     Treina nº modelos de autoencoders.

@@ -22,11 +22,15 @@ set_seeds() #Reprodutibilidade
 #config_gpu() #Usar GPU
 
 #Gerando modelos de autoencoders -> já estão prontos
-generate_models(
-    n_models=args.n_models, 
-    model_name=args.name_model, 
-    filters_list=args.filters_list, 
-    input=args.input, 
-    min_layers=args.min_layers, 
-    max_layers=args.max_layers)
+for autoencoder, encoder, decoder in generete_models2(
+    n_models=args.n_models,
+    model_name=args.name_model,
+    filters_list=args.filters_list,
+    input=args.input,
+    min_layers=args.min_layers,
+    max_layers=args.max_layers
+):
+    print(f"Gerando modelo: {autoencoder.model_name}")
+    # Aqui você pode fazer o que precisar com cada modelo
+    # Por exemplo, você pode treinar o modelo, fazer predições, etc.
 
