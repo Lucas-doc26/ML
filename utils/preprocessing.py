@@ -7,7 +7,12 @@ import tensorflow as tf
 from typing import Tuple
 from tensorflow.keras.models import Model
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+import random 
+import numpy 
 
+random_seed = 42
+random.seed(random_seed)
+np.random.seed(random_seed)
 
 #Funções auxiliares ao preprocessamento
 def normalize_image(img):
@@ -128,25 +133,27 @@ def data_augmentation_kyoto(kyoto_path):
     """
     Função para realizar data augmentation no dataset Kyoto
     """
+    # Transforms com semente fixa
     transform1 = A.Compose([
-        A.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.1, p=1),  # Iluminação 
-        A.GaussNoise(var_limit=(0.0, 0.002), mean=0, p=1),  # Ruído 
+        A.RandomBrightnessContrast(brightness_limit=0.2, contrast_limit=0.1, p=1),
+        A.GaussNoise(var_limit=(0.0, 0.002), mean=0, p=1),
+        A.Rotate(limit=(180, 180), border_mode=0, p=1)
     ])
 
     transform2 = A.Compose([
-        A.ShiftScaleRotate(shift_limit=0.05, scale_limit=0.02, rotate_limit=10, border_mode=0, p=1),  # Movimento da câmera
-        A.CLAHE(clip_limit=3.0, tile_grid_size=(8,8), p=1),  # Contraste
+        A.ShiftScaleRotate(shift_limit=0.05, scale_limit=0.02, rotate_limit=10, border_mode=0, p=1),
+        A.CLAHE(clip_limit=3.0, tile_grid_size=(8,8), p=1),
     ])
 
     transform3 = A.Compose([
-        A.HueSaturationValue(hue_shift_limit=10, sat_shift_limit=20, val_shift_limit=10, p=1),  # variação de tom
-        A.RandomBrightnessContrast(brightness_limit=0.15, contrast_limit=0.1, p=1),  # brilho/contraste 
+        A.HueSaturationValue(hue_shift_limit=10, sat_shift_limit=50, val_shift_limit=20, p=1),
+        A.RandomBrightnessContrast(brightness_limit=0.1, contrast_limit=0.2, p=1),
     ])
 
     transform4 = A.Compose([
-        A.AdvancedBlur(blur_limit=(3,5), noise_limit=(0.3, 0.6), p=1),  # Desfoque leve
-        A.GaussNoise(var_limit=(0.0, 0.002), mean=0, p=1),  # Ruído adicional muito leve
-    ])  
+        A.AdvancedBlur(blur_limit=(15, 25), noise_limit=(0.7, 1.0), p=1),
+        A.JpegCompression(quality_lower=5, quality_upper=20, p=1),  # Compressão com perda
+    ])
 
 
     if not os.path.isdir(os.path.join(kyoto_path, 'dataAug')):
