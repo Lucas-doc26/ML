@@ -5,7 +5,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 from utils.evaluation_metrics import *
-from utils.preprocessing import normalize
+from utils.preprocessing import normalize_image
 
 def plot_autoencoder_quality(x_test:np.ndarray, Autoencoder:Model, width:int=64, height:int=64, path_save:Path=None, autoencoder_name:str='Kyoto'):
     plt.figure(figsize=(16, 8))
@@ -18,7 +18,7 @@ def plot_autoencoder_quality(x_test:np.ndarray, Autoencoder:Model, width:int=64,
 
         # Predição e normalização
         pred = Autoencoder.predict(x_test[i].reshape((1,width, height,3)))
-        pred_img = normalize(pred[0])
+        pred_img = normalize_image(pred[0])
 
         plt.subplot(2, 8, i + 8 + 1)
         plt.imshow(pred_img)
@@ -84,7 +84,7 @@ def plot_vae_quality(x_test:np.ndarray, Autoencoder:Model, width:int=64, height:
         # Predição e normalização
         z_mean, z_log_var, z = Autoencoder.encoder(x_test[i].reshape((1, width, height, 3)))
         pred = Autoencoder.decoder(z)
-        pred_img = normalize(pred[0])
+        pred_img = normalize_image(pred[0])
 
         plt.subplot(2, 8, i + 8 + 1)
         plt.imshow(pred_img)

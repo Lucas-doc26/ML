@@ -45,6 +45,9 @@ class ClassifierGenerator:
         except:
             pass
 
+    def get_encoder(self):
+        return self.encoder
+
     def build_model(self, encoder):
         """Build the model architecture"""
         if encoder != None:
@@ -181,7 +184,7 @@ class ClassifierGenerator:
             os.makedirs(save_history, exist_ok=True)
             plot_history_batch(history, save_history, self.model_name, classifier_base, self.autoencoder_base, n_batches) 
             
-        return history
+        #return history
 
     def dataset(self, train, validation, test):
         self.train = train
@@ -213,8 +216,8 @@ class ClassifierGenerator:
         print(model_path)
         model_loaded = tf.keras.models.load_model(model_path)
         self.model = model_loaded
+        self.encoder = self.model.get_layer('encoder')
         self.load_weights(weights_path)
-
         self.model.summary(show_trainable=True)
 
         return self.model
@@ -319,25 +322,32 @@ def train_per_batch(model_name, classifier_base, autoencoder_base, train_csv, va
         with open(dir_file_path, 'w') as f:
             for acc in accuracies:
                 f.write(f"{acc}\n")
+
+        #Matriz de confusão
+        dir_matrix = f'Modelos/{model_name}/Plots/Matriz/Treinado_em_{classifier_base}/Matriz-{autoencoder_base}-{classifier_base}-{test_base}.png'
+
+        y_true = test_df['class'].astype(int)
+        y_pred = np.argmax(predicts_np, axis=1)
+
+        plot_confusion_matrix(y_true, y_pred, labels=['Empty', 'Occupied'], title=f'AE:{autoencoder_base} - Treino:{classifier_base} x {test_base}', save_path=dir_matrix)
         
         clear_session() 
+
+        heatmap_dir = f'Modelos/{model_name}/Plots/HeatMap/Treinado_em_{classifier_base}/HeatMap-{autoencoder_base}-{classifier_base}-{test_base}-{batch_size}.png'
+        try:
+            errors_heatmap(test_df=test_df, classifier=classifier, save_path=heatmap_dir)
+        except:
+            print("Deu erro ao salvar o heatmap")
+        classifier = None
+
         del autoencoder, encoder, classifier, train
 
     dir_graf = f'Modelos/{model_name}/Plots/Graficos'
     os.makedirs(dir_graf, exist_ok=True)
 
-    dir_graph_university = os.path.join(dir_graf, f'Treinado_em_{classifier_base}')
-    os.makedirs(dir_graph_university, exist_ok=True)
+    dir_graf_facul = f'Modelos/{model_name}/Plots/Graficos/Treinado_em_{classifier_base}/Grafico-{autoencoder_base}-{classifier_base}-{test_base}.png'
 
-    graphic_accuracy_per_batch(
-        batches=n_batches,
-        accuracies=accuracies,
-        model_name=model_name,
-        train_base=classifier_base,
-        test_base=test_base,
-        autoencoder_base=autoencoder_base,
-        save_path=dir_graph_university
-    )
+    graphic_accuracy_per_batch(batches=batches, accuracies=accuracies, model_name=model_name, train_base=classifier_base, test_base=test_base, autoencoder_base=autoencoder_base, save_path=dir_graf_facul)
 
     print("Final accuracies:", accuracies)
 
@@ -400,10 +410,17 @@ def test_model_per_batch(model_name, test, test_df, classifier_base, weights=Tru
         dir_peso = f'/home/lucas/PIBIC/Modelos/{model_name}/Classificador-{autoencoder_base}/Pesos/Treinado_em_{classifier_base}/Classificador_{model_name}_batches-{batch_size}.weights.h5' 
         ## TODO: tem que arrumar essa parte do model name, antes estava sem o Classificador_{model_name}
 
-
         weights = dir_peso
         classifier.load_model(structure, weights)
         predicts_np, accuracy = classifier.predict(test_df)
+
+        #Matriz de confusão
+        dir_matrix = f'Modelos/{model_name}/Plots/Matriz/Treinado_em_{classifier_base}/Matriz-{autoencoder_base}-{classifier_base}-{test_base}.png'
+
+        y_true = test_df['class'].astype(int)
+        y_pred = np.argmax(predicts_np, axis=1)
+
+        plot_confusion_matrix(y_true, y_pred, labels=['Empty', 'Occupied'], title=f'AE:{autoencoder_base} - Treino:{classifier_base} x {test_base}', save_path=dir_matrix)
 
         #Modelo-Kyoto-1/Classificador-CNR/Resultados/Treinados_em_PUC/UFPR04/batches-64-npy
         dir_base =  f"Modelos/{model_name}/Classificador-{autoencoder_base}/Resultados/Treinados_em_{classifier_base}/{test_base}"
@@ -418,6 +435,13 @@ def test_model_per_batch(model_name, test, test_df, classifier_base, weights=Tru
         np.save(file, predicts_np)
         clear_session()
         accuracies.append(accuracy)
+
+        heatmap_dir = f'Modelos/{model_name}/Plots/HeatMap/Treinado_em_{classifier_base}/HeatMap-{autoencoder_base}-{classifier_base}-{test_base}-{batch_size}.png'
+        try:
+            errors_heatmap(test_df=test_df, classifier=classifier, save_path=heatmap_dir)
+        except:
+            print("Deu erro ao salvar o heatmap")
+
         del weights, predicts_np, accuracy
 
 
@@ -431,7 +455,7 @@ def test_model_per_batch(model_name, test, test_df, classifier_base, weights=Tru
         for prec in accuracies:
             f.write(f"{prec}\n")
 
-    dir_graf_facul = f'Modelos/{model_name}/Plots/Graficos/Treinado_em_{classifier_base}'
+    dir_graf_facul = f'Modelos/{model_name}/Plots/Graficos/Treinado_em_{classifier_base}/Grafico-{autoencoder_base}-{classifier_base}-{test_base}.png'
 
     graphic_accuracy_per_batch(batches=batches, accuracies=accuracies, model_name=model_name, train_base=classifier_base, test_base=test_base, autoencoder_base=autoencoder_base, save_path=dir_graf_facul)
 

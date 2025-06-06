@@ -4,8 +4,6 @@ from pathlib import Path
 from typing import Tuple
 import pandas as pd
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.models import Model
-from ..preprocessing import normalize
 from ..evaluation_metrics import *
 
 def plot_images_from_csv(path_csv: Path, num_images_per_column: int = 3, figsize: Tuple[int, int] = (10, 10), title: str = None, save_path: Path = None ):

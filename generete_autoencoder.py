@@ -22,7 +22,7 @@ set_seeds() #Reprodutibilidade
 #config_gpu() #Usar GPU
 
 #Gerando modelos de autoencoders -> já estão prontos
-for autoencoder, encoder, decoder in generete_models2(
+for autoencoder, encoder, decoder in generate_models2(
     n_models=args.n_models,
     model_name=args.name_model,
     filters_list=args.filters_list,

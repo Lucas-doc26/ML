@@ -1,7 +1,6 @@
-#!/bin/bash
 set -e
 
-# Variáveis
+#Variáveis
 AUTOENCODERS=("Kyoto" "CNR" "PKLot")
 CLASSIFIERS_KYOTO=("PUC" "UFPR05" "UFPR04" "camera1" "camera2" "camera3" "camera4" "camera5" "camera6" "camera7" "camera8" "camera9")
 CLASSIFIERS_CNR=("PUC" "UFPR04" "UFPR05")
@@ -10,22 +9,19 @@ FACULDADES=("PUC" "UFPR04" "UFPR05")
 
 NAME_MODEL="Modelo_Kyoto"
 
-# Organizar datasets
-python3 datasets.py
+#Organizar datasets
+#python3 datasets.py
 
-#Gera os modelos 
-python3 generate_autoencoders.py
+#Treino autoencoders
+#for AE in "${AUTOENCODERS[@]}"; do
+    #EPOCHS=50
+    #if [ "$AE" == "Kyoto" ]; then
+     #   EPOCHS=200
+    #fi
+    #python3 train_autoencoders.py --name_model "$NAME_MODEL" --autoencoder_base "$AE" --autoencoder_epochs "$EPOCHS"
+#done
 
-# Treino autoencoders
-for AE in "${AUTOENCODERS[@]}"; do
-    EPOCHS=50
-    if [ "$AE" == "Kyoto" ]; then
-        EPOCHS=200
-    fi
-    python3 train_autoencoders.py --name_model "$NAME_MODEL" --autoencoder_base "$AE" --autoencoder_epochs "$EPOCHS"
-done
-
-# Treino classificadores
+#Treino classificadores
 for AE in "${AUTOENCODERS[@]}"; do
     CLASSIFIERS=()
     if [ "$AE" == "Kyoto" ]; then
@@ -41,27 +37,55 @@ for AE in "${AUTOENCODERS[@]}"; do
     done
 done
 
-# Testes - exemplo apenas para Kyoto
+#Testando na Kyoto
 for CL in "${CLASSIFIERS_KYOTO[@]}"; do
-    TEST_BASES=("${CLASSIFIERS_KYOTO[@]/$CL}")  # remove o próprio da lista
-    TEST_BASES+=("${FACULDADES[@]}")  # adiciona as faculdades
+    TEST_BASES=()
+    for item in "${CLASSIFIERS_KYOTO[@]}"; do
+        if [[ "$item" != "$CL" ]]; then
+            TEST_BASES+=("$item")
+        fi
+    done
 
-    python3 test_classifiers.py --name_model "$NAME_MODEL" --autoencoder_base "Kyoto" --classifier_base "$CL" --test_bases "${TEST_BASES[@]}"
+    python3 test_classifiers.py \
+        --name_model "$NAME_MODEL" \
+        --autoencoder_base "Kyoto" \
+        --classifier_base "$CL" \
+        --test_bases "${TEST_BASES[@]}"
 done
 
-# Testes para CNR
-for CL in "${CLASSIFIERS_CNR[@]}"; do
-    TEST_BASES=("${FACULDADES[@]/$CL}")  # remove o próprio
-    python3 test_classifiers.py --name_model "$NAME_MODEL" --autoencoder_base "CNR" --classifier_base "$CL" --test_bases "${TEST_BASES[@]}"
+#Testando no CNR
+for CL in "${CLASSIFIERS_KYOTO[@]}"; do
+    TEST_BASES=()
+    for item in "${CLASSIFIERS_KYOTO[@]}"; do
+        if [[ "$item" != "$CL" ]]; then
+            TEST_BASES+=("$item")
+        fi
+    done
+
+    python3 test_classifiers.py \
+        --name_model "$NAME_MODEL" \
+        --autoencoder_base "CNR" \
+        --classifier_base "$CL" \
+        --test_bases "${TEST_BASES[@]}"
 done
 
-# Testes para PKLot
-for CL in "${CLASSIFIERS_PKLOT[@]}"; do
-    TEST_BASES=("${CLASSIFIERS_PKLOT[@]/$CL}")  # remove o próprio
-    python3 test_classifiers.py --name_model "$NAME_MODEL" --autoencoder_base "PKLot" --classifier_base "$CL" --test_bases "${TEST_BASES[@]}"
+#Testando na PKLot
+for CL in "${CLASSIFIERS_KYOTO[@]}"; do
+    TEST_BASES=()
+    for item in "${CLASSIFIERS_KYOTO[@]}"; do
+        if [[ "$item" != "$CL" ]]; then
+            TEST_BASES+=("$item")
+        fi
+    done
+
+    python3 test_classifiers.py \
+        --name_model "$NAME_MODEL" \
+        --autoencoder_base "PKLot" \
+        --classifier_base "$CL" \
+        --test_bases "${TEST_BASES[@]}"
 done
 
-# Resultados
+#Resultados
 for AE in "${AUTOENCODERS[@]}"; do
     if [ "$AE" == "Kyoto" ]; then
         CLASSIFIERS=("${CLASSIFIERS_KYOTO[@]}" "${FACULDADES[@]}")
@@ -73,3 +97,9 @@ for AE in "${AUTOENCODERS[@]}"; do
 
     python3 mean_results.py --name_model "$NAME_MODEL" --autoencoder_base "$AE"
 done
+
+#Fusões 
+python3 teste_fusoes.py
+
+#Gerando tabela 
+python tabela.py 

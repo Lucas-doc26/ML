@@ -69,12 +69,12 @@ def create_CNR_csv(path_dataset:Path) -> None:
                 path_image_complete = os.path.join(path_dataset, 'PATCHES', path_image)
                 wheather, day, camera, _ = path_image.strip().split('/')
                 path_images.append(path_image_complete)
-                class_image = parts[1]
+                class_image = parts[1]    
                 classes.append(class_image)
                 data.append([wheather, day, camera, path_image_complete, class_image])
 
     df = pd.DataFrame(data=data, columns=['wheather', 'day', 'camera', 'path_image', 'class'])
-
+    df['class'] = df['class'].map({'1': 0, '0': 1})
     df.to_csv("CSV/CNR/CNR.csv", index=False)
 
 def create_CNR_cameras():
@@ -450,11 +450,16 @@ def format_datasets(datasets_dirs):
         df = pd.read_csv(dir_data)
         if 'Kyoto' in dir_data:
             df = df.sample(frac=1, random_state=SEED)
-            df.to_csv(dir_data, index=False)
         else:
             df = df[['path_image', 'class']].sample(frac=1, random_state=SEED)
-            df.to_csv(dir_data, index=False)
 
+        if len(df.columns) > 2:
+            cols_to_keep = ['class', 'path_image']
+            cols_to_drop = [col for col in df.columns if col not in cols_to_keep]
+            df.drop(cols_to_drop, axis=1, inplace=True)
+
+        df.to_csv(dir_data, index=False)
+                
 def create_datasets_csv(path_manager:PathManager=None, path_datasets_downloaded:Path=None):
     """
     Função para criar os csvs para os datasets

@@ -333,16 +333,16 @@ def tabela_excel():
         ('camera7', 'PUC', 56), ('camera8', 'PUC', 57), ('camera9', 'PUC', 58),
 
         # Para UFPR04
-        ('PUC', 'UFPR04', 105), ('UFPR04', 'UFPR04', 106), ('UFPR05', 'UFPR04', 107),
-        ('camera1', 'UFPR04', 108), ('camera2', 'UFPR04', 109), ('camera3', 'UFPR04', 110),
-        ('camera4', 'UFPR04', 111), ('camera5', 'UFPR04', 112), ('camera6', 'UFPR04', 113),
-        ('camera7', 'UFPR04', 114), ('camera8', 'UFPR04', 115), ('camera9', 'UFPR04', 116),
+        ('PUC', 'UFPR04', 106), ('UFPR04', 'UFPR04', 107), ('UFPR05', 'UFPR04', 108),
+        ('camera1', 'UFPR04', 109), ('camera2', 'UFPR04', 110), ('camera3', 'UFPR04', 111),
+        ('camera4', 'UFPR04', 112), ('camera5', 'UFPR04', 113), ('camera6', 'UFPR04', 114),
+        ('camera7', 'UFPR04', 115), ('camera8', 'UFPR04', 116), ('camera9', 'UFPR04', 117),
 
         # Para UFPR05
-        ('PUC', 'UFPR05', 164), ('UFPR04', 'UFPR05', 165), ('UFPR05', 'UFPR05', 166),
-        ('camera1', 'UFPR05', 167), ('camera2', 'UFPR05', 168), ('camera3', 'UFPR05', 169),
-        ('camera4', 'UFPR05', 170), ('camera5', 'UFPR05', 171), ('camera6', 'UFPR05', 172),
-        ('camera7', 'UFPR05', 173), ('camera8', 'UFPR05', 174), ('camera9', 'UFPR05', 175),
+        ('PUC', 'UFPR05', 165), ('UFPR04', 'UFPR05', 166), ('UFPR05', 'UFPR05', 167),
+        ('camera1', 'UFPR05', 168), ('camera2', 'UFPR05', 169), ('camera3', 'UFPR05', 170),
+        ('camera4', 'UFPR05', 171), ('camera5', 'UFPR05', 172), ('camera6', 'UFPR05', 173),
+        ('camera7', 'UFPR05', 174), ('camera8', 'UFPR05', 175), ('camera9', 'UFPR05', 176),
 
         # Para camera1
         ('PUC', 'camera1', 224), ('UFPR04', 'camera1', 225), ('UFPR05', 'camera1', 226),

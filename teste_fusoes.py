@@ -117,7 +117,7 @@ sum = SumFusion(path)
 mult = MultFusion(path)
 voto = VoteFusion(path)
 
-"""#CNR
+#CNR
 sum.run(model_name='Modelo_Kyoto',
         autoencoder_base='CNR', 
         train_bases=['PUC', 'UFPR04', 'UFPR05'], 
@@ -147,20 +147,20 @@ mult.run(model_name='Modelo_Kyoto',
 voto.run(model_name='Modelo_Kyoto',
         autoencoder_base='PKLot', 
         train_bases=['camera1', 'camera2', 'camera3','camera4','camera5','camera6','camera7','camera8','camera9',], 
-        test_bases=['camera1', 'camera2', 'camera3','camera4','camera5','camera6','camera7','camera8','camera9',])"""
+        test_bases=['camera1', 'camera2', 'camera3','camera4','camera5','camera6','camera7','camera8','camera9',])
 
 #Kyoto
 sum.run(model_name='Modelo_Kyoto',
         autoencoder_base='Kyoto', 
-        train_bases=['PUC', 'UFPR04', 'UFPR05'], 
+        train_bases=['PUC', 'UFPR04', 'UFPR05', 'camera1', 'camera2', 'camera3','camera4','camera5','camera6','camera7','camera8','camera9'], 
         test_bases=['PUC', 'UFPR04', 'UFPR05', 'camera1', 'camera2', 'camera3','camera4','camera5','camera6','camera7','camera8','camera9'])
 
 mult.run(model_name='Modelo_Kyoto',
         autoencoder_base='Kyoto', 
-        train_bases=['PUC', 'UFPR04', 'UFPR05'], 
+        train_bases=['PUC', 'UFPR04', 'UFPR05', 'camera1', 'camera2', 'camera3','camera4','camera5','camera6','camera7','camera8','camera9'], 
         test_bases=['PUC', 'UFPR04', 'UFPR05', 'camera1', 'camera2', 'camera3','camera4','camera5','camera6','camera7','camera8','camera9'])
 
 voto.run(model_name='Modelo_Kyoto',
         autoencoder_base='Kyoto', 
-        train_bases=['PUC', 'UFPR04', 'UFPR05'], 
+        train_bases=['PUC', 'UFPR04', 'UFPR05', 'camera1', 'camera2', 'camera3','camera4','camera5','camera6','camera7','camera8','camera9'], 
         test_bases=['PUC', 'UFPR04', 'UFPR05', 'camera1', 'camera2', 'camera3','camera4','camera5','camera6','camera7','camera8','camera9'])

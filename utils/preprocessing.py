@@ -71,8 +71,6 @@ def preprocessing_dataframe(path_csv: str, autoencoder: bool = False, data_algum
     if len(dataframe.columns) > 1:
         dataframe['class'] = dataframe['class'].astype(str)
 
-    #Embaralho o dataframe aqui e não no shuffle, para garantir o mesmo csv sempre 
-    #dataframe = dataframe.sample(frac=1).reset_index(drop=True)
     
     class_mode = 'input' if autoencoder else 'sparse'
 
@@ -186,14 +184,6 @@ def data_augmentation_kyoto(kyoto_path):
         print("O data augmentation já foi realizado!")
         return 
 
-def normalize(image):
-    """
-    Função para normalizar as imagens
-    """
-    image = np.clip(image, 0, 1)  # Garante que a imagem esteja no intervalo [0, 1]
-    if isinstance(image, tf.Tensor): #Caso seja um tensor, ele transforma em np para evitar uso de vram
-        image = image.numpy()
-        return (image - image.min()) / (image.max() - image.min()) if image.max() != image.min() else image
 
 def preprocess_images(target_shape, csv):
     """
@@ -252,3 +242,31 @@ def process_image_for_heatmap(input_img: np.ndarray, input_img_shape: Tuple[int,
 
         return input_img, reconstructed_img, activation_map
 
+def process_image_for_heatmap_2(input_img: np.ndarray, input_img_shape: Tuple[int, int, int], activation_model: Model, encoder: Model) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Processa uma imagem para obter a imagem original, reconstruída e mapa de ativação.
+
+        Args:
+            input_img: Imagem de entrada
+            input_img_shape: Shape da imagem de entrada
+            activation_model: Modelo de ativação
+            encoder: Modelo de encoder
+            decoder: Modelo de decoder
+
+        Returns:
+            Tupla contendo (imagem original, imagem reconstruída, mapa de ativação)
+        """
+
+        # Redimensionar a imagem se necessário
+        if input_img.shape != input_img_shape:
+            input_img = tf.image.resize(input_img, (input_img_shape[0], input_img_shape[1]))
+
+        # Expandir dimensões para batch
+        input_img_batch = np.expand_dims(input_img, axis=0)
+
+        # Obter ativações e mapa de calor
+        activations = activation_model.predict(input_img_batch)
+        activation_map = np.mean(activations[0], axis=-1)
+
+
+        return input_img, activation_map

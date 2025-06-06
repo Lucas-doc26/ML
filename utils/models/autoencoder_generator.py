@@ -5,6 +5,7 @@ from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 from tensorflow.keras import mixed_precision
 import tensorflow.keras.backend as k
 
+
 # Importações para manipulação de dados e operações básicas
 import numpy as np
 import pandas as pd
@@ -52,6 +53,9 @@ class AutoencoderGenerator:
 
     def get_model_name(self):
         print(self.model_name)
+    
+    def get_encoder(self):
+        return self.encoder
     
     def calculate_layers(self, filters_list=[8,16,32,64,128]):
         num_layers = np.random.randint(self.min_layers, self.max_layers + 1) #+1 por conta do randint ser somente de (min - max-1)
@@ -273,7 +277,7 @@ class AutoencoderGenerator:
         x,y = next(self.test)
         plot_autoencoder(x, self.autoencoder, self.input_shape[0],self.input_shape[1])
         pred = self.autoencoder.predict(x[0].reshape((1,self.input_shape[0], self.input_shape[1],3)))
-        pred_img = normalize(pred[0])
+        pred_img = normalize_image(pred[0])
 
         return x[0], pred_img
 
@@ -300,7 +304,7 @@ def generate_models(n_models=10, model_name=None, filters_list=[8,16,32,64,128],
         del autoencoder, encoder, decoder
         clear_session()
     
-def generete_models2(n_models=10, model_name=None, filters_list=[8,16,32,64,128], input=(64,64,3), min_layers=3, max_layers=5):
+def generate_models2(n_models=10, model_name=None, filters_list=[8,16,32,64,128], input=(64,64,3), min_layers=3, max_layers=5):
     for i in range(n_models):  
         clear_session()
 
