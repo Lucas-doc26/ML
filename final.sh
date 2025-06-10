@@ -10,16 +10,16 @@ FACULDADES=("PUC" "UFPR04" "UFPR05")
 NAME_MODEL="Modelo_Kyoto"
 
 #Organizar datasets
-#python3 datasets.py
+python3 datasets.py
 
 #Treino autoencoders
-#for AE in "${AUTOENCODERS[@]}"; do
-    #EPOCHS=50
-    #if [ "$AE" == "Kyoto" ]; then
-     #   EPOCHS=200
-    #fi
-    #python3 train_autoencoders.py --name_model "$NAME_MODEL" --autoencoder_base "$AE" --autoencoder_epochs "$EPOCHS"
-#done
+for AE in "${AUTOENCODERS[@]}"; do
+    EPOCHS=50
+    if [ "$AE" == "Kyoto" ]; then
+        EPOCHS=200
+    fi
+    python3 train_autoencoders.py --name_model "$NAME_MODEL" --autoencoder_base "$AE" --autoencoder_epochs "$EPOCHS" 
+done
 
 #Treino classificadores
 for AE in "${AUTOENCODERS[@]}"; do
@@ -54,9 +54,9 @@ for CL in "${CLASSIFIERS_KYOTO[@]}"; do
 done
 
 #Testando no CNR
-for CL in "${CLASSIFIERS_KYOTO[@]}"; do
+for CL in "${CLASSIFIERS_CNR[@]}"; do
     TEST_BASES=()
-    for item in "${CLASSIFIERS_KYOTO[@]}"; do
+    for item in "${CLASSIFIERS_CNR[@]}"; do
         if [[ "$item" != "$CL" ]]; then
             TEST_BASES+=("$item")
         fi
@@ -70,9 +70,9 @@ for CL in "${CLASSIFIERS_KYOTO[@]}"; do
 done
 
 #Testando na PKLot
-for CL in "${CLASSIFIERS_KYOTO[@]}"; do
+for CL in "${CLASSIFIERS_PKLOT[@]}"; do
     TEST_BASES=()
-    for item in "${CLASSIFIERS_KYOTO[@]}"; do
+    for item in "${CLASSIFIERS_PKLOT[@]}"; do
         if [[ "$item" != "$CL" ]]; then
             TEST_BASES+=("$item")
         fi
@@ -102,4 +102,4 @@ done
 python3 teste_fusoes.py
 
 #Gerando tabela 
-python tabela.py 
+python3 tabela.py
