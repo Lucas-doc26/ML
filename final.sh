@@ -6,36 +6,35 @@ CLASSIFIERS_KYOTO=("PUC" "UFPR05" "UFPR04" "camera1" "camera2" "camera3" "camera
 CLASSIFIERS_CNR=("PUC" "UFPR04" "UFPR05")
 CLASSIFIERS_PKLOT=("camera1" "camera2" "camera3" "camera4" "camera5" "camera6" "camera7" "camera8" "camera9")
 FACULDADES=("PUC" "UFPR04" "UFPR05")
-
 NAME_MODEL="Modelo_Kyoto"
 
 #Organizar datasets
-python3 datasets.py
+#python3 datasets.py
 
 #Treino autoencoders
-for AE in "${AUTOENCODERS[@]}"; do
-    EPOCHS=50
-    if [ "$AE" == "Kyoto" ]; then
-        EPOCHS=200
-    fi
-    python3 train_autoencoders.py --name_model "$NAME_MODEL" --autoencoder_base "$AE" --autoencoder_epochs "$EPOCHS" 
-done
+#for AE in "${AUTOENCODERS[@]}"; do
+#    EPOCHS=50
+#    if [ "$AE" == "Kyoto" ]; then
+#        EPOCHS=200
+#    fi
+#    python3 train_autoencoders.py --name_model "$NAME_MODEL" --autoencoder_base "$AE" --autoencoder_epochs "$EPOCHS" 
+#done
 
 #Treino classificadores
-for AE in "${AUTOENCODERS[@]}"; do
-    CLASSIFIERS=()
-    if [ "$AE" == "Kyoto" ]; then
-        CLASSIFIERS=("${CLASSIFIERS_KYOTO[@]}")
-    elif [ "$AE" == "CNR" ]; then
-        CLASSIFIERS=("${CLASSIFIERS_CNR[@]}")
-    else
-        CLASSIFIERS=("${CLASSIFIERS_PKLOT[@]}")
-    fi
+#for AE in "${AUTOENCODERS[@]}"; do
+#    CLASSIFIERS=()
+#    if [ "$AE" == "Kyoto" ]; then
+#        CLASSIFIERS=("${CLASSIFIERS_KYOTO[@]}")
+#    elif [ "$AE" == "CNR" ]; then
+#        CLASSIFIERS=("${CLASSIFIERS_CNR[@]}")
+#    else
+#        CLASSIFIERS=("${CLASSIFIERS_PKLOT[@]}")
+#    fi
 
-    for CL in "${CLASSIFIERS[@]}"; do
-        python3 train_classifiers.py --name "$NAME_MODEL" --classifier_base "$CL" --classifier_epochs 20 --autoencoder_base "$AE"
-    done
-done
+#    for CL in "${CLASSIFIERS[@]}"; do
+#        python3 train_classifiers.py --name "$NAME_MODEL" --classifier_base "$CL" --classifier_epochs 20 --autoencoder_base "$AE"
+#    done
+#done
 
 #Testando na Kyoto
 for CL in "${CLASSIFIERS_KYOTO[@]}"; do

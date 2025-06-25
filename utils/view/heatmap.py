@@ -269,7 +269,7 @@ def errors_heatmap(test_df, classifier, save_path=None):
         heatmaps = return_gradcam_heatmap(img, encoder)
         print("Tamanho dos heatmaps:", len(heatmaps))
         for col in range(cols-1):
-            axs[i, col+1].imshow(superimpose_heatmap(img, heatmaps[col], 0.4))
+            axs[i, col+1].imshow(superimpose_heatmap(img, heatmaps[col], 0.6))
             #axs[i, col+1].set_title(cols_name[i].name)
 
     fig.show()

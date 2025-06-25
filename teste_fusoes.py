@@ -51,7 +51,7 @@ class FusionRule:
                     if test == train:
                         path_csv = self.path_manager.get_csv_path(base=test, type='_test')
                     else:
-                        path_csv = self.path_manager.get_csv_path(base=test, type=None)
+                        path_csv = self.path_manager.get_csv_path(base=test, type='_test')
                     
                     df = pd.read_csv(path_csv)
                     y_true = mapear(df['class'])  # Confirma que mapear está definida!
@@ -118,7 +118,7 @@ mult = MultFusion(path)
 voto = VoteFusion(path)
 
 #CNR
-"""sum.run(model_name='Modelo_Kyoto',
+sum.run(model_name='Modelo_Kyoto',
         autoencoder_base='CNR', 
         train_bases=['PUC', 'UFPR04', 'UFPR05'], 
         test_bases=['PUC', 'UFPR04', 'UFPR05'])
@@ -131,10 +131,10 @@ mult.run(model_name='Modelo_Kyoto',
 voto.run(model_name='Modelo_Kyoto',
         autoencoder_base='CNR', 
         train_bases=['PUC', 'UFPR04', 'UFPR05'], 
-        test_bases=['PUC', 'UFPR04', 'UFPR05'])"""
+        test_bases=['PUC', 'UFPR04', 'UFPR05'])
 
 #PKLot
-"""sum.run(model_name='Modelo_Kyoto',
+sum.run(model_name='Modelo_Kyoto',
         autoencoder_base='PKLot', 
         train_bases=['camera1', 'camera2', 'camera3','camera4','camera5','camera6','camera7','camera8','camera9',], 
         test_bases=['camera1', 'camera2', 'camera3','camera4','camera5','camera6','camera7','camera8','camera9',])
@@ -147,7 +147,7 @@ mult.run(model_name='Modelo_Kyoto',
 voto.run(model_name='Modelo_Kyoto',
         autoencoder_base='PKLot', 
         train_bases=['camera1', 'camera2', 'camera3','camera4','camera5','camera6','camera7','camera8','camera9',], 
-        test_bases=['camera1', 'camera2', 'camera3','camera4','camera5','camera6','camera7','camera8','camera9',])"""
+        test_bases=['camera1', 'camera2', 'camera3','camera4','camera5','camera6','camera7','camera8','camera9',])
 
 #Kyoto
 sum.run(model_name='Modelo_Kyoto',
